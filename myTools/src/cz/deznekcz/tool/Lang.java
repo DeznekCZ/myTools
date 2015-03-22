@@ -21,16 +21,19 @@ import java.util.Scanner;
  * 
  * <br><br>Usage:<br>
  * <br>- import static cz.deznekcz.Lang.*;
- * <br>- main method: LANGload("language_fileName");
+ * <br>- set up method: LANGload("language_fileName");
  * <br>- String s = LANG("cus-TOM_5ym bol");
  * <br>- String s = LANG("cus-TOM_5ym bol", var1, var2);
- * <br>- LANGgenerate("language_fileName"); //on close aplication
+ * <br>- String s = LANGlined("cus-TOM_5ym bol");
+ * <br>- String s = LANGlined("cus-TOM_5ym bol", var1, var2);
+ * <br>- tear down method: LANGgenerate("language_fileName");
+ * <br>&nbsp;&nbsp;&nbsp;&nbsp; //on close aplication
  * 
  * <br><br>GUI commands:<br>
- * <br>- LANGset("cus-TOM_5ym bol", "value %d");
+ * <br>- LANGset("cus-TOM_5ym bol", "value %d/n/next line");
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 2.2.1
+ * @version 2.2.2
  */
 public class Lang {
 	

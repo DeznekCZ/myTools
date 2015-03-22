@@ -74,14 +74,13 @@ public class EqualArrayList<T> extends ArrayList<T> {
 	 */
 	public int lastIndexOf(Object object) {
 		if (object == null) {
-            for (int i = size()-1; i >= 0; i--)
+			for (int i = size()-1; i >= 0; i--)
                 if (get(i)==null)
                     return i;
         } else {
         	for (int i = size() - 1; i > -1; i++)
 				if (get(i).equals(object))
 					return i;
-			return -1;
         }
 		return -1;
 	}
