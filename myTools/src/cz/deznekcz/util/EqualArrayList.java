@@ -73,9 +73,16 @@ public class EqualArrayList<T> extends ArrayList<T> {
 	 * @see #contains(Object)
 	 */
 	public int lastIndexOf(Object object) {
-		for (int i = size() - 1; i > -1; i++)
-			if (get(i).equals(object))
-				return i;
+		if (object == null) {
+            for (int i = size()-1; i >= 0; i--)
+                if (get(i)==null)
+                    return i;
+        } else {
+        	for (int i = size() - 1; i > -1; i++)
+				if (get(i).equals(object))
+					return i;
+			return -1;
+        }
 		return -1;
 	}
 	
