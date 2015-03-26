@@ -10,6 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
 
+import cz.deznekcz.util.EqualArrayList;
+
 /**
  * Lanuguage configuration class<br><br>
  * 
@@ -33,7 +35,7 @@ import java.util.Scanner;
  * <br>- LANGset("cus-TOM_5ym bol", "value %d/n/next line");
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 2.2.2
+ * @version 2.3
  */
 public class Lang {
 	
@@ -41,7 +43,7 @@ public class Lang {
 	private static Lang instance = null;
 	
 	/** List of used symbols */
-	private final static List<LangItem> SYMBOLS = new ArrayList<LangItem>();
+	private final static List<LangItem> SYMBOLS = new EqualArrayList<LangItem>();
 	/** Load default language */
 	static { LANGload("english"); }
 	
@@ -181,16 +183,16 @@ public class Lang {
 	 * @return instance of {@link LangItem} 
 	 */
 	private static LangItem LANGgetItem(String symbol, Object... args) {
-		LangItem langItem = new LangItem(symbol, args);
 		
-		int index = SYMBOLS.indexOf(langItem);
+		int index = SYMBOLS.indexOf(symbol);
 		 
 		if (index < 0) {
+			LangItem langItem = new LangItem(symbol, args);
 			SYMBOLS.add(langItem);
+			return langItem;
 		} else {
-			langItem = SYMBOLS.get(index);
+			return SYMBOLS.get(index);
 		}
-		return langItem;
 	}
 }
 

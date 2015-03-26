@@ -5,7 +5,7 @@ package cz.deznekcz.tool;
  * value of an {@link Lang} item defined by specific symbol 
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 2.1
+ * @version 2.3
  */
 public class LangItem implements Comparable<LangItem>{
 	private final String symbol;
@@ -60,9 +60,14 @@ public class LangItem implements Comparable<LangItem>{
 	
 	@Override
 	public boolean equals(Object obj) {
-		return obj != null 
-				&& obj instanceof LangItem
-				&& ((LangItem) obj).getSymbol().equals(this.getSymbol());
+		return obj != null && (false
+				/* Ask by another instance */
+				|| (obj instanceof LangItem
+						&& ((LangItem) obj).getSymbol().equals(this.getSymbol()))
+				/* Ask by symbol */
+				|| (obj instanceof String
+						&& ((String) obj).equals(getSymbol()))
+		);
 	}
 
 	@Override
