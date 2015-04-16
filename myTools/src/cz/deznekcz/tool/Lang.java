@@ -14,8 +14,8 @@ import cz.deznekcz.util.EqualArrayList;
 /**
  * Lanuguage configuration class<br><br>
  * 
- * An sigleton class that can use static import.
- * Class generate a custom files. Files is writen
+ * An singleton class that can use static import.
+ * Class generate a custom files. Files is written
  * in UTF-8 and can be rewrited. Used extension
  * is *.lng. Every value of {@link LangItem} can
  * use default formating symbols.
@@ -34,17 +34,20 @@ import cz.deznekcz.util.EqualArrayList;
  * <br>- LANGset("cus-TOM_5ym bol", "value %d/n/next line");
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 2.3
+ * @version 2.4
  */
 public class Lang {
 	
 	/** Singleton instance */
-	private static Lang instance = null;
+	private static Lang instance;
 	
 	/** List of used symbols */
-	private final static List<LangItem> SYMBOLS = new EqualArrayList<LangItem>();
+	private final static List<LangItem> SYMBOLS;
 	/** Load default language */
-	static { LANGload("english"); }
+	static {
+		SYMBOLS = new EqualArrayList<LangItem>();
+		LANGload("english");
+	}
 	
 	/** Current used language */
 	private String langName;
@@ -63,7 +66,7 @@ public class Lang {
 	public static void LANGload(String langName) {
 		try {
 			if (instance != null) {
-				LANGgererate(langName);
+				LANGgererate();
 				SYMBOLS.clear();
 			}
 			instance = new Lang(langName);
@@ -80,7 +83,7 @@ public class Lang {
 			scanner.close();
 			
 		} catch (FileNotFoundException e) {
-			LANGgererate(langName);
+			LANGgererate();
 		}
 	}
 
@@ -88,10 +91,10 @@ public class Lang {
 	 * Generates a {@link Lang} file with used symbols.
 	 * <br><font color="red">WARNING!</font>
 	 *  - method rewrite previous version of {@link Lang} file
-	 * @param string {@link String} value
+	 * @param langName {@link String} value
 	 * @return true/false
 	 */
-	public static boolean LANGgererate(String string) {
+	public static boolean LANGgererate() {
 		try {
 			File f = new File("lang");
 			if (!f.exists()) {
@@ -183,6 +186,7 @@ public class Lang {
 	 */
 	private static LangItem LANGgetItem(String symbol, Object... args) {
 		
+		// Comparing LangItem to String
 		int index = SYMBOLS.indexOf(symbol);
 		 
 		if (index < 0) {

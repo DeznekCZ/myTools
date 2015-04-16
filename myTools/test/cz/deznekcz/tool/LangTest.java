@@ -15,7 +15,7 @@ import org.junit.Test;
 /**
  * Tests for <b>cz.deznekcz.tool.Lang</b>
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 2.2.1
+ * @version 2.4
  */
 public class LangTest {
 
@@ -24,7 +24,7 @@ public class LangTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		LANGgererate("spanish"); //USE TO CLEAR
+		LANGgererate(); //USE TO CLEAR
 		
 		LANGload("spanish");
 	}
@@ -37,7 +37,7 @@ public class LangTest {
 		LANG("data_2");
 		LANG("data_3");
 		
-		LANGgererate("spanish");
+		LANGgererate();
 		assertEquals(loadFile("lang/spanish.lng"), LANGlist());
 		
 		assertEquals("<data_1>", LANG("data_1"));
@@ -45,7 +45,7 @@ public class LangTest {
 
 	@Test
 	public void testGenerate() {
-		assertEquals(true, LANGgererate("spanish"));
+		assertEquals(true, LANGgererate());
 	}
 	
 	@Test
