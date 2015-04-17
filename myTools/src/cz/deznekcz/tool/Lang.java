@@ -34,7 +34,7 @@ import cz.deznekcz.util.EqualArrayList;
  * <br>- LANGset("cus-TOM_5ym bol", "value %d/n/next line");
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 2.4
+ * @version 3.0
  */
 public class Lang {
 	

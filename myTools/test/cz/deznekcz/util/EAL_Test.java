@@ -12,31 +12,31 @@ import org.junit.runners.JUnit4;
  *
  */
 public class EAL_Test {
-
-	private EqualArrayList<EAL_Integer> list;
+	
+	private EqualArrayList<EAL_Integer> integerList;
 
 	@Before
 	public void setUp() throws Exception {
-		list = new EqualArrayList<EAL_Integer>();
-		list.add(new EAL_Integer());
-		list.add(new EAL_Integer(1));
-		list.add(new EAL_Integer("8"));
-		list.add(new EAL_Integer(3));
+		integerList = new EqualArrayList<EAL_Integer>();
+		integerList.add(new EAL_Integer());
+		integerList.add(new EAL_Integer(1));
+		integerList.add(new EAL_Integer("8"));
+		integerList.add(new EAL_Integer(3));
 	}
 
 	@Test
 	public void testInteger() {
-		assertTrue(list.contains(8));
+		assertTrue(integerList.contains(8));
 	}
 
 	@Test
 	public void testSameClass() {
-		assertTrue(list.contains(new EAL_Integer(0)));
+		assertTrue(integerList.contains(new EAL_Integer(0)));
 	}
 
 	@Test
 	public void testString() {
-		assertTrue(list.contains("1"));
+		assertTrue(integerList.contains("1"));
 	}
 
 }

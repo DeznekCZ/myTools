@@ -2,11 +2,13 @@ package cz.deznekcz.util;
 
 /**
  * An example class for {@link EqualArrayList}
+ * Example now uses method Overloading. A creator
+ * of comparing can automatically test what he needs.
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 0.0.3
+ * @version 1.0.0
  */
-public class EAL_Integer {
+public class EAL_Integer implements EqualAble {
 	
 	private int value;
 
@@ -33,58 +35,79 @@ public class EAL_Integer {
 		this.value = Integer.parseInt(i);
 	}
 	
+	// EQUAL PART
+	
 	/**
-	 * Return true when obj is {@link Integer}, parse able {@link String},
-	 * or equals to another instance of {@link EAL_Integer}
-	 * value type of this integer equal to obj value
+	 * Returns result of method override
 	 * @param obj instance of {@link Object}
+	 * @see #equalsTo(EAL_Integer)
+	 * @see #equalsTo(int)
+	 * @see #equalsTo(Integer)
+	 * @see #equalsTo(String)
 	 */
-	public boolean equals(Object obj) {
-		//CONSTRUCT return (condition ? valtrue : valfalse);
-		return (obj != null && /* NOT NULL and ... */(false
-		
-		// SAME CLASS
-		||    (obj instanceof EAL_Integer ?
-					equalsTo((EAL_Integer) obj)
-				: false)
-		// SAME VALUE OF INTEGER
-		||    (obj instanceof Integer ?
-					equalsToInteger((Integer) obj)
-				: false)
-		// SAME VALUE FROM PARSE ABLE STRING
-		||    (obj instanceof String ?
-					equalsToString((String) obj)
-				: false)
-		
-		// END COMPARE
-		) ? true : false);
+	public boolean equalsTo(Object obj) {
+		// INSTANCE OF SAME CLASS
+		return  (obj instanceof EAL_Integer 
+			    	 && equalsTo((EAL_Integer) obj))
+		// INSTANCE OF INTEGER
+			 || (obj instanceof Integer 
+					 && equalsTo((Integer) obj))
+		// INSTANCE OF PARSE-ABLE STRING
+			 || (obj instanceof String 
+					 && equalsTo((String) obj));			
 	}
 
 	/**
-	 * Compares this instance to instance of parameter
+	 * Compares value of this instance to parameter
 	 * @param otherInstance {@link EAL_Integer} instance
 	 * @return boolean result
+	 * @see #equalsTo(int)
+	 * @see #equalsTo(Integer)
+	 * @see #equalsTo(Object)
+	 * @see #equalsTo(String)
 	 */
-	private boolean equalsTo(EAL_Integer otherInstance) {
+	public boolean equalsTo(EAL_Integer otherInstance) {
 		return otherInstance.value == value ;
 	}
 
 	/**
-	 * Compares this instance to instance of parameter
-	 * @param string {@link String} value
+	 * Compares value of this instance to parameter
+	 * @param stringInteger {@link String} value
 	 * @return boolean result
+	 * @see #equalsTo(EAL_Integer)
+	 * @see #equalsTo(int)
+	 * @see #equalsTo(Integer)
+	 * @see #equalsTo(Object)
+	 * @throws NumberFormatException
 	 */
-	private boolean equalsToString(String string) {
-		return Integer.parseInt(string) == value;
+	public boolean equalsTo(String stringInteger) {
+		return Integer.parseInt(stringInteger) == value;
 	}
 
 	/**
-	 * Compares this instance to instance of parameter
+	 * Compares value of this instance to parameter
 	 * @param integer {@link Integer} value
 	 * @return boolean result
+	 * @see #equalsTo(EAL_Integer)
+	 * @see #equalsTo(int)
+	 * @see #equalsTo(Object)
+	 * @see #equalsTo(String)
 	 */
-	private boolean equalsToInteger(Integer integer) {
+	public boolean equalsTo(Integer integer) {
 		return integer.intValue() == value;
+	}
+
+	/**
+	 * Compares value of this instance to parameter
+	 * @param integer {@code int} value
+	 * @return boolean result
+	 * @see #equalsTo(EAL_Integer)
+	 * @see #equalsTo(Integer)
+	 * @see #equalsTo(Object)
+	 * @see #equalsTo(String)
+	 */
+	public boolean equalsTo(int integer) {
+		return integer == value;
 	}
 	
 	
