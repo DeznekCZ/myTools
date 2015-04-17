@@ -14,7 +14,7 @@ import java.util.List;
  * must be implemented in each class stored in {@link EqualArrayList}
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 1.0.0
+ * @version 1.0.1
  *
  * @param <T> Element class implements {@link EqualAble}
  * 
@@ -51,19 +51,10 @@ public class EqualArrayList<T extends EqualAble> extends ArrayList<T> {
 	}
 	
 	/**
-	 * Method returns last index of element {@link T} in {@link List}.
-	 * <br>This change allow compare {@link T} to another object
-	 * and object can be an instance of different class.
-	 * <br>Example:<br>
-	 * <code>
-	 * boolean (new T).equals(object)<br>
-	 * {<br>
-	 * &nbsp;return object instanceof T<br> 
-	 * &nbsp;&nbsp;&nbsp;&nbsp;&& ((T) object).methodOrParam == this.param ...<br>
-	 * &nbsp;&nbsp;|| object instanceof DiffClass<br> 
-	 * &nbsp;&nbsp;&nbsp;&nbsp;&& ...<br>
-	 * }<br>
-	 * </code>
+	 * Method returns last index of element {@link T} in {@link EqualArrayList}.
+	 * <br>{@link EqualAble} inteface implemeted to {@link T} allow
+	 * send more type of objects.
+	 * 
 	 * @param object instance of any {@link Object} to compare
 	 * @see #indexOf(Object)
 	 * @see #contains(Object)
