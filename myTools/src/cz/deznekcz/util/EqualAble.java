@@ -4,7 +4,7 @@ package cz.deznekcz.util;
  * Every class adding to {@link EqualArrayList} must implements
  * this Interface
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 1.0.0
+ * @version 1.0.1
  */
 public interface EqualAble {
 	
@@ -28,7 +28,7 @@ public interface EqualAble {
 	 * Below must be implemented method {@code equalsTo(ThisClass otherInstance)}
 	 * and  {@code equalsTo(DiffClass diffClassInstance)}
 	 * @param obj
-	 * @return
+	 * @return returns result of equal method
 	 */
 	public boolean equalsTo(Object obj);
 }
