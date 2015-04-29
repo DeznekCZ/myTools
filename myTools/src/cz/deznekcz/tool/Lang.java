@@ -34,7 +34,7 @@ import cz.deznekcz.util.EqualArrayList;
  * <br>- LANGset("cus-TOM_5ym bol", "value %d/n/next line");
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 3.0
+ * @version 3.0.1
  */
 public class Lang {
 	
@@ -91,7 +91,6 @@ public class Lang {
 	 * Generates a {@link Lang} file with used symbols.
 	 * <br><font color="red">WARNING!</font>
 	 *  - method rewrite previous version of {@link Lang} file
-	 * @param langName {@link String} value
 	 * @return true/false
 	 */
 	public static boolean LANGgererate() {
@@ -110,6 +109,19 @@ public class Lang {
 		} catch (FileNotFoundException e) {
 			return false;
 		}
+	}
+
+	/**
+	 * Generates a {@link Lang} file with used symbols.
+	 * <br><font color="red">WARNING!</font>
+	 *  - method rewrite previous version of {@link Lang} file
+	 * @param langName {@link String} value
+	 * @return true/false
+	 */
+	@Deprecated
+	public static boolean LANGgererate(String langName) {
+		instance.langName = langName;
+		return LANGgererate();
 	}
 	
 	/**
