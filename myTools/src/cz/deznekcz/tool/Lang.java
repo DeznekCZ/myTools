@@ -3,6 +3,7 @@ package cz.deznekcz.tool;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.FormatFlagsConversionMismatchException;
 import java.util.Iterator;
@@ -34,7 +35,7 @@ import cz.deznekcz.util.EqualArrayList;
  * <br>- LANGset("cus-TOM_5ym bol", "value %d/n/next line");
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 3.0.1
+ * @version 3.0.2
  */
 public class Lang {
 	
@@ -70,7 +71,7 @@ public class Lang {
 				SYMBOLS.clear();
 			}
 			instance = new Lang(langName);
-			Scanner scanner = new Scanner(new File("lang/"+langName+".lng"));
+			Scanner scanner = new Scanner(new File("lang/"+langName+".lng"), "utf-8");
 			
 			String[] line;
 			while (scanner.hasNextLine()) {
@@ -100,13 +101,16 @@ public class Lang {
 				f.mkdir();
 			}
 		
-			PrintStream out = new PrintStream("lang/"+instance.langName+".lng");
+			PrintStream out = 
+				new PrintStream("lang/"+instance.langName+".lng", "utf-8");
 			
 			out.print(LANGlist());
 			
 			out.close();
 			return true;
-		} catch (FileNotFoundException e) {
+		} catch (FileNotFoundException 
+				| UnsupportedEncodingException e) {
+			// wrong encoding, or file creating error
 			return false;
 		}
 	}
