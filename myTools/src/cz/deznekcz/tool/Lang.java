@@ -35,7 +35,7 @@ import cz.deznekcz.util.EqualArrayList;
  * <br>- LANGset("cus-TOM_5ym bol", "value %d/n/next line");
  * 
  * @author Zdeněk Novotný (DeznekCZ)
- * @version 3.0.2
+ * @version 3.1.0
  */
 public class Lang {
 	
@@ -82,6 +82,11 @@ public class Lang {
 			}
 			
 			scanner.close();
+			
+			// symbol autosaving on close java
+			Runtime.getRuntime().addShutdownHook(
+					new Thread(() -> LANGgererate())
+				);
 			
 		} catch (FileNotFoundException e) {
 			LANGgererate();

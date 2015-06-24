@@ -1,5 +1,9 @@
 package cz.deznek.reflect;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Arrays;
+
 /**
  *     Instance of class {@link Out} represent a returnable parameter
  *     known as "<code><b>out</b> variableName</code>" from <b>C#</b>
@@ -77,5 +81,20 @@ public class Out<I> {
 			&&  instance != null
 			&&  ((Out<?>) obj).instance != null
 			&&  ((Out<?>) obj).instance.equals(instance);
+	}
+	
+	/**
+	 * Method returns class of parameter {@link I}
+	 * 
+	 * @return instance of {@link Class}
+	 */
+	public Class<? extends Object> getParameterClass() {
+		System.out.println(
+				Arrays.toString(
+						getClass()
+						.getEnclosingClass()
+						.getTypeParameters()));
+		
+		return getClass();
 	}
 }
