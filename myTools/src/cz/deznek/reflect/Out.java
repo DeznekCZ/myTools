@@ -62,9 +62,9 @@ public class Out<I> {
 
 	@Override
 	public String toString() {
-		return  instance == null
-				? String.format(FORMAT, "null")
-				: String.format(FORMAT, instance.toString()
+		return (  instance == null
+			? String.format(FORMAT, "null")
+			: String.format(FORMAT, instance.toString())
 		);
 	}
 	
