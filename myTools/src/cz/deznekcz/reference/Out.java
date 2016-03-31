@@ -4,8 +4,6 @@ import java.util.Arrays;
 import java.util.concurrent.locks.Condition;
 import java.util.function.Predicate;
 
-import com.sun.istack.internal.NotNull;
-
 /**
  *     Instance of class {@link Out} represent a returnable parameter
  *     known as "<code><b>out</b> variableName</code>" from <b>C#</b>
