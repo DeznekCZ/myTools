@@ -4,6 +4,8 @@ import java.util.Arrays;
 import java.util.concurrent.locks.Condition;
 import java.util.function.Predicate;
 
+import com.sun.istack.internal.NotNull;
+
 /**
  *     Instance of class {@link Out} represent a returnable parameter
  *     known as "<code><b>out</b> variableName</code>" from <b>C#</b>
@@ -36,12 +38,12 @@ import java.util.function.Predicate;
  *
  * @author Zdenek Novotny (DeznekCZ)
  * @param <C> Class of stored instances
- * @version 2
+ * @version 2.1 (Fixed issue #2)
  */
 public class Out<C> implements Comparable<Out<C>> {
 
 	/**
-	 * Functional interface used in method {@link Out#set(Object, Contition)}.
+	 * Functional interface used in method {@link Out#set(Object, Condition)}.
 	 * Is replaceable with the lambda function.
 	 * @author Zdenek Novotny (DeznekCZ)
 	 *
@@ -51,7 +53,7 @@ public class Out<C> implements Comparable<Out<C>> {
 	 * @see Out#set(Object, Condition)
 	 */
 	@FunctionalInterface
-	public static interface Contition<C> {
+	public static interface Condition<C> {
 		/**
 		 * Returns ability to be set to reference
 		 * @param value instance of new referenced value
@@ -88,6 +90,8 @@ public class Out<C> implements Comparable<Out<C>> {
 
 	/** ToString formating */
 	private static final String FORMAT = "Reference@%x: <%s>";
+	/** No action exception */
+	private static final String NO_ACTION_EXCEPTION = "No action is used";
 	/** Referenced instance of {@link C} */
 	private C value;
 
@@ -105,7 +109,7 @@ public class Out<C> implements Comparable<Out<C>> {
 	 * Method stores an instance of {@link C}.
 	 * @param newValue new stored value
 	 * @see #set(Object, boolean)
-	 * @see #set(Object, Contition)
+	 * @see #set(Object, Condition)
 	 * @see #get()
 	 */
 	public void set(C newValue) {
@@ -117,7 +121,7 @@ public class Out<C> implements Comparable<Out<C>> {
 	 * Condition parameter enables storing to reference.
 	 * @param newValue new stored value
 	 * @see #set(Object)
-	 * @see #set(Object, Contition)
+	 * @see #set(Object, Condition)
 	 * @see #get()
 	 */
 	public void set(C newValue, boolean condition)
@@ -137,7 +141,7 @@ public class Out<C> implements Comparable<Out<C>> {
 	 * @see #set(Object, boolean)
 	 * @see #get()
 	 */
-	public void set(C newValue, Contition<C> conditionFunction)
+	public void set(C newValue, Condition<C> conditionFunction)
 	throws InvalidValueException {
 		set(newValue, conditionFunction.check(newValue));
 	}
@@ -195,11 +199,16 @@ public class Out<C> implements Comparable<Out<C>> {
 	public int compareTo(Out<C> o) {
 		return (value != null && o.value != null 
 				? ((Comparable<C>)value).compareTo(o.value) 
-				: 0);
+				: (value == null && o.value == null ? 0 
+						: value == null ? 1 : -1));
+	}
+	
+	public static <C> int compare(Out<C> comparedReference, C comparedValue) {
+		return -1*Out.init(comparedValue).compareTo(comparedReference);
 	}
 
 	/* **************************************** *
-	 * Usefull declarations
+	 * Factory methods
 	 * **************************************** */
 
 	/**
@@ -219,7 +228,7 @@ public class Out<C> implements Comparable<Out<C>> {
 	 * @return new instance of {@link Out}
 	 */
 	public static <C> Out<C> init() {
-		return init(null);
+		return init((C) null);
 	}
 	
 	/**
@@ -248,6 +257,8 @@ public class Out<C> implements Comparable<Out<C>> {
 	 */
 	public static <C> Out<C> init(C defaultValue, OnSetAction<C> action) {
 		/* Overriding of default set method */
+		if (action == null)
+			throw new NullPointerException(NO_ACTION_EXCEPTION);
 		return new Out<C>(defaultValue) {
 			@Override
 			public void set(C newValue) {
