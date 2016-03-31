@@ -1,10 +1,7 @@
 package cz.deznekcz.reference;
 
 import java.util.Arrays;
-import java.util.concurrent.locks.Condition;
 import java.util.function.Predicate;
-
-import com.sun.istack.internal.NotNull;
 
 /**
  *     Instance of class {@link Out} represent a returnable parameter
@@ -38,7 +35,7 @@ import com.sun.istack.internal.NotNull;
  *
  * @author Zdenek Novotny (DeznekCZ)
  * @param <C> Class of stored instances
- * @version 2.1 (Fixed issue #2)
+ * @version 2.2 (methods stability fix)
  */
 public class Out<C> implements Comparable<Out<C>> {
 
@@ -60,6 +57,22 @@ public class Out<C> implements Comparable<Out<C>> {
 		 * @return true/false
 		 */
 		public boolean check(C value);
+	}
+	
+	/**
+	 * Functional interface is usable to export variable
+	 * without calling {@link Out#get()}. Can be replaced
+	 * with lambda function.
+	 * @author Zdenek Novotny (DeznekCZ)
+	 * @param <C> Class of stored instance
+	 */
+	@FunctionalInterface
+	public static interface OnSetAction<C> {
+		/**
+		 * Brings new value into body of method {@link #onSet(Object)}
+		 * @param newValue instance of {@link C}
+		 */
+		public void onSet(C newValue);
 	}
 	
 	/**
@@ -206,6 +219,16 @@ public class Out<C> implements Comparable<Out<C>> {
 	public static <C> int compare(Out<C> comparedReference, C comparedValue) {
 		return -1*Out.init(comparedValue).compareTo(comparedReference);
 	}
+	
+	/**
+	 * Returns new instance of {@link Out} with same reference.
+	 * <br><font color="red">WARNING!</font>: 
+	 * {@link OnSetAction} will be lost.
+	 */
+	@Override
+	public Out<C> clone() {
+		return new Out<C>(value);
+	}
 
 	/* **************************************** *
 	 * Factory methods
@@ -229,23 +252,6 @@ public class Out<C> implements Comparable<Out<C>> {
 	 */
 	public static <C> Out<C> init() {
 		return init((C) null);
-	}
-	
-	/**
-	 * Functional interface is usable to export variable
-	 * without keeping of Out instance. It can bring problem
-	 * with locality of exported value. Can be replaced
-	 * with lambda function.
-	 * @author Zdenek Novotny (DeznekCZ)
-	 * @param <C> Class of stored instance
-	 */
-	@FunctionalInterface
-	public static interface OnSetAction<C> {
-		/**
-		 * Brings new value into body of method {@link #onSet(Object)}
-		 * @param newValue instance of {@link C}
-		 */
-		public void onSet(C newValue);
 	}
 	
 	/**
