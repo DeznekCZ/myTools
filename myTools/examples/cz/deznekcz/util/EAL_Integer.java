@@ -5,8 +5,8 @@ package cz.deznekcz.util;
  * Example now uses method Overloading. A creator
  * of comparing can automatically test what he needs.
  * 
- * @author Zdeněk Novotný (DeznekCZ)
- * @version 1.0.0
+ * @author Zdenek Novotny (DeznekCZ)
+ * @version 1.0.1 Comment update
  */
 public class EAL_Integer implements EqualAble {
 	

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.SeparatorMenuItem?>
+
+<BorderPane xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="cz.deznekcz.tool.langEditor.LangCotroller">
+	<top>
+		<MenuBar>
+         <menus>
+            <Menu mnemonicParsing="false" text="%Lang.menu._FILE">
+              <items>
+                <MenuItem mnemonicParsing="true" onAction="#newFile" text="%Lang.menu.F_NEW" />
+                <SeparatorMenuItem />
+                <MenuItem mnemonicParsing="true" onAction="#openFile" text="%Lang.menu.F_OPEN" />
+                <MenuItem fx:id="saveAsMenuItem" mnemonicParsing="true" onAction="#saveAsFile" text="%Lang.menu.F_SAVE_AS" />
+                <SeparatorMenuItem />
+                <MenuItem mnemonicParsing="true" onAction="#importFile" text="%Lang.menu.F_IMPORT" />
+                <MenuItem fx:id="exportMenuItem" mnemonicParsing="true" onAction="#exportFile" text="%Lang.menu.F_EXPORT" />
+                <SeparatorMenuItem />
+                <MenuItem mnemonicParsing="true" onAction="#exitApplication" text="%Lang.menu.F_EXIT" />
+              </items>
+            </Menu>
+            <Menu fx:id="editMenu" disable="true" mnemonicParsing="false" text="%Lang.menu._EDIT">
+              <items>
+                <MenuItem mnemonicParsing="true" onAction="#undoChanges" text="%Lang.menu.E_UNDO" />
+                <MenuItem mnemonicParsing="true" onAction="#redoChanges" text="%Lang.menu.E_REDO" />
+              </items>
+            </Menu>
+          </menus>
+         </MenuBar>
+	</top>
+   <center>
+      <TreeView prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" fx:id="xmlTreeView" />
+   </center>
+<!-- <bottom>
+      <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <children>
+            <Button fx:id="newContextButton" mnemonicParsing="false" text="%Lang.button.NEW_CONTEXT" />
+            <Button fx:id="newGroupButton" mnemonicParsing="false" text="%Lang.button.NEW_GROUP" />
+            <Button fx:id="newKeyButton" mnemonicParsing="false" text="%Lang.button.NEW_KEY" />
+         </children>
+      </HBox>
+   </bottom> -->
+	
+</BorderPane>

@@ -1,4 +1,4 @@
-package cz.deznekcz.tool;
+package cz.deznekcz.tool.loader;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,7 +13,7 @@ import javax.swing.JOptionPane;
 
 public class Installer {
 	
-	private static final String INSTALER_NAME = "instal.jar";
+	private static final String INSTALER_NAME = Messages.getString("Installer.0"); //$NON-NLS-1$
 
 	/**
 	 * Install this packed application
@@ -23,19 +23,19 @@ public class Installer {
 	public static void main(String[] args) {
 		try {
 			if (args.length == 0) {
-				extract(new File(""));
+				extract(new File("")); //$NON-NLS-1$
 			} else {
 				extract(new File(args[0]));
 			}
 		} catch (IOException e) {
-			error("Writing or reading error:\n"+e.getMessage());
+			error(Messages.getString("Installer.2")+e.getMessage()); //$NON-NLS-1$
 		}
 		
 	}
 
 	private static void extract(File folder) throws IOException {
 		if (folder.exists() && !folder.isDirectory()) {
-			error("Name of folder references to a file!");
+			error(Messages.getString("Installer.3")); //$NON-NLS-1$
 		} else {
 			if (!folder.exists()) folder.mkdirs();
 			
@@ -45,14 +45,14 @@ public class Installer {
 			JarFile jar = new JarFile(INSTALER_NAME);
 			Enumeration<JarEntry> enumEntries = jar.entries();
 			
-			String label = "Current file: ";
+			String label = Messages.getString("Installer.4"); //$NON-NLS-1$
 			
-			Loader.start("Instaling", "", null);
+			Loader.start(Messages.getString("Installer.5"), "", null); //$NON-NLS-1$ //$NON-NLS-2$
 			
 			while (enumEntries.hasMoreElements()) {
 			    JarEntry file = enumEntries.nextElement();
 			    String fileName = folder.getAbsolutePath() + File.separator + file.getName();
-			    if (fileName.contains("META-INF")) continue;
+			    if (fileName.contains(Messages.getString("Installer.7"))) continue; //$NON-NLS-1$
 			    File f = new File(fileName);
 			    if (file.isDirectory()) { // if its a directory, create it
 			        f.mkdir();
@@ -79,7 +79,7 @@ public class Installer {
 			}
 			jar.close();
 		}
-		Loader.newLoading("Complete", "");
+		Loader.newLoading(Messages.getString("Installer.8"), ""); //$NON-NLS-1$ //$NON-NLS-2$
 		Loader.abort();
 		System.exit(0);
 	}
@@ -102,7 +102,7 @@ public class Installer {
 	}
 
 	private static void error(String string) {
-		JOptionPane.showMessageDialog(null, string, "Instalation error", JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(null, string, Messages.getString("Installer.10"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
 		System.exit(1);
 	}
 }

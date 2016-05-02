@@ -38,12 +38,13 @@ package cz.deznekcz.tool;
       }
     )
   );</pre>
+  @version 2 (Handling all exceptions natively)
  */
 public final class Interruptable implements Runnable {
 	/** Represents code of run */
 	private RunCode runCode;
 	/** Represents code of exception */
-	private InterruptCode interruptCode;
+	private ExceptionCode exceptionCode;
 
 	/**
 	 * Run code function
@@ -53,53 +54,59 @@ public final class Interruptable implements Runnable {
 	public static interface RunCode {
 		/**
 		 * Represent a code of thread
-		 * @throws InterruptedException throws while thread interrupting
+		 * @throws Exception throws while thread interrupting
 		 */
-		void todo() throws InterruptedException ;
+		void todo() throws Exception ;
 	}
 	/**
 	 * Catch code function
 	 * @author Zdenek Novotny (DeznekCZ)
 	 */
 	@FunctionalInterface
-	public static interface InterruptCode {
+	public static interface ExceptionCode {
 		/**
-		 * Handles an {@link InterruptedException} of thread
-		 * @param e instance of handled {@link InterruptedException}
+		 * Handles an {@link Exception} of thread
+		 * @param e instance of handled {@link Exception}
 		 */
-		void todo(InterruptedException e);
+		void todo(Exception e);
 	}
 	
 	/**
 	 * Constructor of {@link Interruptable} class implements an interface {@link Runnable}
 	 * @param runCode instance of {@link RunCode} or lambda <code>() -> { CODE }</code> }
-	 * @param interruptCode instance of {@link InterruptCode} or lambda <code>(exceptionVar) -> { CODE }</code> }
+	 * @param exceptionCode instance of {@link ExceptionCode} or lambda <code>(exceptionVar) -> { CODE }</code> }
 	 */
-	public Interruptable(RunCode runCode, InterruptCode interruptCode) {
+	public Interruptable(RunCode runCode, ExceptionCode exceptionCode) {
 		this.runCode = runCode;
-		this.interruptCode = interruptCode;
+		this.exceptionCode = exceptionCode;
 	}
 
 	/**
 	 * Factory method for instances of {@link Interruptable}
 	 * @param runCode instance of {@link RunCode} or lambda <code>() -> { CODE }</code> }
-	 * @param interruptAction instance of {@link InterruptCode} or lambda <code>(exceptionVar) -> { CODE }</code> }
+	 * @param exceptionCode instance of {@link ExceptionCode} or lambda <code>(exceptionVar) -> { CODE }</code> }
 	 * @return instance of {@link Runnable}
 	 */
-	public static final Runnable run(RunCode runnable, InterruptCode interruptAction) {
-		return new Interruptable(runnable, interruptAction);
+	public static final Interruptable run(RunCode runnable, ExceptionCode exceptionCode) {
+		return new Interruptable(runnable, exceptionCode);
 	}
 
 	/**
-	 * @see #Interruptable(RunCode, InterruptCode)
-	 * @see #run(RunCode, InterruptCode)
+	 * @see #Interruptable(RunCode, ExceptionCode)
+	 * @see #run(RunCode, ExceptionCode)
 	 */
 	@Override
 	public final void run() {
 		try {
 			runCode.todo();
-		} catch (InterruptedException e) {
-			interruptCode.todo(e);
+		} catch (Exception e) {
+			exceptionCode.todo(e);
 		}
+	}
+	
+	public Thread start() {
+		Thread thread = new Thread(this);
+		thread.start();
+		return thread;
 	}
 }

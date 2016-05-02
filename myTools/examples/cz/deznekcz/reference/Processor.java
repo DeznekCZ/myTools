@@ -11,8 +11,8 @@ public class Processor {
 	private static final int PRINT_INT = 5;
 	private static final int READ_INT = 6;
 	/* Registers */
-	public final Out<Integer> NULL_INT = Out.init(0);
-	public final Out<Long> NULL_LONG = Out.init(0L);
+	public final Out<Integer> NULL_INT  = Out.init(0);
+	public final Out<Long>    NULL_LONG = Out.init(0L);
 	
 	public final Out<Integer> X1 = Out.init();
 	public final Out<Integer> X2 = Out.init();
@@ -27,10 +27,10 @@ public class Processor {
 	public HashMap<Long, Long> data = new HashMap<>();
 	
 	/** systemInterrupt for X1:
-	 * 1 - store integer value from X2 to address L1
-	 * 2 - load integer value from address L1 to X1
-	 * 5 - print int from register X2
-	 * 6 - read int to register X1
+	 * <br>1 - store integer value from X2 to address L1
+	 * <br>2 - load integer value from address L1 to X1
+	 * <br>5 - print int from register X2
+	 * <br>6 - read int to register X1
 	 */
 	public void systemInterrupt() {
 		switch ((int) X1.get()) {

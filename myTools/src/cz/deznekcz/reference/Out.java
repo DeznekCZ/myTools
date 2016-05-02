@@ -1,7 +1,8 @@
 package cz.deznekcz.reference;
 
-import java.util.Arrays;
 import java.util.function.Predicate;
+
+import cz.deznekcz.util.EqualAble;
 
 /**
  *     Instance of class {@link Out} represent a returnable parameter
@@ -32,13 +33,23 @@ import java.util.function.Predicate;
  * <br>&nbsp;out.lock("myValue");
  * <br>}
  *     </code>
+ *     
+ * <br>
+ * <br><b>New usable declarations</b>
+ * <br>{@link ExceptionOut}, {@link StringOut}, {@link NumberOut}, 
+ *     {@link ByteOut}, {@link ShortOut}, {@link IntOut}, {@link LongOut}, 
+ *     {@link FloatOut}, {@link DoubleOut}
  *
  * @author Zdenek Novotny (DeznekCZ)
  * @param <C> Class of stored instances
- * @version 2.2 (methods stability fix)
+ * @version 2.5 (method sorting, #getParameterClass() fixed)
  */
-public class Out<C> implements Comparable<Out<C>> {
+public class Out<C> implements Comparable<Out<C>>, EqualAble {
 
+	/* BLOCK*********************************** *
+	 * Class declaration
+	 * **************************************** */
+	
 	/**
 	 * Functional interface used in method {@link Out#set(Object, Condition)}.
 	 * Is replaceable with the lambda function.
@@ -57,22 +68,6 @@ public class Out<C> implements Comparable<Out<C>> {
 		 * @return true/false
 		 */
 		public boolean check(C value);
-	}
-	
-	/**
-	 * Functional interface is usable to export variable
-	 * without calling {@link Out#get()}. Can be replaced
-	 * with lambda function.
-	 * @author Zdenek Novotny (DeznekCZ)
-	 * @param <C> Class of stored instance
-	 */
-	@FunctionalInterface
-	public static interface OnSetAction<C> {
-		/**
-		 * Brings new value into body of method {@link #onSet(Object)}
-		 * @param newValue instance of {@link C}
-		 */
-		public void onSet(C newValue);
 	}
 	
 	/**
@@ -100,7 +95,27 @@ public class Out<C> implements Comparable<Out<C>> {
 			super(String.format(EXCEPTION_FORMAT, value.toString()));
 		}
 	}
+	
+	/**
+	 * Functional interface is usable to export variable
+	 * without calling {@link Out#get()}. Can be replaced
+	 * with lambda function.
+	 * @author Zdenek Novotny (DeznekCZ)
+	 * @param <C> Class of stored instance
+	 */
+	@FunctionalInterface
+	public static interface OnSetAction<C> {
+		/**
+		 * Brings new value into body of method {@link #onSet(Object)}
+		 * @param newValue instance of {@link C}
+		 */
+		public void onSet(C newValue);
+	}
 
+	/* BLOCK*********************************** *
+	 * Instance handling
+	 * **************************************** */
+	
 	/** ToString formating */
 	private static final String FORMAT = "Reference@%x: <%s>";
 	/** No action exception */
@@ -119,8 +134,51 @@ public class Out<C> implements Comparable<Out<C>> {
 	}
 	
 	/**
+	 * Method returns an instance of {@link C}
+	 * @return reference to instance
+	 * @see #set()
+	 * @see #set(Object)
+	 * @see #set(Object, boolean)
+	 * @see #set(Object, Predicate)
+	 */
+	public C get() {
+		return value;
+	}
+	
+	/**
+	 * Method returns class of referencing instance.
+	 * If value of <b>this</b> reference is null, returns <b>null</b>
+	 * 
+	 * @return instance of {@link Class} or <b>null</b>
+	 */
+	public Class<? extends Object> getParameterClass() {
+		return value != null ? value.getClass() : null;
+	}
+
+	/**
+	 * Returns <b>null</b> if the stored value is <b>null</b>
+	 * @return <b>true</b> / <b>false</b>
+	 */
+	public boolean isNull() {
+		return value == null;
+	}
+	
+	/**
+	 * Method stores a <b>null</b> value.
+	 * Usable for {@link OnSetAction} fast call.
+	 * @see #set(Object)
+	 * @see #set(Object, boolean)
+	 * @see #set(Object, Condition)
+	 * @see #get()
+	 */
+	public void set() {
+		value = null;
+	}
+	
+	/**
 	 * Method stores an instance of {@link C}.
 	 * @param newValue new stored value
+	 * @see #set()
 	 * @see #set(Object, boolean)
 	 * @see #set(Object, Condition)
 	 * @see #get()
@@ -133,6 +191,7 @@ public class Out<C> implements Comparable<Out<C>> {
 	 * Method stores an instance of {@link C}.
 	 * Condition parameter enables storing to reference.
 	 * @param newValue new stored value
+	 * @see #set()
 	 * @see #set(Object)
 	 * @see #set(Object, Condition)
 	 * @see #get()
@@ -150,6 +209,7 @@ public class Out<C> implements Comparable<Out<C>> {
 	 * Condition parameter enables storing to reference.
 	 * @param newValue new stored value
 	 * @throws InvalidValueException 
+	 * @see #set()
 	 * @see #set(Object)
 	 * @see #set(Object, boolean)
 	 * @see #get()
@@ -160,15 +220,18 @@ public class Out<C> implements Comparable<Out<C>> {
 	}
 	
 	/**
-	 * Method returns an instance of {@link C}
-	 * @return reference to instance
-	 * @see #set(Object)
-	 * @see #set(Object, boolean)
-	 * @see #set(Object, Predicate)
+	 * Returns new instance of {@link Out} with same reference.
+	 * <br><font color="red">WARNING!</font>: 
+	 * {@link OnSetAction} will be lost.
 	 */
-	public C get() {
-		return value;
+	@Override
+	public Out<C> clone() {
+		return new Out<C>(value);
 	}
+	
+	/* BLOCK*********************************** *
+	 * Comparing and equaling
+	 * **************************************** */
 	
 	/**
 	 * Returns string value in format
@@ -201,6 +264,35 @@ public class Out<C> implements Comparable<Out<C>> {
 				)
 			);
 	}
+	
+	/**
+	 * Returns <b>true</b> if reference of <b>this</b> value equals to another reference
+	 * or value of <b>this</b> reference equals to value
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equalsTo(Object obj) {
+		try {
+			return equalsTo((Out<C>) obj);
+		} catch (ClassCastException outException) {
+			return value instanceof EqualAble 
+					? ((EqualAble) value).equalsTo(obj) 
+					: value.equals(obj);
+		}
+	}
+	
+	/**
+	 * Returns <b>true</b> if value of reference of <b>this</b> equals to value of another reference
+	 * @param ref another reference
+	 * @return <b>true</b> / <b>false</b>
+	 */
+	public boolean equalsTo(Out<C> ref) {
+		return value != null && (
+					value instanceof EqualAble
+						?	((EqualAble) value).equalsTo(ref.value)
+						:	value.equals(ref.value)
+				);
+	}
 
 	/**
 	 * Uses method of {@link C#compareTo(I)} to compare stored parameters.
@@ -216,23 +308,31 @@ public class Out<C> implements Comparable<Out<C>> {
 						: value == null ? 1 : -1));
 	}
 	
-	public static <C> int compare(Out<C> comparedReference, C comparedValue) {
-		return -1*Out.init(comparedValue).compareTo(comparedReference);
-	}
-	
 	/**
-	 * Returns new instance of {@link Out} with same reference.
-	 * <br><font color="red">WARNING!</font>: 
-	 * {@link OnSetAction} will be lost.
+	 * Compare values of {@link Out} reference and a value
+	 * @param <C> class of stored instances
+	 * @param comparedReference instance of {@link Out}
+	 * @param comparedValue instance of {@link C}
+	 * @return returns value of {@link Out}&lt;{@link C}&gt;.{@link #get()}.{@link Comparable#compareTo(Object) compareTo}({@link C})
 	 */
-	@Override
-	public Out<C> clone() {
-		return new Out<C>(value);
+	public static <C> int compare(Out<C> comparedReference, C comparedValue) {
+		return -1*Out.init(comparedValue).compareTo(comparedReference); // 
+//		return ((Comparable<C>) comparedReference.value).compareTo(comparedValue);
 	}
 
-	/* **************************************** *
+	/* BLOCK*********************************** *
 	 * Factory methods
 	 * **************************************** */
+	
+	/**
+	 * Initializer for simple reference by type.
+	 * <br>Default value is null.
+	 * @param <C> Class of stored instance
+	 * @return new instance of {@link Out}
+	 */
+	public static <C> Out<C> init() {
+		return init((C) null);
+	}
 
 	/**
 	 * Initializer for simple reference by type.
@@ -248,10 +348,12 @@ public class Out<C> implements Comparable<Out<C>> {
 	 * Initializer for simple reference by type.
 	 * <br>Default value is null.
 	 * @param <C> Class of stored instance
+	 * @param defaultValue new stored instance
+	 * @param action action on set new value
 	 * @return new instance of {@link Out}
 	 */
-	public static <C> Out<C> init() {
-		return init((C) null);
+	public static <C> Out<C> init(OnSetAction<C> action) {
+		return init(null, action);
 	}
 	
 	/**
@@ -274,19 +376,234 @@ public class Out<C> implements Comparable<Out<C>> {
 		};
 	}
 	
-	/**
-	 * Initializer for simple reference by type.
-	 * <br>Default value is null.
-	 * @param <C> Class of stored instance
-	 * @param defaultValue new stored instance
-	 * @param action action on set new value
-	 * @return new instance of {@link Out}
+	/* BLOCK*********************************** *
+	 * Usable declarations
+	 * **************************************** */
+	
+	/** 
+	 * @see #isExcepted()
+	 * @see #throwException()
 	 */
-	public static <C> Out<C> init(OnSetAction<C> action) {
-		return init(null, action);
+	public static class ExceptionOut extends Out<Exception> {
+		public ExceptionOut() {
+			super(null);
+		}
+		
+		public boolean isExcepted() {
+			return get() != null;
+		}
+		
+		public void throwException() throws Exception {
+			if (isExcepted())
+				throw get();
+			else
+				throw new NullPointerException("No exception to throw!");
+		}
 	}
 	
-	/* **************************************** *
+	/**
+	 * @see CharSequence
+	 * @see Appendable
+	 */
+	public static class StringOut extends Out<String> implements CharSequence, Appendable {
+		public StringOut() {
+			super("");
+		}
+
+		@Override
+		public int length() {
+			return get().length();
+		}
+
+		@Override
+		public char charAt(int index) {
+			return get().charAt(index);
+		}
+
+		@Override
+		public String subSequence(int start, int end) {
+			return get().substring(start, end);
+		}
+
+		@Override
+		public StringOut append(CharSequence csq) {
+			set(get().concat( csq instanceof StringOut ? ((StringOut) csq).get() : csq.toString()));
+			return this;
+		}
+
+		@Override
+		public StringOut append(CharSequence csq, int start, int end) {
+			return append(csq.subSequence(start, end));
+		}
+
+		@Override
+		public StringOut append(char c) {
+			set(get().concat(""+c));
+			return this;
+		}
+		
+		@Override
+		public String toString() {
+			return String.format("String reference: \"%s\"", get());
+		}
+		
+		@Override
+		public boolean isNull() {
+			return super.isNull() || length() == 0;
+		}
+	}
+	
+	/**
+	 * @see #add(Number)
+	 * @see #mul(Number)
+	 */
+	public static abstract class NumberOut<I extends Number> extends Out<I> {
+		public NumberOut(I n) {
+			super(n);
+		}
+		
+		public abstract NumberOut<I> add(Number n);
+		
+		public abstract NumberOut<I> mul(Number n);
+	}
+	
+	/**
+	 * @see #add(Number)
+	 * @see #mul(Number)
+	 */
+	public static class ByteOut extends NumberOut<Byte> {
+		public ByteOut(byte n) {
+			super(n);
+		}
+		
+		public ByteOut add(Number n) {
+			set((byte) (get() + n.byteValue()));
+			return this;
+		}
+		
+		public ByteOut mul(Number n) {
+			set((byte) (get() * n.byteValue()));
+			return this;
+		}
+	}
+	
+	/**
+	 * @see #add(Number)
+	 * @see #mul(Number)
+	 */
+	public static class ShortOut extends NumberOut<Short> {
+		public ShortOut(short n) {
+			super(n);
+		}
+		
+		public ShortOut add(Number n) {
+			set((short) (get() + n.intValue()));
+			return this;
+		}
+		
+		public ShortOut mul(Number n) {
+			set((short) (get() * n.intValue()));
+			return this;
+		}
+	}
+	
+	/**
+	 * @see #add(Number)
+	 * @see #mul(Number)
+	 * @see #increment()
+	 * @see #decrement()
+	 */
+	public static class IntOut extends NumberOut<Integer> {
+		public IntOut(int n) {
+			super(n);
+		}
+		
+		public IntOut add(Number n) {
+			set(get() + n.intValue());
+			return this;
+		}
+		
+		public IntOut mul(Number n) {
+			set(get() * n.intValue());
+			return this;
+		}
+
+		public IntOut increment() {
+			set(get() + 1);
+			return this;
+		}
+
+		public IntOut decrement() {
+			set(get() - 1);
+			return this;
+		}
+		
+		public boolean is(int n) {
+			return n == get();
+		}
+	}
+	
+	/**
+	 * @see #add(Number)
+	 * @see #mul(Number)
+	 */
+	public static class LongOut extends NumberOut<Long> {
+		public LongOut(long n) {
+			super(n);
+		}
+		
+		public LongOut add(Number n) {
+			set(get() + n.longValue());
+			return this;
+		}
+		
+		public LongOut mul(Number n) {
+			set(get() * n.longValue());
+			return this;
+		}
+	}
+	
+	/**
+	 * @see #add(Number)
+	 * @see #mul(Number)
+	 */
+	public static class FloatOut extends NumberOut<Float> {
+		public FloatOut(float n) {
+			super(n);
+		}
+		
+		public FloatOut add(Number n) {
+			set(get() + n.floatValue());
+			return this;
+		}
+		
+		public FloatOut mul(Number n) {
+			set(get() * n.floatValue());
+			return this;
+		}
+	}
+	
+	/**
+	 * @see #add(Number)
+	 * @see #mul(Number)
+	 */
+	public static class DoubleOut extends NumberOut<Double> {
+		public DoubleOut(double n) {
+			super(n);
+		}
+		
+		public DoubleOut add(Number n) {
+			set(get() + n.doubleValue());
+			return this;
+		}
+		
+		public DoubleOut mul(Number n) {
+			set(get() * n.doubleValue());
+			return this;
+		}
+	}
+	
+	/* BLOCK*********************************** *
 	 * Deprecated methods
 	 * **************************************** */
 
@@ -350,23 +667,5 @@ public class Out<C> implements Comparable<Out<C>> {
 	@Deprecated
 	public C value() {
 		return value;
-	}
-	
-	/**
-	 * Method returns class of parameter {@link C}
-	 * Method is not correctly implemented, 
-	 * returns class of referencing instance.
-	 * 
-	 * @return instance of {@link Class}
-	 */
-	@Deprecated
-	public Class<? extends Object> getParameterClass() {
-		System.out.println(
-				Arrays.toString(
-						getClass()
-						.getEnclosingClass()
-						.getTypeParameters()));
-		
-		return getClass();
 	}
 }

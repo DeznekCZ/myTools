@@ -1,5 +1,12 @@
 package cz.deznekcz.util;
 
+import java.util.Iterator;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import cz.deznekcz.reference.Out;
+import cz.deznekcz.reference.Out.IntOut;
+
 /**
  * Abstract class removes a Java version mismatch between new Java 1.8 and OpenJDK.
  * <br>
@@ -28,13 +35,16 @@ package cz.deznekcz.util;
  * 	};
  * }
  * </pre>
+ * @see #start(Iterable, Iteration) from version 2 #start(Iterable, Iteration)
  * @author Zdenek Novotny (DeznekCZ)
- *
+ * @version 2
  * @param <T> Type of iterable element
  */
 public abstract class ForEach<T> {
 
+	@Deprecated
 	private final Iterable<T> iterable;
+	@Deprecated
 	private boolean breaking;
 
 	/**
@@ -52,6 +62,7 @@ public abstract class ForEach<T> {
 	 * </pre>
 	 * @param iterable instance of an iterable collection or set
 	 */
+	@Deprecated
 	public ForEach(Iterable<T> iterable) {
 		this.iterable = iterable;
 		this.breaking = false;
@@ -59,6 +70,7 @@ public abstract class ForEach<T> {
 	}
 	
 	/** Hidden method of execution (do a synchronized foreach loop) */
+	@Deprecated
 	private final void start() {
 		synchronized (iterable) {
 			for (T t : iterable) {
@@ -75,12 +87,111 @@ public abstract class ForEach<T> {
 	 * Method defines an action applicable for each element 
 	 * @param t element of foreach
 	 */
+	@Deprecated
 	public abstract void apply(T t);
 
 	/**
 	 * Ends execution of ForEach loop
 	 */
+	@Deprecated
 	protected final void breakLoop() {
 		breaking = true;
+	}
+	
+	@FunctionalInterface
+	public interface Return<T> {
+		T returnValue();
+	}
+
+	@FunctionalInterface
+	public interface Concurent<T> {
+		void loop(T value);
+	}
+	
+	@FunctionalInterface
+	public interface Iteration<T> {
+		void loop(T value, Out<Boolean> breakloop);
+	}
+	
+	/**
+	 * Method starts a breakable foreach.
+	 * 
+	 * <br>Example:
+	 * <pre>
+	 * <code>
+	 * Iterable<T> iterable = ... ;
+	 * ForEach.<T>(iterable, (element, breakL) -&gt; {
+	 * 	do some...
+	 * 	if (needs break) {
+	 * 		breakL.set();
+	 * 		return; // necessary booth
+	 * 	} else if (needs continue) {
+	 * 		return;
+	 * 	}
+	 * });
+	 * </pre>
+	 * 
+	 * @param iterable instance of {@link Iterable}
+	 * @param iteration instance of {@link FunctionalInterface} {@link Iterator}
+	 */
+	public static <T> void start(Iterable<T> iterable, Iteration<T> iteration) {
+		Out<Boolean> breakL = Out.init(false);
+		Iterator<T> it = iterable.iterator();
+		while(
+				it.hasNext() 		// items exists
+			&& !breakL.isNull() 	// fast set function called Out.set() 
+			&& !breakL.get()		// normal use of Out.set(true) 
+			
+			)	iteration.loop(it.next(), breakL); // loop action
+	}
+
+	public static <T> void paralel(Iterable<T> iterable, int threadCount, long waitTime, Concurent<T> iteration) {
+		ExecutorService exec = Executors.newFixedThreadPool(threadCount);
+		IntOut countOfRunning = new IntOut(0);
+				
+		Iterator<T> it = iterable.iterator();
+		while(it.hasNext()) {
+			synchronized (countOfRunning) { countOfRunning.increment(); }
+			exec.execute(new Runnable() {
+				private T value = it.next();
+				public void run() { 
+					iteration.loop(value); 
+					synchronized (countOfRunning) { 
+						countOfRunning.decrement(); 
+					} 
+				};
+			});	// loop action
+		}
+		
+		Return<Integer> check = () -> {
+			Integer value;
+			synchronized(countOfRunning) {
+				value = countOfRunning.get();
+			}
+			return value;
+		};
+		while (check.returnValue() != 0);
+	}
+
+	public static Iterable<Integer> integer(final int i, final int max) {
+		return new Iterable<Integer>() {
+			@Override
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					int iteration = i;
+					final int limit = max;
+
+					@Override
+					public boolean hasNext() {
+						return iteration < limit;
+					}
+
+					@Override
+					public Integer next() {
+						return iteration++;
+					}
+				};
+			}
+		};
 	}
 }
