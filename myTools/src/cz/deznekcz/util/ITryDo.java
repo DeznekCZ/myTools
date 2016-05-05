@@ -1,8 +1,16 @@
 package cz.deznekcz.util;
 
+/**
+ *     Instances or lambda functions of {@link ITryDo} is usable to remove a 
+ * <br>&nbsp;<code>try {var = sometingWhatCauseException();} catch({@link Exception} e) {e.printStackTrace();}</code>
+ * <br>and replace with
+ * <br>&nbsp;<code>{@link Exception} e = (({@link ITryDo}) ()->outVar.set(sometingWhatCauseException())).{@link #doAction()};</code>
+ * <br>can be use in condition clause with <code>tryDoinstance.doAction() != null</code> or more complex.
+ * @author Zdenek Novotny (DeznekCZ)
+ * @see #checkValue(CheckAction)
+ */
 @FunctionalInterface
 public interface ITryDo {
-
 	/**
 	 * Method returns 
 	 * @return instance of {@link Exception}
@@ -44,8 +52,7 @@ public interface ITryDo {
 		return new ITryDo() {
 			@Override
 			public void defineAction() throws Exception {
-				@SuppressWarnings("unused")
-				Object noValue = castAction.get();
+				castAction.get();
 			}
 		}.doAction();
 	}
