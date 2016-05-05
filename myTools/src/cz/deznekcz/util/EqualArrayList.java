@@ -1,6 +1,9 @@
 package cz.deznekcz.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -23,10 +26,47 @@ import java.util.List;
  * @see #indexOf(Object)
  * @see #lastIndexOf(Object)
  */
-public class EqualArrayList<T extends EqualAble> extends ArrayList<T> {
-	
-	/** */
-	private static final long serialVersionUID = 1L;
+public class EqualArrayList<T extends EqualAble> 
+extends ArrayList<T>
+implements EqualAble {
+
+	/**
+	 * <b>Overrode from {@link ArrayList}</b>
+	 */
+    private static final long serialVersionUID = 8683452581122892189L;
+
+	/**
+	 * <b>Overrode from {@link ArrayList}</b><br>
+     * Constructs an empty list with an initial capacity of ten.
+     */
+	public EqualArrayList() {
+		super();
+	}
+
+	/**
+	 * <b>Overrode from {@link ArrayList}</b><br>
+     * Constructs a list containing the elements of the specified
+     * collection, in the order they are returned by the collection's
+     * iterator.
+     *
+     * @param c the collection whose elements are to be placed into this list
+     * @throws NullPointerException if the specified collection is null
+     */
+	public EqualArrayList(Collection<? extends T> c) {
+		super(c);
+	}
+
+	/**
+	 * <b>Overrode from {@link ArrayList}</b><br>
+     * Constructs an empty list with the specified initial capacity.
+     *
+     * @param  initialCapacity  the initial capacity of the list
+     * @throws IllegalArgumentException if the specified initial capacity
+     *         is negative
+     */
+    public EqualArrayList(int initialCapacity) {
+		super(initialCapacity);
+	}
 
 	/**
 	 * Method returns first index of element {@link T} in {@link EqualArrayList}.
@@ -81,6 +121,50 @@ public class EqualArrayList<T extends EqualAble> extends ArrayList<T> {
 	 * @see #lastIndexOf(Object)
 	 */
 	public boolean contains(Object object) {
-		return indexOf(object) > -1;
+		return indexOf(object) >= 0;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equalsTo(Object obj) {
+		return obj == this || (obj != null && (
+				CatchException.tryDo(()->(Object[]) obj) == null
+			?		equalsTo((Object[]) obj)
+			:	CatchException.tryDo(()->(T[]) obj) == null
+			?		equalsTo((T[]) obj) 
+			:	CatchException.tryDo(()->(Collection<T>) obj) == null
+			?		equalsTo((Collection<T>) obj)
+			:	CatchException.tryDo(()->(List<T>) obj) == null
+			?		equalsTo((List<T>) obj)
+			:	CatchException.tryDo(()->(ArrayList<T>) obj) == null
+			?		equalsTo((List<T>) obj)
+			:	CatchException.tryDo(()->(EqualArrayList<T>) obj) == null
+			?		equalsTo((List<T>) obj)
+			:	false
+				));
+	}
+	
+	public boolean equalsTo(Object[] o) {
+		return super.equals(Arrays.asList(o));
+	}
+	
+	public boolean equalsTo(T[] o) {
+		return super.equals(Arrays.asList(o));
+	}
+	
+	public boolean equalsTo(Collection<T> o) {
+		return equalsTo(o.toArray());
+	}
+	
+	public boolean equalsTo(List<T> o) {
+		return super.equals(o);
+	}
+	
+	public boolean equalsTo(ArrayList<T> o) {
+		return super.equals(o);
+	}
+	
+	public boolean equalsTo(EqualArrayList<T> o) {
+		return super.equals(o);
 	}
 }

@@ -37,7 +37,7 @@ import cz.deznekcz.util.EqualAble;
  * <br>
  * <br><b>New usable declarations</b>
  * <br>{@link ExceptionOut}, {@link StringOut}, {@link NumberOut}, 
- *     {@link ByteOut}, {@link ShortOut}, {@link IntOut}, {@link LongOut}, 
+ *     {@link ByteOut}, {@link ShortOut}, {@link IntegerOut}, {@link LongOut}, 
  *     {@link FloatOut}, {@link DoubleOut}
  *
  * @author Zdenek Novotny (DeznekCZ)
@@ -117,11 +117,13 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * **************************************** */
 	
 	/** ToString formating */
-	private static final String FORMAT = "Reference@%x: <%s>";
+	private static final String TO_STRING_FORMAT = "Reference@%x: <%s>";
 	/** No action exception */
 	private static final String NO_ACTION_EXCEPTION = "No action is used";
 	/** Referenced instance of {@link C} */
 	private C value;
+	/** On set action function */
+	private OnSetAction<C> onSetAction;
 
 	/**
 	 * Constructor references an external instance
@@ -156,11 +158,19 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	}
 
 	/**
-	 * Returns <b>null</b> if the stored value is <b>null</b>
+	 * Returns <b>true</b> if the stored value is <b>null</b>
 	 * @return <b>true</b> / <b>false</b>
 	 */
 	public boolean isNull() {
-		return value == null;
+		return get() == null;
+	}
+
+	/**
+	 * Returns <b>false</b> if the stored value is <b>null</b>
+	 * @return <b>true</b> / <b>false</b>
+	 */
+	public boolean isNotNull() {
+		return !isNull();
 	}
 	
 	/**
@@ -185,6 +195,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 */
 	public void set(C newValue) {
 		value = newValue;
+		if (onSetAction != null)
+			onSetAction.onSet(newValue);
 	}
 	
 	/**
@@ -220,6 +232,14 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	}
 	
 	/**
+	 * Method sets an onSet action of an Out reference, getting of action is not allowed.
+	 * @param onSetAction instance of {@link OnSetAction} or lambda expression
+	 */
+	public void setOnSetAction(OnSetAction<C> onSetAction) {
+		this.onSetAction = onSetAction;
+	}
+	
+	/**
 	 * Returns new instance of {@link Out} with same reference.
 	 * <br><font color="red">WARNING!</font>: 
 	 * {@link OnSetAction} will be lost.
@@ -239,8 +259,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	@Override
 	public String toString() {
 		return (  value == null
-			? String.format(FORMAT, hashCode(), "null")
-			: String.format(FORMAT, hashCode(), value.toString())
+			? String.format(TO_STRING_FORMAT, hashCode(), "null")
+			: String.format(TO_STRING_FORMAT, hashCode(), value.toString())
 		);
 	}
 	
@@ -367,13 +387,9 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 		/* Overriding of default set method */
 		if (action == null)
 			throw new NullPointerException(NO_ACTION_EXCEPTION);
-		return new Out<C>(defaultValue) {
-			@Override
-			public void set(C newValue) {
-				super.set(newValue);
-				action.onSet(newValue);
-			}
-		};
+		Out<C> out = Out.init(defaultValue);
+		out.setOnSetAction(action);
+		return out;
 	}
 	
 	/* BLOCK*********************************** *
@@ -383,6 +399,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	/** 
 	 * @see #isExcepted()
 	 * @see #throwException()
+	 * @see #printStackTrace()
+	 * @see #get() get() for other acces to an Exception
 	 */
 	public static class ExceptionOut extends Out<Exception> {
 		public ExceptionOut() {
@@ -398,6 +416,10 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 				throw get();
 			else
 				throw new NullPointerException("No exception to throw!");
+		}
+		
+		public void printStackTrace() {
+			get().printStackTrace();
 		}
 	}
 	
@@ -427,7 +449,9 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 
 		@Override
 		public StringOut append(CharSequence csq) {
-			set(get().concat( csq instanceof StringOut ? ((StringOut) csq).get() : csq.toString()));
+			set(get().concat( csq instanceof StringOut 
+							? ((StringOut) csq).get() 
+							: csq.toString()));
 			return this;
 		}
 
@@ -465,6 +489,12 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 		public abstract NumberOut<I> add(Number n);
 		
 		public abstract NumberOut<I> mul(Number n);
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public void set() {
+			set((I) get().getClass().cast(0));
+		}
 	}
 	
 	/**
@@ -476,12 +506,12 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			super(n);
 		}
 		
-		public ByteOut add(Number n) {
+		public synchronized ByteOut add(Number n) {
 			set((byte) (get() + n.byteValue()));
 			return this;
 		}
 		
-		public ByteOut mul(Number n) {
+		public synchronized ByteOut mul(Number n) {
 			set((byte) (get() * n.byteValue()));
 			return this;
 		}
@@ -496,50 +526,118 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			super(n);
 		}
 		
-		public ShortOut add(Number n) {
+		public synchronized ShortOut add(Number n) {
 			set((short) (get() + n.intValue()));
 			return this;
 		}
 		
-		public ShortOut mul(Number n) {
+		public synchronized ShortOut mul(Number n) {
 			set((short) (get() * n.intValue()));
 			return this;
 		}
 	}
 	
 	/**
+	 * @see Out
+	 * @see #create() create(): stored value 0
+	 * @see #create(int)
 	 * @see #add(Number)
 	 * @see #mul(Number)
+	 * @see #div()
+	 * @see #mod()
+	 * @see #div(int,Out) div(int,IntOut modulo)
+	 * @see #div(int,Out) mod(int,IntOut division)
 	 * @see #increment()
 	 * @see #decrement()
+	 * @see #isEqual(int)
+	 * @see #isLower(int n)
+	 * @see #isGreather(int n)
+	 * @see #isLowerAndEqual(int n)
+	 * @see #isGreatherAndEqual(int n)
 	 */
-	public static class IntOut extends NumberOut<Integer> {
-		public IntOut(int n) {
+	public static class IntegerOut extends NumberOut<Integer> {
+		public static IntegerOut create() {
+			return new IntegerOut(0);
+		}
+		
+		public static IntegerOut create(int initial) {
+			return new IntegerOut(initial);
+		}
+		
+		private IntegerOut(int n) {
 			super(n);
 		}
 		
-		public IntOut add(Number n) {
+		public synchronized IntegerOut add(Number n) {
 			set(get() + n.intValue());
 			return this;
 		}
 		
-		public IntOut mul(Number n) {
-			set(get() * n.intValue());
+		public synchronized IntegerOut mul(Number n) {
+			set(n instanceof Integer 
+					?	get() * n.intValue()
+					:	(int) (get() * n.doubleValue()));
+			return this;
+		}
+		
+		public synchronized IntegerOut div(Number n) {
+			set(n instanceof Integer 
+					?	get() / n.intValue()
+					:	(int) (get() / n.doubleValue()));
+			return this;
+		}
+		
+		public synchronized IntegerOut mod(Number n) {
+			set(get() % n.intValue());
+			return this;
+		}
+		
+		public synchronized IntegerOut div(int divider, IntegerOut modulo) {
+			int divident = get();
+			if (modulo != null) {
+				modulo.set(divident % divider);
+			}
+			set(divident / divider);
+			return this;
+		}
+		
+		public synchronized IntegerOut mod(int divider, IntegerOut division) {
+			int divident = get();
+			if (division != null) {
+				division.set(divident / divider);
+			}
+			set(divident % divider);
 			return this;
 		}
 
-		public IntOut increment() {
+		public synchronized IntegerOut increment() {
 			set(get() + 1);
 			return this;
 		}
 
-		public IntOut decrement() {
+		public synchronized IntegerOut decrement() {
 			set(get() - 1);
 			return this;
 		}
-		
-		public boolean is(int n) {
-			return n == get();
+
+		public synchronized boolean isEqual(int value) {
+			return value == get();
+		}
+
+		public synchronized boolean isLower(int value) {
+			return value > get();
+		}
+
+		public synchronized boolean isGreather(int value) {
+			return value < get();
+		}
+
+		public synchronized boolean isLowerAndEqual(int value) {
+			return value >= get();
+		}
+
+		public synchronized boolean isGreatherAndEqual(int value) {
+			return value <= get();
 		}
 	}
 	
@@ -552,12 +650,12 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			super(n);
 		}
 		
-		public LongOut add(Number n) {
+		public synchronized LongOut add(Number n) {
 			set(get() + n.longValue());
 			return this;
 		}
 		
-		public LongOut mul(Number n) {
+		public synchronized LongOut mul(Number n) {
 			set(get() * n.longValue());
 			return this;
 		}
@@ -572,12 +670,12 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			super(n);
 		}
 		
-		public FloatOut add(Number n) {
+		public synchronized FloatOut add(Number n) {
 			set(get() + n.floatValue());
 			return this;
 		}
 		
-		public FloatOut mul(Number n) {
+		public synchronized FloatOut mul(Number n) {
 			set(get() * n.floatValue());
 			return this;
 		}
@@ -592,80 +690,14 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			super(n);
 		}
 		
-		public DoubleOut add(Number n) {
+		public synchronized DoubleOut add(Number n) {
 			set(get() + n.doubleValue());
 			return this;
 		}
 		
-		public DoubleOut mul(Number n) {
+		public synchronized DoubleOut mul(Number n) {
 			set(get() * n.doubleValue());
 			return this;
 		}
-	}
-	
-	/* BLOCK*********************************** *
-	 * Deprecated methods
-	 * **************************************** */
-
-	/**
-	 * Method sets an instance of {@link C}
-	 * @param instance reference to instance
-	 * @see #lock(Object, boolean)
-	 * @see #lock(Object, Predicate)
-	 * @see #set()
-	 * @see #get()
-	 */
-	@Deprecated
-	public void lock(C instance) {
-		this.value = instance;
-	}
-	
-	/**
-	 * Method sets an instance of {@link C} 
-	 * @param instance reference to instance
-	 * @param predicate check for able to store
-	 * @see #lock(Object)
-	 * @see #lock(Object, Predicate)
-	 * @see #set(Object)
-	 * @see #set(Object, boolean)
-	 * @see #set(Object, Predicate)
-	 * @see #get()
-	 */
-	@Deprecated
-	public void lock(C instance, boolean predicate) {
-		if (predicate)
-			this.value = instance;
-		/* DUPLICITE CODE FOR FASTER EXECUTION */
-	}
-	
-	/**
-	 * Method sets an instance of {@link C} 
-	 * @param instance reference to instance
-	 * @param predicate check function for able to store
-	 * @see #lock(Object)
-	 * @see #lock(Object, boolean)
-	 * @see #set(Object)
-	 * @see #set(Object, boolean)
-	 * @see #set(Object, Predicate)
-	 * @see #get()
-	 */
-	@Deprecated
-	public void lock(C instance, Predicate<C> predicate) {
-		if (predicate.test(instance))
-			this.value = instance;
-		/* DUPLICITE CODE FOR FASTER EXECUTION */
-	}
-
-	/**
-	 * Method returns an instance of {@link C}
-	 * @return reference to instance
-	 * @see #set(Object)
-	 * @see #set(Object, boolean)
-	 * @see #set(Object, Predicate)
-	 * @see #get()
-	 */
-	@Deprecated
-	public C value() {
-		return value;
 	}
 }

@@ -5,7 +5,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import cz.deznekcz.reference.Out;
-import cz.deznekcz.reference.Out.IntOut;
+import cz.deznekcz.reference.Out.IntegerOut;
 
 /**
  * Abstract class removes a Java version mismatch between new Java 1.8 and OpenJDK.
@@ -97,11 +97,6 @@ public abstract class ForEach<T> {
 	protected final void breakLoop() {
 		breaking = true;
 	}
-	
-	@FunctionalInterface
-	public interface Return<T> {
-		T returnValue();
-	}
 
 	@FunctionalInterface
 	public interface Concurent<T> {
@@ -147,30 +142,20 @@ public abstract class ForEach<T> {
 
 	public static <T> void paralel(Iterable<T> iterable, int threadCount, long waitTime, Concurent<T> iteration) {
 		ExecutorService exec = Executors.newFixedThreadPool(threadCount);
-		IntOut countOfRunning = new IntOut(0);
+		IntegerOut countOfRunning = IntegerOut.create();
 				
 		Iterator<T> it = iterable.iterator();
 		while(it.hasNext()) {
-			synchronized (countOfRunning) { countOfRunning.increment(); }
+			countOfRunning.increment();
 			exec.execute(new Runnable() {
 				private T value = it.next();
 				public void run() { 
 					iteration.loop(value); 
-					synchronized (countOfRunning) { 
-						countOfRunning.decrement(); 
-					} 
+					countOfRunning.decrement();  
 				};
 			});	// loop action
 		}
-		
-		Return<Integer> check = () -> {
-			Integer value;
-			synchronized(countOfRunning) {
-				value = countOfRunning.get();
-			}
-			return value;
-		};
-		while (check.returnValue() != 0);
+		while (countOfRunning.isGreather(1));
 	}
 
 	public static Iterable<Integer> integer(final int i, final int max) {

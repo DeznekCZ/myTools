@@ -3,7 +3,7 @@ package cz.deznekcz.util;
 /**
  * Every class adding to {@link EqualArrayList} must implements
  * this Interface
- * @author Zdeněk Novotný (DeznekCZ)
+ * @author Zdenek Novotny (DeznekCZ)
  * @version 1.0.1
  */
 public interface EqualAble {

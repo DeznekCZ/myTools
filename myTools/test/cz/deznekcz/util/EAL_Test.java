@@ -2,6 +2,8 @@ package cz.deznekcz.util;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runners.JUnit4;
@@ -37,6 +39,15 @@ public class EAL_Test {
 	@Test
 	public void testString() {
 		assertTrue(integerList.contains("1"));
+	}
+	
+	@Test
+	public void testEquals() throws Exception {
+		ArrayList<EAL_Integer> arrayList = new ArrayList<>(integerList);
+		assertTrue(integerList.equalsTo((Object) arrayList));
+		assertTrue(integerList.equalsTo(arrayList.clone()));
+		assertTrue(integerList.equalsTo((Object) arrayList.stream().toArray()));
+		assertTrue(integerList.equalsTo(integerList.clone()));
 	}
 
 }
