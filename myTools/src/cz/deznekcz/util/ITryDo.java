@@ -1,12 +1,12 @@
 package cz.deznekcz.util;
 
 @FunctionalInterface
-public interface CatchException {
+public interface ITryDo {
 
 	/**
 	 * Method returns 
 	 * @return instance of {@link Exception}
-	 * @see #tryDo(CheckAction)
+	 * @see #checkValue(CheckAction)
 	 */
 	default Exception doAction(){
 		try {
@@ -32,7 +32,7 @@ public interface CatchException {
 	 * <br>
 	 * <br><b>Using:</b>
 	 * <br>
-	 * <code>CatchException.tryDo(()-&gt;(List&lt;T&gt;) object)
+	 * <code>ITryDo.checkValue(()-&gt;(List&lt;T&gt;) object)
 	 * <br>&nbsp; != null
 	 * <br>&nbsp;&nbsp;? false
 	 * <br>&nbsp;&nbsp;: (List&lt;T&gt;) object</code>
@@ -40,8 +40,8 @@ public interface CatchException {
 	 * @return instance of {@link Exception}
 	 * @see #doAction()
 	 */
-	static Exception tryDo(CheckAction castAction) {
-		return new CatchException() {
+	static Exception checkValue(CheckAction castAction) {
+		return new ITryDo() {
 			@Override
 			public void defineAction() throws Exception {
 				@SuppressWarnings("unused")

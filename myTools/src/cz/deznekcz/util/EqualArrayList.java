@@ -128,17 +128,17 @@ implements EqualAble {
 	@Override
 	public boolean equalsTo(Object obj) {
 		return obj == this || (obj != null && (
-				CatchException.tryDo(()->(Object[]) obj) == null
+				ITryDo.checkValue(()->(Object[]) obj) == null
 			?		equalsTo((Object[]) obj)
-			:	CatchException.tryDo(()->(T[]) obj) == null
+			:	ITryDo.checkValue(()->(T[]) obj) == null
 			?		equalsTo((T[]) obj) 
-			:	CatchException.tryDo(()->(Collection<T>) obj) == null
+			:	ITryDo.checkValue(()->(Collection<T>) obj) == null
 			?		equalsTo((Collection<T>) obj)
-			:	CatchException.tryDo(()->(List<T>) obj) == null
+			:	ITryDo.checkValue(()->(List<T>) obj) == null
 			?		equalsTo((List<T>) obj)
-			:	CatchException.tryDo(()->(ArrayList<T>) obj) == null
+			:	ITryDo.checkValue(()->(ArrayList<T>) obj) == null
 			?		equalsTo((List<T>) obj)
-			:	CatchException.tryDo(()->(EqualArrayList<T>) obj) == null
+			:	ITryDo.checkValue(()->(EqualArrayList<T>) obj) == null
 			?		equalsTo((List<T>) obj)
 			:	false
 				));

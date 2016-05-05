@@ -8,13 +8,13 @@
 <entry key="Lang.IO.FILTER">Language files "*.xlng"</entry>
 <entry key="Lang.menu.E_REDO">_Redo</entry>
 <entry key="Lang.menu.F_EXPORT">_Export</entry>
-<entry key="Lang.menu.F_NEW">&lt;Lang.menu.F_NEW&gt;</entry>
-<entry key="Lang.menu.F_OPEN">_Open</entry>
 <entry key="Lang.menu.E_UNDO">_Undo</entry>
+<entry key="Lang.menu.F_OPEN">_Open</entry>
+<entry key="Lang.menu.F_NEW">&lt;Lang.menu.F_NEW&gt;</entry>
 <entry key="Lang.menu.F_IMPORT">_Import</entry>
-<entry key="Lang.button.NEW_GROUP">&lt;Lang.button.NEW_GROUP&gt;</entry>
-<entry key="Lang.menu.F_SAVE">_Save</entry>
 <entry key="Lang.menu._EDIT">_Edit</entry>
+<entry key="Lang.menu.F_SAVE">_Save</entry>
+<entry key="Lang.button.NEW_GROUP">&lt;Lang.button.NEW_GROUP&gt;</entry>
 <entry key="Lang.IO.NO_FILTER">Other files</entry>
 <entry key="Lang.menu.F_SAVE_AS">Save _as ...</entry>
 <entry key="Lang.button.NEW_KEY">&lt;Lang.button.NEW_KEY&gt;</entry>
