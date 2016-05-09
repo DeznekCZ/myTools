@@ -140,7 +140,7 @@ public abstract class ForEach<T> {
 			)	iteration.loop(it.next(), breakL); // loop action
 	}
 
-	public static <T> void paralel(Iterable<T> iterable, int threadCount, long waitTime, Concurent<T> iteration) {
+	public static <T> void paralel(Iterable<T> iterable, int threadCount, Concurent<T> iteration) {
 		ExecutorService exec = Executors.newFixedThreadPool(threadCount);
 		IntegerOut countOfRunning = IntegerOut.create();
 				
