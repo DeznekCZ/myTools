@@ -105,7 +105,7 @@ public abstract class ForEach<T> {
 	
 	@FunctionalInterface
 	public interface Iteration<T> {
-		void loop(T value, Out<Boolean> breakloop);
+		boolean loop(T value);
 	}
 	
 	/**
@@ -114,14 +114,13 @@ public abstract class ForEach<T> {
 	 * <br>Example:
 	 * <pre>
 	 * <code>
-	 * Iterable<T> iterable = ... ;
-	 * ForEach.<T>(iterable, (element, breakL) -&gt; {
+	 * Iterable&lt;T> iterable = ... ;
+	 * ForEach.&lt;T>(iterable, (T element) -&gt; {
 	 * 	do some...
 	 * 	if (needs break) {
-	 * 		breakL.set();
-	 * 		return; // necessary booth
+	 * 		return false;
 	 * 	} else if (needs continue) {
-	 * 		return;
+	 * 		return true;
 	 * 	}
 	 * });
 	 * </pre>
@@ -130,14 +129,11 @@ public abstract class ForEach<T> {
 	 * @param iteration instance of {@link FunctionalInterface} {@link Iterator}
 	 */
 	public static <T> void start(Iterable<T> iterable, Iteration<T> iteration) {
-		Out<Boolean> breakL = Out.init(false);
 		Iterator<T> it = iterable.iterator();
 		while(
 				it.hasNext() 		// items exists
-			&& !breakL.isNull() 	// fast set function called Out.set() 
-			&& !breakL.get()		// normal use of Out.set(true) 
-			
-			)	iteration.loop(it.next(), breakL); // loop action
+			&&  iteration.loop(it.next())		// normal use of Out.set(true) 
+			)	; // loop action
 	}
 
 	public static <T> void paralel(Iterable<T> iterable, int threadCount, Concurent<T> iteration) {
