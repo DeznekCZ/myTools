@@ -1,17 +1,11 @@
 package cz.deznekcz.tool.langEditor;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.OutputKeys;
-
 import org.w3c.dom.Node;
-import org.xml.sax.SAXException;
-
-import com.sun.xml.internal.ws.handler.HandlerException;
 
 import cz.deznekcz.reference.Out;
 import cz.deznekcz.util.XMLLoader;
@@ -20,14 +14,16 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.control.TreeView.EditEvent;
 import javafx.scene.control.cell.TextFieldTreeCell;
-import javafx.scene.input.KeyCode;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.util.converter.DefaultStringConverter;
@@ -51,9 +47,12 @@ public class LangCotroller implements Initializable {
 	
 	@FXML
 	private Button newGroupButton;
-	
+
 	@FXML
 	private Button newKeyButton;
+	
+	@FXML
+	private Button deleteButton;
 
 	private FileChooser chooser;
     
@@ -67,7 +66,7 @@ public class LangCotroller implements Initializable {
     		if (opened != null) {
     			try {
 					TreeGenerator.from(opened.getName(), opened, XMLLoader.load(opened), xmlTreeView);
-					break; // Succesfully loaded
+					break; // Successfully loaded
 				} catch (Exception e) {
 					XMLLoader.showError(e);
 				}
@@ -113,8 +112,75 @@ public class LangCotroller implements Initializable {
     void importFile(ActionEvent event) {
 
     }
-
+    
     @FXML
+	void removeElement(ActionEvent event) {
+    	TreeItem<String> selected = xmlTreeView.getSelectionModel().getSelectedItem();
+    	if (selected instanceof RootLangKey) {
+    		displayError( 
+    				Keys.RemoveTitle.WANT_REMOVE_ROOT.value(),
+    				Keys.RemoveHead.WANT_REMOVE_ROOT.value(),
+    				Keys.RemoveMessage.WANT_REMOVE_ROOT.value());
+    	} else if (selected instanceof ContextLangKey
+    			&& confirm(
+	    				Keys.RemoveTitle.WANT_REMOVE_CONTEXT.value(),
+	    				Keys.RemoveHead.WANT_REMOVE_CONTEXT.value(),
+	    				Keys.RemoveMessage.WANT_REMOVE_CONTEXT.value()
+    					)) {
+    		boolean remove = selected.getParent().getChildren().remove(selected);
+    		if (!remove) {
+    			displayError(
+        				Keys.RemoveTitle.NOT_REMOVED.value(),
+        				Keys.RemoveHead.NOT_REMOVED.value(),
+        				Keys.RemoveMessage.NOT_REMOVED.value());
+    		}
+    	} else if (selected instanceof CathegoryLangKey
+    			&& confirm(
+	    				Keys.RemoveTitle.WANT_REMOVE_GROUP.value(),
+	    				Keys.RemoveHead.WANT_REMOVE_GROUP.value(),
+	    				Keys.RemoveMessage.WANT_REMOVE_GROUP.value()
+    					)) {
+    		boolean remove = selected.getParent().getChildren().remove(selected);
+    		if (!remove) {
+    			displayError(
+        				Keys.RemoveTitle.NOT_REMOVED.value(),
+        				Keys.RemoveHead.NOT_REMOVED.value(),
+        				Keys.RemoveMessage.NOT_REMOVED.value());
+    		}
+    	} else if (selected instanceof LangKey
+    			&& confirm(
+	    				Keys.RemoveTitle.WANT_REMOVE_KEY.value(),
+	    				Keys.RemoveHead.WANT_REMOVE_KEY.value(),
+	    				Keys.RemoveMessage.WANT_REMOVE_KEY.value()
+    					)) {
+    		boolean remove = selected.getParent().getChildren().remove(selected);
+    		if (!remove) {
+    			displayError(
+        				Keys.RemoveTitle.NOT_REMOVED.value(),
+        				Keys.RemoveHead.NOT_REMOVED.value(),
+        				Keys.RemoveMessage.NOT_REMOVED.value());
+    		}
+    	}
+	}
+
+    private boolean confirm(String title, String head, String message) {
+    	Alert alert = new Alert(AlertType.CONFIRMATION);
+		alert.setTitle(title);
+		alert.setHeaderText(head);
+		alert.setContentText(message);
+    	Optional<ButtonType> option = alert.showAndWait();
+    	return option != null && option.get() == ButtonType.YES;
+	}
+
+	private void displayError(String title, String head, String message) {
+		Alert alert = new Alert(AlertType.ERROR);
+		alert.setTitle(title);
+		alert.setHeaderText(head);
+		alert.setContentText(message);
+		alert.showAndWait();
+	}
+
+	@FXML
     void newFile(ActionEvent event) {
     	File xml = chooser.showSaveDialog(null);
     	if (xml == null) {
@@ -142,6 +208,7 @@ public class LangCotroller implements Initializable {
 
 	private void handlerException(Exception exception) {
 		System.out.println(exception);
+		exception.printStackTrace();
 	}
 
 	@Override

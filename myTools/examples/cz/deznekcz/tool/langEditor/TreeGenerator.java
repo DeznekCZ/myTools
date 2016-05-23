@@ -1,6 +1,7 @@
 package cz.deznekcz.tool.langEditor;
 
 import java.io.File;
+import java.text.Collator;
 import java.util.HashMap;
 
 import javax.xml.transform.OutputKeys;
@@ -20,6 +21,8 @@ import org.w3c.dom.UserDataHandler;
 
 import cz.deznekcz.tool.Lang;
 import cz.deznekcz.util.XMLLoader;
+import javafx.collections.ObservableList;
+import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 
 public class TreeGenerator {
@@ -73,6 +76,22 @@ public class TreeGenerator {
 		}
 		String langName = xml.getName().split("\\.")[0];
 		renameRoot(root, langName);
+		sortValues(root);
+	}
+	
+	private static class TreeItemCollator {
+		public static int compare(TreeItem<String> v1, TreeItem<String> v2){
+			return Collator.getInstance().compare(v1.getValue(),v2.getValue());
+		}
+	}
+
+	private static void sortValues(AbstractLangKey root) {
+		ObservableList<TreeItem<String>> children = root.getChildren();
+		if (children.size() > 0) {
+			children.forEach((child)->sortValues((AbstractLangKey) child));
+			children.sort(TreeItemCollator::compare);
+		}
+		
 	}
 
 	public static void storeChanges(RootLangKey root) {

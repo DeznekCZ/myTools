@@ -37,14 +37,15 @@
    <center>
       <TreeView prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER" fx:id="xmlTreeView" />
    </center>
-<!-- <bottom>
-      <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+ <bottom>
+      <HBox BorderPane.alignment="CENTER">
          <children>
             <Button fx:id="newContextButton" mnemonicParsing="false" text="%Lang.button.NEW_CONTEXT" />
             <Button fx:id="newGroupButton" mnemonicParsing="false" text="%Lang.button.NEW_GROUP" />
             <Button fx:id="newKeyButton" mnemonicParsing="false" text="%Lang.button.NEW_KEY" />
+            <Button fx:id="deleteButton" layoutX="10.0" layoutY="10.0" mnemonicParsing="false" onAction="#removeElement" text="%Lang.button.DELETE" />
          </children>
       </HBox>
-   </bottom> -->
+   </bottom> 
 	
 </BorderPane>

@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.text.Collator;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,9 +13,11 @@ import java.util.Enumeration;
 import java.util.FormatFlagsConversionMismatchException;
 import java.util.List;
 import java.util.Locale;
+import java.util.MissingResourceException;
 import java.util.Properties;
 import java.util.ResourceBundle;
-import java.util.Scanner;
+
+import cz.deznekcz.util.ForEach;
 
 /**
  * Lanuguage configuration class<br><br>
@@ -88,6 +92,7 @@ public class Lang {
 	 * @param langName {@link String} value
 	 */
 	public static void LANGload(String langName) {
+		boolean loaded = false;
 		try {
 			if (instance != null) {
 				LANGgererate();
@@ -100,15 +105,27 @@ public class Lang {
 				instance.SYMBOLS.loadFromXML(new FileInputStream(f));
 				if (!instance.SYMBOLS.containsKey(LANG_SHORT_NAME))
 					instance.SYMBOLS.put(LANG_SHORT_NAME, langName);
-				return;
-			} else {
-				LANGgererate();
+				loaded = true;
 			}
+			loadBundle(langName);
 			
-		} catch (IOException e) {
+		} catch (IOException | MissingResourceException e) {
 			System.err.println(e.getLocalizedMessage());
-			LANGgererate(langName);
+			if (!loaded)
+				LANGgererate(langName);
 		}
+	}
+
+	private static void loadBundle(String langName) throws IOException, MissingResourceException {
+		Locale.setDefault(new Locale(langName));
+		File file = new File("lang");
+		URL[] urls = {file.toURI().toURL()};
+		ClassLoader loader = new URLClassLoader(urls);
+		ResourceBundle bundle = ResourceBundle.getBundle("lang", Locale.getDefault(), loader);
+		ForEach.start(ForEach.enumeration(bundle.getKeys()), (String key) -> {
+			LANGset(key, bundle.getString(key));
+			return true;
+		});
 	}
 
 	/**
@@ -246,13 +263,13 @@ public class Lang {
 	
 	/**
 	 * Method sets a value of {@link LangItem} specified by symbol.
-	 * @param symbol {@link Scanner} value
-	 * @param value {@link Scanner} value
+	 * @param symbol {@link String} value
+	 * @param value {@link String} value
 	 * 
 	 * @see #LANG(String, Object...)
 	 */
 	public static void LANGset(String symbol, String value) {
-		LANGgetItem(symbol).setValue(value);
+		instance.SYMBOLS.setProperty(symbol, value);
 	}
 
 	/**
@@ -331,7 +348,7 @@ public class Lang {
 
 	/**
 	 * Returns instance of resource bundle
-	 * @return TODO
+	 * @return instance of {@link ResourceBundle}
 	 */
 	public static ResourceBundle asResourceBundle() {
 		return langResourceBundle;

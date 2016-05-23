@@ -21,7 +21,7 @@ public class LangApplication extends Application {
 //		Lang.FXselect();
 		Lang.LANGload("en_US");
 		
-		if (args.length == 1) {
+		if (args.length == 1 && !args[0].endsWith("LangApplication.java")) {
 			file = new File(args[0]);
 		}
 		

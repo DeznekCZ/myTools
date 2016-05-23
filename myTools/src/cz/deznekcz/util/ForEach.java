@@ -1,5 +1,6 @@
 package cz.deznekcz.util;
 
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -170,6 +171,25 @@ public abstract class ForEach<T> {
 					@Override
 					public Integer next() {
 						return iteration++;
+					}
+				};
+			}
+		};
+	}
+
+	public static <T> Iterable<T> enumeration(Enumeration<T> keys) {
+		return new Iterable<T>() {
+			@Override
+			public Iterator<T> iterator() {
+				return new Iterator<T>() {
+					@Override
+					public boolean hasNext() {
+						return keys.hasMoreElements();
+					}
+
+					@Override
+					public T next() {
+						return keys.nextElement();
 					}
 				};
 			}

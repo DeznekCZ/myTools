@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<!-- Types declaration -->
+	
+	<xs:complexType name="browsefiletype">
+		<xs:attribute name="id" type="nameRegular" use="required"/>
+		<xs:attribute name="index" type="xs:int" use="required"/>
+		<xs:attribute name="extension" type="filterRegular" use="required"/>
+	</xs:complexType>
+
+	<xs:simpleType name="checkedRegular">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[a-zA-Z]+=((true)|(false))(;[a-zA-Z]+=((true)|(false))+)*"/>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="checkedtype">
+		<xs:sequence maxOccurs="unbounded" minOccurs="1">
+			<xs:group ref="parameter"></xs:group>
+		</xs:sequence>
+		<xs:attribute name="values" type="checkedRegular" use="required"/>
+	</xs:complexType>
+	
+	<xs:simpleType name="filterRegular">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[^;]+(;[^;]+)*"></xs:pattern>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="checktype">
+		<xs:attribute name="id" type="nameRegular" use="required"/>
+		<xs:attribute name="index" type="xs:int" use="required"/>
+		<xs:attribute name="default" type="xs:boolean"/>
+	</xs:complexType>
+	
+	<xs:simpleType name="formatRegular">
+		<xs:restriction base="xs:string">
+			<xs:pattern value="((\$(\[[a-zA-Z]+\])*\{[a-zA-Z]+\})|[^$]|(\$\$))*"></xs:pattern>
+		</xs:restriction>
+	</xs:simpleType>
+
+	<xs:complexType name="listtype">
+		<xs:sequence minOccurs="1" maxOccurs="unbounded">
+			<xs:choice>
+				<xs:element name="value" type="listValue"/>
+<!--				<xs:element name="formated" type="formatRegular"/>
+				<xs:element name="named" type="nameRegular"/>
+-->			</xs:choice>
+		</xs:sequence>
+		<xs:attribute name="id" type="nameRegular" use="required"/>
+		<xs:attribute name="index" type="xs:int" use="required"/>
+		<xs:attribute name="default" type="xs:int"/>
+	</xs:complexType>
+	
+	<xs:simpleType name="listValue">
+		<xs:restriction base="xs:string">
+			<xs:pattern value=".+"></xs:pattern>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="namedtype">
+		<xs:attribute name="id" type="nameRegular" use="required"/>
+		<xs:attribute name="index" type="xs:int" use="required"/>
+	</xs:complexType>
+	
+	<xs:simpleType name="nameRegular">
+		<xs:restriction base="xs:ID">
+			<xs:pattern value="[a-zA-Z]+"></xs:pattern>
+		</xs:restriction>
+	</xs:simpleType>
+	
+	<xs:complexType name="packtype">
+		<xs:sequence maxOccurs="unbounded" minOccurs="1">
+			<xs:group ref="parameter"></xs:group>
+		</xs:sequence>
+	</xs:complexType>
+	
+	<xs:complexType name="texttype">
+		<xs:attribute name="id" type="nameRegular" use="required"/>
+		<xs:attribute name="index" type="xs:int" use="required"/>
+		<xs:attribute name="format" type="formatRegular" use="optional" default=""/>
+		<xs:attribute name="editable" type="xs:boolean" use="optional" default="true"/>
+	</xs:complexType>
+	
+	<xs:complexType name="passwordtype">
+		<xs:attribute name="id" type="nameRegular" use="required"/>
+		<xs:attribute name="index" type="xs:int" use="required"/>
+		<xs:attribute name="storeable" type="xs:boolean" use="optional" default="true"/>
+	</xs:complexType>
+	
+	<!-- Parameters group -->
+	<xs:group name="parameter">
+		<xs:choice>
+			<!-- Self indent-able -->
+			<xs:element name="editable" type="checkedtype" />
+			<xs:element name="enabled" type="checkedtype" />
+			<xs:element name="logic" type="packtype" />
+
+			<!-- Format-able text field -->
+			<xs:element name="text" type="texttype"/>
+			
+			<!-- Password field -->
+			<xs:element name="password" type="passwordtype"/>
+			
+			<!-- Check box -->
+			<xs:element name="check" type="checktype"/>
+			
+			<!-- Combo box -->
+			<xs:element name="list" type="listtype"/>
+			
+			<!-- Path field and browse button -->
+			<xs:element name="browse_dir" type="namedtype"/>
+			<xs:element name="browse_file" type="browsefiletype"/>
+		</xs:choice>
+	</xs:group>
+
+	<!-- Root element -->
+	<xs:element name="parameters">
+		<xs:complexType>
+			<xs:sequence maxOccurs="unbounded">
+				<xs:group ref="parameter"></xs:group>
+			</xs:sequence>
+		</xs:complexType>
+		<xs:unique name="unique_index">
+			<!-- Represents an index of row in parametric pane. For correct displaying it must be unique. -->
+	        <xs:selector xpath=".//*"/>
+	        <xs:field xpath="@index"/>
+	    </xs:unique>
+		<xs:unique name="unique_id">
+			<!-- Represents an unique id of parameter. -->
+	        <xs:selector xpath=".//*"/>
+	        <xs:field xpath="@id"/>
+	    </xs:unique>
+	</xs:element>
+
+</xs:schema> 

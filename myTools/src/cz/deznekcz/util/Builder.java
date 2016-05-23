@@ -14,7 +14,7 @@ public class Builder<E> {
 	 * @param <E> class of value instance
 	 */
 	@FunctionalInterface
-	interface IBuild<E> {
+	public static interface IBuild<E> {
 		/**
 		 * @param value current builded instance
 		 */
@@ -37,7 +37,8 @@ public class Builder<E> {
 	 * @param methods instances or lambdas of {@link IBuild}
 	 * @return returns instance of {@link Builder}
 	 */
-	public Builder<E> set(@SuppressWarnings("unchecked") IBuild<E> ...methods) {
+	@SafeVarargs
+	public final Builder<E> set(IBuild<E> ...methods) {
 		if (methods != null && methods instanceof IBuild[] && methods.length > 0)
 			for (int i = 0; i < methods.length; i++)
 				methods[i].set(value);
@@ -54,10 +55,10 @@ public class Builder<E> {
 	
 	/**
 	 * Creates new instance of {@link Builder}
-	 * @param initialInstance instance of {@link E}
+	 * @param initialInstance instance of {@link C}
 	 * @return instance of {@link Builder}
 	 */
-	public Builder<E> create(E initialInstance) {
-		return new Builder<E>(initialInstance);
+	public static <C> Builder<C> create(C initialInstance) {
+		return new Builder<C>(initialInstance);
 	}
 }

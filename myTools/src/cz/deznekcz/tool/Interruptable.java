@@ -100,7 +100,8 @@ public final class Interruptable implements Runnable {
 		try {
 			runCode.todo();
 		} catch (Exception e) {
-			exceptionCode.todo(e);
+			if (exceptionCode != null)
+				exceptionCode.todo(e);
 		}
 	}
 	

@@ -23,6 +23,11 @@ import cz.deznekcz.reference.Out;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 
+/**
+ * XML loading provider
+ * @author Zdenek Novotny (DeznekCZ)
+ * 
+ */
 public class XMLLoader {
 
 	private static final Alert xmlError;

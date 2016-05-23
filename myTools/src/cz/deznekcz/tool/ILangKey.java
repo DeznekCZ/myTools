@@ -1,5 +1,7 @@
 package cz.deznekcz.tool;
 
+import java.util.IllegalFormatException;
+
 /**
  * New type of searching key in lang file.
  * Is a better form for Object oriented programing.
@@ -41,4 +43,70 @@ public interface ILangKey {
 	 * @see #symbol()
 	 */
 	public default String value() {return Lang.LANG(this);}
+
+	/**
+	 * Returns a simple language key
+	 * @param symbol symbol of key
+	 * @return instance of {@link ILangKey}
+	 */
+	public static ILangKey simple(String symbol) {
+		return new ILangKey() {
+			@Override
+			public String symbol() {
+				return symbol;
+			}
+			@Override
+			public String name() {
+				return null;
+			}
+		};
+	}
+	
+	/**
+	 * Returns changed copy of <b>this</b> key modified by adding
+	 * an extension to symbol
+	 * @param symbolExtension a text extension of symbol
+	 * @return <b>new</b> instance of {@link ILangKey}
+	 */
+	public default ILangKey extended(String symbolExtension) {
+		ILangKey templateKey = ILangKey.this;
+		if (symbolExtension != null) {
+			return new ILangKey() {
+				@Override
+				public String symbol() {
+					return templateKey.symbol().concat(symbolExtension);
+				}
+				@Override
+				public String name() {
+					return null;
+				}
+			};
+		} else {
+			return templateKey;
+		}
+	}
+
+	/**
+	 * Returns changed copy of <b>this</b> key modified by string formating
+	 * of symbol
+	 * @param arguments formating arguments
+	 * @return <b>new</b> instance of {@link ILangKey}
+	 * @throws IllegalFormatException
+	 * @see String#format(String,Object...)
+	 */
+	public default ILangKey format(Object...arguments) {
+		ILangKey templateKey = ILangKey.this;
+		String finalString = String.format(templateKey.symbol(), arguments);
+		
+		return new ILangKey() {
+			@Override
+			public String symbol() {
+				return finalString;
+			}
+			@Override
+			public String name() {
+				return null;
+			}
+		};
+	}
 }

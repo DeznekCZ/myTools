@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<parameters 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="parametric_pane.xsd">
+	
+	<!-- Can be checked on page: 
+		 	http://www.utilities-online.info/xsdvalidation/
+		 or 
+		 	using xml editor supporting schemas
+		 with an original file "parametric_pane.xsd" stored in "config" folder.
+	 -->
+	<!-- Order of parameters depends on index, written order of xml elements is not necessary. -->
+	
+	<text id="firstName" index="0"/>
+	<text id="lastName" index="1"/>
+	<text id="dateOfBith" index="2"/>
+	<logic><!-- logic elements is necessary in case of ant script is using this variable name -->
+		<password id="userPassword" index="4"/>
+	</logic>
+	<text id="userName" index="3"/>
+	<list id="server" index="5"><!-- default is not prepared -->
+		<value>Anaturna</value>
+		<value>Belegrin</value>
+		<value>Saraten</value>
+	</list>
+	
+	<check index="6" id="publicProfile" default="false"/>
+	<enabled values="publicProfile=true">
+		<check index="7" id="hiddenStatus" default="true"/>
+		
+		<enabled values="hiddenPhoto=false">
+			<browse_file index="10" id="photo" extension="*.jpg;*.png"/>
+		</enabled>
+		<check index="11" id="hiddenPhoto" default="true"/>
+	</enabled>
+		
+	
+	<editable values="publicProfile=true;hiddenStatus=false">
+		<text index="8" id="feeling"/>
+	</editable>
+	
+	<text index="9" id="greetingMessage" editable="false" 
+		  format="Welcome to ${server}, $[upperCase]{firstName}"/>
+	
+</parameters>

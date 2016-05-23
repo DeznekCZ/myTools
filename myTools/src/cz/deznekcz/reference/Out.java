@@ -1,5 +1,6 @@
 package cz.deznekcz.reference;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 import cz.deznekcz.util.EqualAble;
@@ -449,7 +450,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 
 		@Override
 		public StringOut append(CharSequence csq) {
-			set(get().concat( csq instanceof StringOut 
+			if (csq != null)
+				set(get().concat( csq instanceof StringOut 
 							? ((StringOut) csq).get() 
 							: csq.toString()));
 			return this;
@@ -466,9 +468,16 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			return this;
 		}
 		
+		public static final String TO_STRING_FORMAT = "String reference: \"%s\"";
+		
+		/**
+		 * Returns a string in format:
+		 * <br><b>String reference: "referenced string"</b>
+		 * @return instance of string
+		 */
 		@Override
 		public String toString() {
-			return String.format("String reference: \"%s\"", get());
+			return String.format(StringOut.TO_STRING_FORMAT, get());
 		}
 		
 		@Override
@@ -550,10 +559,16 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #increment()
 	 * @see #decrement()
 	 * @see #isEqual(int)
-	 * @see #isLower(int n)
-	 * @see #isGreather(int n)
-	 * @see #isLowerAndEqual(int n)
-	 * @see #isGreatherAndEqual(int n)
+	 * @see #isLower(int)
+	 * @see #isGreather(int)
+	 * @see #isLowerAndEqual(int)
+	 * @see #isGreatherAndEqual(int)
+	 * @see #binary(Function)
+	 * @see #binaryAND(int)
+	 * @see #binaryNAND(int)
+	 * @see #binaryOR(int)
+	 * @see #binaryNOR(int)
+	 * @see #binaryXOR(int)
 	 */
 	public static class IntegerOut extends NumberOut<Integer> {
 		public static IntegerOut create() {
@@ -638,6 +653,36 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 
 		public synchronized boolean isGreatherAndEqual(int value) {
 			return value <= get();
+		}
+		
+		public synchronized IntegerOut binaryAND(int value) {
+			set(get() & value);
+			return this;
+		}
+		
+		public synchronized IntegerOut binaryOR(int value) {
+			set(get() | value);
+			return this;
+		}
+		
+		public synchronized IntegerOut binaryXOR(int value) {
+			set(get() ^ value);
+			return this;
+		}
+		
+		public synchronized IntegerOut binaryNAND(int value) {
+			set(~(get() & value));
+			return this;
+		}
+		
+		public synchronized IntegerOut binaryNOR(int value) {
+			set(~(get() ^ value));
+			return this;
+		}
+		
+		public synchronized IntegerOut binary(Function<Integer, Integer> applyFunction) {
+			set(applyFunction.apply(get()));
+			return this;
 		}
 	}
 	
