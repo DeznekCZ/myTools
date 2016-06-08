@@ -21,10 +21,10 @@
 <entry key="Lang.button.NEW_GROUP">&lt;Lang.button.NEW_GROUP&gt;</entry>
 <entry key="Lang.RemoveHead.WANT_REMOVE_KEY">&lt;Lang.RemoveHead.WANT_REMOVE_KEY&gt;</entry>
 <entry key="Lang.menu.F_IMPORT">_Import</entry>
-<entry key="Lang.RemoveHead.WANT_REMOVE_GROUP">&lt;Lang.RemoveHead.WANT_REMOVE_GROUP&gt;</entry>
-<entry key="Lang.IO.NO_FILTER">Other files</entry>
-<entry key="Lang.menu._EDIT">_Edit</entry>
 <entry key="_lang_short">en_US</entry>
+<entry key="Lang.menu._EDIT">_Edit</entry>
+<entry key="Lang.IO.NO_FILTER">Other files</entry>
+<entry key="Lang.RemoveHead.WANT_REMOVE_GROUP">&lt;Lang.RemoveHead.WANT_REMOVE_GROUP&gt;</entry>
 <entry key="Lang.RemoveMessage.WANT_REMOVE_ROOT">&lt;Lang.RemoveMessage.WANT_REMOVE_ROOT&gt;</entry>
 <entry key="Lang.button.DELETE">&lt;Lang.button.DELETE&gt;</entry>
 <entry key="Lang.menu.E_REDO">_Redo</entry>

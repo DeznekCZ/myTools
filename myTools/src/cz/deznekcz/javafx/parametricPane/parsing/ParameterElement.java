@@ -96,7 +96,6 @@ public enum ParameterElement implements ILangKey {
 		return ParameterElement.valueOf(name);
 	}
 	
-	private String elementId;
 	private ElementFunction<AParameter<?>> elementFunction;
 	
 	private ParameterElement(ElementFunction<AParameter<?>> elementFunction) {
@@ -111,18 +110,17 @@ public enum ParameterElement implements ILangKey {
 		};
 	}
 	
-	/**
-	 * 
-	 */
-	public String getId() {
-		return elementId;
-	}
-	
 	@Override
 	public String symbol() {
 		return ParametricPane.class.getSimpleName() + "." + name();
 	}
 
+	/**
+	 * Returns value of attribute of node.
+	 * @param id attribute ID
+	 * @param node selected node
+	 * @return {@link String} value
+	 */
 	public static String Param(String id, Node node) {
 		NamedNodeMap params;
 		Node paramNode;
@@ -133,10 +131,20 @@ public enum ParameterElement implements ILangKey {
 			return "";
 	}
 	
+	/**
+	 * Returns result of parsing node to list of parameters
+	 * @param node parsed node
+	 * @param parameterList output list of parameters
+	 * @throws DOMException exception while parsing
+	 */
 	public void getParameter(Node node, RandomAccessList<AParameter<?>> parameterList) throws DOMException {
 		elementFunction.returnValue(node, parameterList);
 	}
 
+	/**
+	 * Loads settings of pane from file "config/parametric_pane.xml"
+	 * @return array of instances of {@link AParameter}
+	 */
 	public static AParameter<?>[] loadFromXML() {
 		RandomAccessList<AParameter<?>> list = new RandomAccessList<>();
 		list.setOnlyWritable(true);
@@ -159,10 +167,20 @@ public enum ParameterElement implements ILangKey {
 	
 	private ILangKey tooltip = extended(".%s-tooltip");
 	
+	/**
+	 * Creates a translation symbol of name for parameter id
+	 * @param id unique id of parameter
+	 * @return translated {@link String}
+	 */
 	public String translate(String id) {
 		return translate.format(id).value();
 	}
 
+	/**
+	 * Creates a tooltip symbol of name for parameter id
+	 * @param id unique id of parameter
+	 * @return translated {@link String}
+	 */
 	public String tooltip(String id) {
 		return tooltip.format(id).value();
 	}

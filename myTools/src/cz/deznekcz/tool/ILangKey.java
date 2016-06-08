@@ -33,6 +33,7 @@ public interface ILangKey {
 	 * @see #value()
 	 * @see Lang#LANG(ILangKey, Object...)
 	 * @see #symbol()
+	 * @return returns translated value
 	 */
 	public default String value(Object... args) {return Lang.LANG(this, args);}
 	
@@ -41,6 +42,7 @@ public interface ILangKey {
 	 * @see #value(Object...)
 	 * @see Lang#LANG(ILangKey, Object...)
 	 * @see #symbol()
+	 * @return returns translated value
 	 */
 	public default String value() {return Lang.LANG(this);}
 
@@ -91,7 +93,7 @@ public interface ILangKey {
 	 * of symbol
 	 * @param arguments formating arguments
 	 * @return <b>new</b> instance of {@link ILangKey}
-	 * @throws IllegalFormatException
+	 * @throws IllegalFormatException from {@link String#format(String, Object...)}
 	 * @see String#format(String,Object...)
 	 */
 	public default ILangKey format(Object...arguments) {

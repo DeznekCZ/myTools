@@ -142,14 +142,13 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	
 	/**
 	 * Method stores a <b>null</b> value.
-	 * Usable for {@link OnSetAction} fast call.
 	 * @see #set(Object)
 	 * @see #set(Object, boolean)
-	 * @see #set(Object, Condition)
+	 * @see #set(Object, Predicate)
 	 * @see #get()
 	 */
 	public void set() {
-		value = null;
+		set(null);
 	}
 	
 	/**
@@ -157,7 +156,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @param newValue new stored value
 	 * @see #set()
 	 * @see #set(Object, boolean)
-	 * @see #set(Object, Condition)
+	 * @see #set(Object, Predicate)
 	 * @see #get()
 	 */
 	public void set(C newValue) {
@@ -170,9 +169,11 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * Method stores an instance of {@link C}.
 	 * Condition parameter enables storing to reference.
 	 * @param newValue new stored value
+	 * @param condition pre-counted value of condition (usable for ternary operators) 
+	 * @throws InvalidValueException is thrown in case of bad value will be set
 	 * @see #set()
 	 * @see #set(Object)
-	 * @see #set(Object, Condition)
+	 * @see #set(Object, Predicate)
 	 * @see #get()
 	 */
 	public void set(C newValue, boolean condition)
@@ -187,7 +188,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * Method stores an instance of {@link C}.
 	 * Condition parameter enables storing to reference.
 	 * @param newValue new stored value
-	 * @throws InvalidValueException 
+	 * @param conditionFunction instance or lambda of {@link Predicate} 
+	 * @throws InvalidValueException is thrown in case of bad value will be set
 	 * @see #set()
 	 * @see #set(Object)
 	 * @see #set(Object, boolean)
@@ -200,7 +202,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	
 	/**
 	 * Method sets an onSet action of an Out reference, getting of action is not allowed.
-	 * @param onSetAction instance of {@link OnSetAction} or lambda expression
+	 * @param onSetAction instance of {@link Consumer} or lambda expression
 	 */
 	public void setOnSetAction(Consumer<C> onSetAction) {
 		this.onSetAction = onSetAction;
@@ -208,12 +210,11 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	
 	/**
 	 * Returns new instance of {@link Out} with same reference.
-	 * <br><font color="red">WARNING!</font>: 
-	 * {@link OnSetAction} will be lost.
+	 * OnSetAction will be copied.
 	 */
 	@Override
 	public Out<C> clone() {
-		return new Out<C>(value);
+		return new Out<C>(value){{setOnSetAction(onSetAction);}};
 	}
 	
 	/* BLOCK*********************************** *
