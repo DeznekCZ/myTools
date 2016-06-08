@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import cz.deznekcz.reference.Out.IntegerOut;
+import cz.deznekcz.reference.Out.OutInteger;
 
 /**
  * Provider class {@link ForEach} creates a new access to loop iterables.
@@ -91,7 +91,7 @@ public class ForEach {
 	 */
 	public static <T> void paralel(Iterable<T> iterable, int threadCount, Consumer<T> iteration) {
 		ExecutorService exec = Executors.newFixedThreadPool(threadCount);
-		IntegerOut countOfRunning = IntegerOut.create();
+		OutInteger countOfRunning = OutInteger.create();
 				
 		Iterator<T> it = iterable.iterator();
 		while(it.hasNext()) {
