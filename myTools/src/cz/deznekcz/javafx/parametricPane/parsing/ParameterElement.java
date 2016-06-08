@@ -1,8 +1,7 @@
 package cz.deznekcz.javafx.parametricPane.parsing;
 
-import static cz.deznekcz.javafx.parametricPane.parsing.IOutSuplier.indexOut;
-
 import java.io.File;
+import java.util.function.BiFunction;
 
 import org.w3c.dom.DOMException;
 import org.w3c.dom.NamedNodeMap;
@@ -16,35 +15,20 @@ import cz.deznekcz.javafx.parametricPane.parameters.CheckParameter;
 import cz.deznekcz.javafx.parametricPane.parameters.ListParameter;
 import cz.deznekcz.javafx.parametricPane.parameters.PasswordParameter;
 import cz.deznekcz.javafx.parametricPane.parameters.TextParameter;
+import cz.deznekcz.reference.Out.OutInteger;
 import cz.deznekcz.tool.ILangKey;
 import cz.deznekcz.tool.RandomAccessList;
 import cz.deznekcz.util.XMLLoader;
+import javafx.application.Platform;
+import cz.deznekcz.javafx.components.Dialog;
 
 public enum ParameterElement implements ILangKey {
-	text( (node, list) -> {
-		AParameter<?> param = TextParameter.fromXml(node, indexOut);
-		list.add( indexOut.get(), param );
-	}),
-	check( (node, list) -> {
-		AParameter<?> param = CheckParameter.fromXml(node, indexOut);
-		list.add( indexOut.get(), param );
-	}),
-	browse_file( (node, list) -> {
-		AParameter<?> param = BrowseParameter.fromXml(node, indexOut);
-		list.add( indexOut.get(), param );
-	}), 
-	browse_dir( (node, list) -> {
-		AParameter<?> param = BrowseParameter.fromXml(node, indexOut);
-		list.add( indexOut.get(), param );
-	}), 
-	list( (node, list) -> {
-		AParameter<?> param = ListParameter.fromXml(node, indexOut);
-		list.add( indexOut.get(), param );
-	}),
-	password( (node, list) -> {
-		AParameter<?> param = PasswordParameter.fromXml(node, indexOut);
-		list.add( indexOut.get(), param );
-	}),
+	text       ( TextParameter    ::fromXml ),
+	check      ( CheckParameter   ::fromXml ),
+	browse_file( BrowseParameter  ::fromXml ),
+	browse_dir ( BrowseParameter  ::fromXml ),
+	list       ( ListParameter    ::fromXml ),
+	password   ( PasswordParameter::fromXml ),
 	
 	editable((node, list) -> {
 		NodeList elements = node.getChildNodes();
@@ -54,10 +38,11 @@ public enum ParameterElement implements ILangKey {
 			ParameterElement.fromXMLName(child.getNodeName()).getParameter(child, paramaters);
 		}
 		String values = ParameterElement.Param(ParameterElement.VALUES, node);
+		String defaultValue = ParameterElement.Param(ParameterElement.DEFAULT, node);
 		for(int i = 0; i < paramaters.size(); i++) {
 			AParameter<?> v = paramaters.get(i);
 			if (v != null)
-				list.add(i, v.editable(values));
+				list.add(i, v.editable(values, Boolean.parseBoolean(defaultValue)));
 		}
 	}),
 	enabled((node, list) -> {
@@ -68,10 +53,11 @@ public enum ParameterElement implements ILangKey {
 			ParameterElement.fromXMLName(child.getNodeName()).getParameter(child, paramaters);
 		}
 		String values = ParameterElement.Param(ParameterElement.VALUES, node);
+		String defaultValue = ParameterElement.Param(ParameterElement.DEFAULT, node);
 		for(int i = 0; i < paramaters.size(); i++) {
 			AParameter<?> v = paramaters.get(i);
 			if (v != null)
-				list.add(i, v.enabled(values));
+				list.add(i, v.enabled(values, Boolean.parseBoolean(defaultValue)));
 		}
 	}),
 	logic((node, list) -> {
@@ -99,6 +85,7 @@ public enum ParameterElement implements ILangKey {
 	public static final String FORMAT = "format";
 	public static final String VALUES = "values";
 	public static final String FILTER = "filter";
+	public static final String DEFAULT = "default";
 	public static final String EDITABLE = "editable";
 	public static final String EXTENSION = "extension";
 	
@@ -114,6 +101,14 @@ public enum ParameterElement implements ILangKey {
 	
 	private ParameterElement(ElementFunction<AParameter<?>> elementFunction) {
 		this.elementFunction = elementFunction;
+	}
+	
+	private ParameterElement(BiFunction<Node, OutInteger, AParameter<?>> fromXml) {
+		this.elementFunction = (node, list) -> {
+			OutInteger indexOut = OutInteger.create();
+			AParameter<?> param = fromXml.apply(node, indexOut);
+			list.add( indexOut.get(), param );
+		};
 	}
 	
 	/**
@@ -144,6 +139,7 @@ public enum ParameterElement implements ILangKey {
 
 	public static AParameter<?>[] loadFromXML() {
 		RandomAccessList<AParameter<?>> list = new RandomAccessList<>();
+		list.setOnlyWritable(true);
 		try {
 			Node root = XMLLoader.load(XML_DEFINITION_FILE);
 			NodeList elements = root.getChildNodes();
@@ -153,7 +149,8 @@ public enum ParameterElement implements ILangKey {
 				type.getParameter(element, list);
 			}
 		} catch (Exception e) {
-			System.out.println(e.getLocalizedMessage());
+			Dialog.EXCEPTION.show(e);
+			Platform.exit();
 		}
 		return list.toArray(new AParameter<?>[list.count()]);
 	}

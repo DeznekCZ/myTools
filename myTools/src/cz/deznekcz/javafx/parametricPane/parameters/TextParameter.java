@@ -4,7 +4,7 @@ import cz.deznekcz.javafx.parametricPane.ParametricPane;
 import cz.deznekcz.javafx.parametricPane.ParametricTraverser;
 import cz.deznekcz.javafx.parametricPane.dynamic.Format;
 import cz.deznekcz.javafx.parametricPane.parsing.ParameterElement;
-import cz.deznekcz.reference.Out.IntegerOut;
+import cz.deznekcz.reference.Out.OutInteger;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
@@ -140,11 +140,10 @@ public class TextParameter extends AParameter<String> {
 	}
 
 	@Override
-	public String fromString(String string) {
+	public void fromString(String string) {
 		textField.setText(string);
 		label.setText(string);
 		defaultValue = string;
-		return get();
 	}
 
 	/**
@@ -153,7 +152,7 @@ public class TextParameter extends AParameter<String> {
 	 * @param indexOut returns an index in {@link ParametricPane}
 	 * @return instance of {@link AParameter}
 	 */
-	public static TextParameter fromXml(org.w3c.dom.Node node, IntegerOut indexOut) {
+	public static TextParameter fromXml(org.w3c.dom.Node node, OutInteger indexOut) {
 		indexOut.set(Integer.parseInt(ParameterElement.Param(ParameterElement.INDEX, node)));
 		String id = ParameterElement.Param(ParameterElement.ID, node);
 		String editable = ParameterElement.Param(ParameterElement.EDITABLE, node);

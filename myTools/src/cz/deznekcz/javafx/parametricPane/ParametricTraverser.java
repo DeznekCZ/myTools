@@ -1,10 +1,9 @@
 package cz.deznekcz.javafx.parametricPane;
 
 import cz.deznekcz.javafx.parametricPane.parameters.AParameter;
-import cz.deznekcz.reference.Out.IntegerOut;
+import cz.deznekcz.reference.Out.OutInteger;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
-import javafx.scene.control.Button;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TableView.TableViewSelectionModel;
 import javafx.scene.input.KeyCode;
@@ -67,7 +66,7 @@ public class ParametricTraverser {
 	public static void traverseOn(String parameterId) {
 		viewRegistered();
 		
-		IntegerOut row = IntegerOut.create();
+		OutInteger row = OutInteger.create();
 		tableView.getItems().forEach((value) -> {
 			if (parameterId.equals(value.getId())) {
 				System.out.format(

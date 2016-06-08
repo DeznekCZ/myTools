@@ -7,7 +7,7 @@ import org.w3c.dom.NodeList;
 import cz.deznekcz.javafx.parametricPane.ParametricPane;
 import cz.deznekcz.javafx.parametricPane.ParametricTraverser;
 import cz.deznekcz.javafx.parametricPane.parsing.ParameterElement;
-import cz.deznekcz.reference.Out.IntegerOut;
+import cz.deznekcz.reference.Out.OutInteger;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
@@ -90,9 +90,8 @@ public class ListParameter extends AParameter<String[]> {
 	}
 
 	@Override
-	public String[] fromString(String string) {
+	public void fromString(String string) {
 		setSelected(string);
-		return value;
 	}
 
 	/**
@@ -101,7 +100,7 @@ public class ListParameter extends AParameter<String[]> {
 	 * @param indexOut returns an index in {@link ParametricPane}
 	 * @return instance of {@link AParameter}
 	 */
-	public static ListParameter fromXml(org.w3c.dom.Node node, IntegerOut indexOut) {
+	public static ListParameter fromXml(org.w3c.dom.Node node, OutInteger indexOut) {
 		indexOut.set(Integer.parseInt(ParameterElement.Param(ParameterElement.INDEX, node)));
 		String id = ParameterElement.Param(ParameterElement.ID, node);
 		ArrayList<String> values = new ArrayList<>();

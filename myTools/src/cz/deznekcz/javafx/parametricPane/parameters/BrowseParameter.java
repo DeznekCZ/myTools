@@ -5,7 +5,7 @@ import java.io.File;
 import cz.deznekcz.javafx.parametricPane.ParametricPane;
 import cz.deznekcz.javafx.parametricPane.ParametricTraverser;
 import cz.deznekcz.javafx.parametricPane.parsing.ParameterElement;
-import cz.deznekcz.reference.Out.IntegerOut;
+import cz.deznekcz.reference.Out.OutInteger;
 import cz.deznekcz.tool.ILangKey;
 import cz.deznekcz.tool.Lang;
 import javafx.beans.property.StringProperty;
@@ -136,9 +136,8 @@ public class BrowseParameter extends AParameter<File> {
 	}
 
 	@Override
-	public File fromString(String string) {
+	public void fromString(String string) {
 		set(new File(string));
-		return value;
 	}
 
 	/**
@@ -147,7 +146,7 @@ public class BrowseParameter extends AParameter<File> {
 	 * @param indexOut returns an index in {@link ParametricPane}
 	 * @return instance of {@link AParameter}
 	 */
-	public static BrowseParameter fromXml(org.w3c.dom.Node node, IntegerOut indexOut) {
+	public static BrowseParameter fromXml(org.w3c.dom.Node node, OutInteger indexOut) {
 		indexOut.set(Integer.parseInt(ParameterElement.Param(ParameterElement.INDEX, node)));
 		String id = ParameterElement.Param(ParameterElement.ID, node);
 		ParameterElement type = ParameterElement.fromXMLName(node.getNodeName());

@@ -8,7 +8,7 @@ import cz.deznekcz.javafx.parametricPane.parameters.AParameter;
 import cz.deznekcz.util.ForEach;
 import javafx.beans.property.Property;
 
-public abstract class ADynamic {
+public abstract class ADynamic<T> {
 	public class DynamicEntry {
 		private Property<String> param;
 		private boolean desired;
@@ -23,22 +23,22 @@ public abstract class ADynamic {
 		}
 	}
 
-	private AParameter<?> parameter;
+	private AParameter<T> parameter;
 	private String ids;
-	private IDynamicFunction setFunction;
+	private IDynamicFunction<T> setFunction;
 	private ArrayList<DynamicEntry> paramList;
 
-	public ADynamic(String params, AParameter<?> parameter) {
+	public ADynamic(String params, AParameter<T> parameter) {
 		this.ids = params;
 		this.parameter = parameter;
 		this.setFunction = getFunction();
 		this.paramList = new ArrayList<>();
 	}
 	
-	protected abstract IDynamicFunction getFunction();
+	protected abstract IDynamicFunction<T> getFunction();
 
 	public void init() {
-		ForEach.start(new ArrayList<String>(Arrays.asList(ids.split(";"))), (value) -> {
+		ForEach.start(Arrays.asList(ids.split(";")), (value) -> {
 			String[] detail = value.split("=");
 			boolean desiredValue = detail.length > 1 ? Boolean.parseBoolean(detail[1]) : true;
 			Property<String> param = ParametricPane.getInstance().parameterValueByName(detail[0]);

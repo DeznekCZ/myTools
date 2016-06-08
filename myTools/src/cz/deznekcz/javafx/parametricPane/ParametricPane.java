@@ -1,7 +1,5 @@
 package cz.deznekcz.javafx.parametricPane;
 
-import static cz.deznekcz.tool.Lang.LANG;
-
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -9,20 +7,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.stream.Stream;
 
 import cz.deznekcz.javafx.parametricPane.parameters.AParameter;
 import cz.deznekcz.javafx.parametricPane.parameters.MissingParameter;
 import cz.deznekcz.javafx.parametricPane.parsing.ParameterElement;
 import cz.deznekcz.reference.Out;
+import cz.deznekcz.reference.Out.OutString;
 import cz.deznekcz.tool.ILangKey;
 import cz.deznekcz.tool.Interruptable;
 import cz.deznekcz.util.ForEach;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
+import javafx.util.Pair;
 
 @SuppressWarnings("serial")
 public class ParametricPane extends BorderPane {
@@ -52,12 +54,13 @@ public class ParametricPane extends BorderPane {
 		try {
 			PARAMETERS.loadFromXML(new FileInputStream(PARAMETRIC_FILE));
 		} catch (IOException e) {
-			System.out.println(LANG(ILangKey.simple(NO_LAST_SETTING)));
+			System.out.println(ILangKey.simple(NO_LAST_SETTING).value());
 		}
 	}
 	private static ParametricPane instance;
 
 	private TableView<AParameter<?>> tableView;
+	private ReadOnlyObjectWrapper<TableView<AParameter<?>>> hiddenCenter;
 	
 	@SuppressWarnings("unchecked")
 	public ParametricPane() {
@@ -67,7 +70,7 @@ public class ParametricPane extends BorderPane {
 		tableView.setSortPolicy((b) -> false);
 
 		TableColumn<AParameter<?>, String> nameColumn
-				= new TableColumn<>(LANG(ILangKey.simple(NAME_COLLUMN)));
+				= new TableColumn<>(ILangKey.simple(NAME_COLLUMN).value());
 		nameColumn.setCellValueFactory(new AParameter.NameValueCallback());
 		nameColumn.setPrefWidth(225);
 		nameColumn.setStyle( "-fx-alignment: CENTER-LEFT;");
@@ -75,7 +78,7 @@ public class ParametricPane extends BorderPane {
 		nameColumn.setCellFactory(column -> new AParameter.NameCellCallback());
 		
 		TableColumn<AParameter<?>, AParameter<?>> valueColumn
-				= new TableColumn<>(LANG(ILangKey.simple(VALUE_COLLUMN)));
+				= new TableColumn<>(ILangKey.simple(VALUE_COLLUMN).value());
 		valueColumn.setCellValueFactory(new AParameter.ComponentValueCallback());
 		valueColumn.setPrefWidth(350);
 		
@@ -85,6 +88,9 @@ public class ParametricPane extends BorderPane {
 		tableView.getSelectionModel().setCellSelectionEnabled(false);
 		
 		setCenter(tableView);
+		
+		hiddenCenter = new ReadOnlyObjectWrapper<TableView<AParameter<?>>>(tableView);
+		centerProperty().bind(hiddenCenter);
 		
 		ParametricTraverser.registerView(tableView);
 		tableView.setFocusTraversable(false);
@@ -103,6 +109,18 @@ public class ParametricPane extends BorderPane {
 		}
 		
 		loadLastValues();
+		initDynamics();
+	}
+
+	private void initDynamics() {
+		for (AParameter<?> parameter : tableView.getItems()) {
+			if (parameter.isDynamic())
+				parameter.initDynamic();
+		}
+		for (AParameter<?> parameter : tableView.getItems()) {
+			if (parameter.isDynamic())
+				parameter.refresh();
+		}
 	}
 
 	public static ParametricPane getInstance() {
@@ -114,9 +132,9 @@ public class ParametricPane extends BorderPane {
 		ForEach.start(tableView.getItems(), (v) -> {
 			if (v.getId().compareTo(searchedId) == 0) {
 				value.set(v);
-				return false;
+				return false; // BREAK
 			} else {
-				return true;
+				return true; // CONTINUE
 			}
 		});
 		if (value.get() == null) {
@@ -131,17 +149,28 @@ public class ParametricPane extends BorderPane {
 	}
 
 	public String getAntParams() {
-		final Out<String> stringBuilder = Out.init("");
+		OutString stringBuilder = OutString.empty();
 		
-		ForEach.start(tableView.getItems(), (value) -> {
-			if (value.isLogic() || !value.isEnabled())
-				return true; // CONTINUE
-			System.out.println(stringBuilder);
-			stringBuilder.set(stringBuilder.get()+" -D"+value.getId()+"="+value.get());
-			return true;
+		getStreamOfParams().map((value) -> {
+			return value.getValue().contains(" ")
+					? String.format("\"-D%s=%s\"", value.getKey(), value.getValue())
+					: String.format(  "-D%s=%s"  , value.getKey(), value.getValue());
+		}).forEach((value) -> {
+			stringBuilder.append(value).append(" ");
 		});
 		
-		return stringBuilder.get().trim();
+		return stringBuilder.length() > 0 ? stringBuilder.subSequence(0, stringBuilder.length()-2) : stringBuilder.get();
+	}
+
+	public List<Pair<String,String>> getListOfParams() {
+		Stream<Pair<String,String>> stream = getStreamOfParams();
+		List<Pair<String,String>> list = new ArrayList<>((int)stream.count());
+		stream.forEach((item) -> list.add(item));
+		return list;
+	}
+	
+	public Stream<Pair<String, String>> getStreamOfParams() {
+		return tableView.getItems().stream().map((param) -> new Pair<String,String>(param.getId(), param.get()));
 	}
 
 	public void loadLastValues() {
@@ -153,17 +182,10 @@ public class ParametricPane extends BorderPane {
 				toRemove.add(key);
 			}
 			parameter.fromString((String) value.getValue());
-			if (parameter.isDynamic())
-				parameter.initDynamic();
 		}
 		
 		for (String string : toRemove) {
 			PARAMETERS.remove(string);
-		}
-		
-		for (AParameter<?> parameter : tableView.getItems()) {
-			if (parameter.isDynamic())
-				parameter.refresh();
 		}
 	}
 

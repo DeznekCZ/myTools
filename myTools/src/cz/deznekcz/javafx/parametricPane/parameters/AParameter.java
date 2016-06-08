@@ -24,13 +24,12 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.util.Callback;
-import javafx.util.StringConverter;
 
-public abstract class AParameter <T> extends StringConverter<T> {
+public abstract class AParameter <T> {
 	
 	private String id;
 	private Tooltip tooltip;
-	private List<ADynamic> implementation;
+	private List<ADynamic<T>> implementation;
 	private boolean implementationChecked;
 	private boolean logic;
 	private ParameterElement type;
@@ -123,8 +122,9 @@ public abstract class AParameter <T> extends StringConverter<T> {
 		return this;
 	}
 
-	public AParameter<T> enabled(String params) {
-		this.implementation.add(new Enabled(params, this));
+	public AParameter<T> enabled(String params, boolean defaultValue) {
+		this.implementation.add(new Enabled<T>(params, this));
+		this.setEnabled(defaultValue);
 		return this;
 	}
 
@@ -132,8 +132,9 @@ public abstract class AParameter <T> extends StringConverter<T> {
 	
 	public abstract boolean isEnabled();
 	
-	public AParameter<T> editable(String params) {
-		this.implementation.add(new Editable(params, this));
+	public AParameter<T> editable(String params, boolean defaultValue) {
+		this.implementation.add(new Editable<T>(params, this));
+		this.setEditable(defaultValue);
 		return this;
 	}
 	
@@ -142,8 +143,8 @@ public abstract class AParameter <T> extends StringConverter<T> {
 	public abstract boolean isEditable();
 	
 	@Override
-	public String toString(T object) {
-		return valueProperty().getValue();
+	public String toString() {
+		return "Parameter: "+valueProperty().getValue();
 	}
 	
 	protected Tooltip getTooltip() {
@@ -155,7 +156,7 @@ public abstract class AParameter <T> extends StringConverter<T> {
 	}
 
 	public void refresh() {
-		for (ADynamic aDynamic : implementation) {
+		for (ADynamic<T> aDynamic : implementation) {
 			aDynamic.refresh();
 		}
 	}
@@ -163,7 +164,7 @@ public abstract class AParameter <T> extends StringConverter<T> {
 	public void initDynamic() {
 		if (!implementationChecked) {
 			implementationChecked = true;
-			for (ADynamic aDynamic : implementation) {
+			for (ADynamic<T> aDynamic : implementation) {
 				aDynamic.init();
 			}
 		}
@@ -182,4 +183,10 @@ public abstract class AParameter <T> extends StringConverter<T> {
 	public abstract void setFocusComponent();
 
 	public abstract boolean isFocusTraversable();
+	
+	/**
+	 * Fills parameter value from string argument
+	 * @param string argument
+	 */
+	public abstract void fromString(String string);
 }

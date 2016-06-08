@@ -1,5 +1,6 @@
 package cz.deznekcz.javafx.parametricPane.dynamic;
 
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,13 +30,11 @@ public enum Modifiers {
 		}
 		return modified.replaceAll("__", "_");
 	});
-	@FunctionalInterface
-	private static interface Modifier {
-		String modify(String value);
-	}
-	private Modifier mod;
-	private Modifiers(Modifier mod) {
+	
+	private Function<String,String> mod;
+	
+	private Modifiers(Function<String,String> mod) {
 		this.mod = mod;
 	}
-	public String apply(String value) { return mod.modify(value); }
+	public String apply(String value) { return mod.apply(value); }
 }

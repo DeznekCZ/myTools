@@ -3,7 +3,7 @@ package cz.deznekcz.javafx.parametricPane.parameters;
 import cz.deznekcz.javafx.parametricPane.ParametricPane;
 import cz.deznekcz.javafx.parametricPane.ParametricTraverser;
 import cz.deznekcz.javafx.parametricPane.parsing.ParameterElement;
-import cz.deznekcz.reference.Out.IntegerOut;
+import cz.deznekcz.reference.Out.OutInteger;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
@@ -38,8 +38,8 @@ public class CheckParameter extends AParameter<Boolean> {
 	protected void initComponent() {
 		checkBox = new CheckBox();
 		checkBox.setId(getId());
-		checkBox.setSelected(checked);
 		checkBox.selectedProperty().addListener((b,l,n) -> selectedAsString.setValue(n.toString()));
+		checkBox.setSelected(checked);
 		checkBox.setTooltip(getTooltip());
 		ParametricTraverser.registerElement(checkBox);
 	}
@@ -83,9 +83,8 @@ public class CheckParameter extends AParameter<Boolean> {
 	}
 
 	@Override
-	public Boolean fromString(String string) {
+	public void fromString(String string) {
 		checkBox.setSelected(Boolean.parseBoolean(string));
-		return checkBox.isSelected();
 	}
 
 	/**
@@ -94,10 +93,10 @@ public class CheckParameter extends AParameter<Boolean> {
 	 * @param indexOut returns an index in {@link ParametricPane}
 	 * @return instance of {@link AParameter}
 	 */
-	public static CheckParameter fromXml(org.w3c.dom.Node node, IntegerOut indexOut) {
+	public static CheckParameter fromXml(org.w3c.dom.Node node, OutInteger indexOut) {
 		indexOut.set(Integer.parseInt(ParameterElement.Param(ParameterElement.INDEX, node)));
 		String id = ParameterElement.Param(ParameterElement.ID, node);
-		boolean defaultValue = Boolean.parseBoolean(ParameterElement.Param(ParameterElement.FORMAT, node));
+		boolean defaultValue = Boolean.parseBoolean(ParameterElement.Param(ParameterElement.DEFAULT, node));
 		return new CheckParameter(id, defaultValue);
 	}
 

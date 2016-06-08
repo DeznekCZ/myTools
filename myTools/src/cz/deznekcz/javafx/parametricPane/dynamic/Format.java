@@ -6,9 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.deznekcz.javafx.parametricPane.ParametricPane;
-import cz.deznekcz.reference.Out;
-import cz.deznekcz.reference.Out.StringOut;
-import cz.deznekcz.util.Builder;
+import cz.deznekcz.reference.Out.OutString;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -105,7 +103,7 @@ public class Format extends StringBinding {
 	@Override
 	protected String computeValue() {
 		System.out.println(name);
-		StringOut string = new StringOut();
+		OutString string = OutString.empty();
 		for (StringProperty value : formatMaches) {
 			string.append(value.getValue());
 		}

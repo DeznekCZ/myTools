@@ -59,8 +59,7 @@ public class MissingParameter extends AParameter<String> {
 	}
 
 	@Override
-	public String fromString(String string) {
-		return null;
+	public void fromString(String string) {
 	}
 
 	@Override
