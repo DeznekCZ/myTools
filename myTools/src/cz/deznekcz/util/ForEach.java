@@ -2,14 +2,19 @@ package cz.deznekcz.util;
 
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
-import cz.deznekcz.reference.Out;
 import cz.deznekcz.reference.Out.IntegerOut;
 
 /**
- * Abstract class removes a Java version mismatch between new Java 1.8 and OpenJDK.
+ * Provider class {@link ForEach} creates a new access to loop iterables.
+ * <br>Now is available conversions for {@link Enumeration} -> {@link #enumeration(Enumeration)},
+ * for {@link Random} -> {@link #random(Random, Predicate)} and for the sorted integers {@link #integer(int, int)}
  * <br>
  * JAVA 1.8
  * <br>
@@ -24,90 +29,26 @@ import cz.deznekcz.reference.Out.IntegerOut;
  * }
  * </pre>
  * <br>
- * My ForEach iterator (minimal version 1.7)
+ * My ForEach iterator (minimal version 1.8)
  * <br>
  * <pre>
- * {@code
- * 	Iterable<T> iterable = ... ;
- * 	new ForEach<T>(iterable) {
- * 		public void doOne(T t) {
- * 			// some action for element t
- * 		}
- * 	};
- * }
+ * <code>
+ * Iterable&lt;T> iterable = ... ;
+ * ForEach.&lt;T>(iterable, (T element) -&gt; {
+ * 	do some...
+ * 	if (needs break) {
+ * 		return false;
+ * 	} else if (needs continue) {
+ * 		return true;
+ * 	}
+ * });
  * </pre>
- * @see #start(Iterable, Iteration) from version 2 #start(Iterable, Iteration)
+ * @see #start(Iterable, Function)
+ * @see #paralel(Iterable, Consumer)
  * @author Zdenek Novotny (DeznekCZ)
- * @version 2
- * @param <T> Type of iterable element
+ * @version 3 Removed instantiation, Only static methods
  */
-public abstract class ForEach<T> {
-
-	@Deprecated
-	private final Iterable<T> iterable;
-	@Deprecated
-	private boolean breaking;
-
-	/**
-	 * Creates a foreach loop for iterable, using extending of <b>this</b> class.
-	 * <br>Example:
-	 * <pre>
-	 * {@code
-	 * 	Iterable<T> iterable = ... ;
-	 * 	new ForEach<T>(iterable) {
-	 * 		public void doOne(T t) {
-	 * 			// some action for element t
-	 * 		}
-	 * 	};
-	 * }
-	 * </pre>
-	 * @param iterable instance of an iterable collection or set
-	 */
-	@Deprecated
-	public ForEach(Iterable<T> iterable) {
-		this.iterable = iterable;
-		this.breaking = false;
-		start();
-	}
-	
-	/** Hidden method of execution (do a synchronized foreach loop) */
-	@Deprecated
-	private final void start() {
-		synchronized (iterable) {
-			for (T t : iterable) {
-				if (breaking) {
-					break;
-				} else {
-					apply(t);
-				}
-			}
-		}
-	}
-
-	/**
-	 * Method defines an action applicable for each element 
-	 * @param t element of foreach
-	 */
-	@Deprecated
-	public abstract void apply(T t);
-
-	/**
-	 * Ends execution of ForEach loop
-	 */
-	@Deprecated
-	protected final void breakLoop() {
-		breaking = true;
-	}
-
-	@FunctionalInterface
-	public interface Concurent<T> {
-		void loop(T value);
-	}
-	
-	@FunctionalInterface
-	public interface Iteration<T> {
-		boolean loop(T value);
-	}
+public class ForEach {
 	
 	/**
 	 * Method starts a breakable foreach.
@@ -127,34 +68,52 @@ public abstract class ForEach<T> {
 	 * </pre>
 	 * 
 	 * @param iterable instance of {@link Iterable}
-	 * @param iteration instance of {@link FunctionalInterface} {@link Iterator}
+	 * @param iteration instance of {@link FunctionalInterface} 
+	 * {@link Function}&lt;{@link T}&gt;&lt;{@link Boolean}&gt;
+	 * @param <T> Class of array object
 	 */
-	public static <T> void start(Iterable<T> iterable, Iteration<T> iteration) {
+	public static <T> void start(Iterable<T> iterable, Function<T,Boolean> iteration) {
 		Iterator<T> it = iterable.iterator();
 		while(
 				it.hasNext() 		// items exists
-			&&  iteration.loop(it.next())		// normal use of Out.set(true) 
+			&&  iteration.apply(it.next())		// normal use of Out.set(true) 
 			)	; // loop action
 	}
 
-	public static <T> void paralel(Iterable<T> iterable, int threadCount, Concurent<T> iteration) {
+	/**
+	 * 
+	 * @param iterable instance of {@link Iterable}
+	 * @param threadCount
+	 * @param iteration instance of {@link FunctionalInterface} 
+	 * {@link Function}&lt;{@link T}&gt;&lt;{@link Boolean}&gt;
+	 * @param <T> Class of array object
+	 * @see #start(Iterable, Function)
+	 */
+	public static <T> void paralel(Iterable<T> iterable, int threadCount, Consumer<T> iteration) {
 		ExecutorService exec = Executors.newFixedThreadPool(threadCount);
 		IntegerOut countOfRunning = IntegerOut.create();
 				
 		Iterator<T> it = iterable.iterator();
 		while(it.hasNext()) {
+			T nextValue = it.next();
 			countOfRunning.increment();
 			exec.execute(new Runnable() {
-				private T value = it.next();
+				private T value = nextValue;
 				public void run() { 
-					iteration.loop(value); 
+					iteration.accept(value); 
 					countOfRunning.decrement();  
 				};
 			});	// loop action
 		}
-		while (countOfRunning.isGreather(1));
+		while (countOfRunning.isGreather(1)) Thread.yield();
 	}
 
+	/**
+	 * Creates {@link Iterable} from an integer i to integer (max-1)
+	 * @param i lover value
+	 * @param max upper value
+	 * @return new instance of {@link Iterable}
+	 */
 	public static Iterable<Integer> integer(final int i, final int max) {
 		return new Iterable<Integer>() {
 			@Override
@@ -177,6 +136,40 @@ public abstract class ForEach<T> {
 		};
 	}
 
+	/**
+	 * Creates {@link Iterable} from a {@link Random} values (max-1). 
+	 * Predicate function tests final count of ramdom values.
+	 * @param r instance of {@link Random}
+	 * @param predicate instance or lambda of {@link Predicate}
+	 * @return new instance of {@link Iterable}
+	 */
+	public static Iterable<Random> random(Random r, Predicate<Object> predicate) {
+		return new Iterable<Random>() {
+			@Override
+			public Iterator<Random> iterator() {
+				return new Iterator<Random>() {
+					int count = 0;
+
+					@Override
+					public boolean hasNext() {
+						return predicate.test(count);
+					}
+
+					@Override
+					public Random next() {
+						count++;
+						return r;
+					}
+				};
+			}
+		};
+	}
+
+	/**
+	 * Creates {@link Iterable} from an {@link Enumeration} 
+	 * @param keys instance of {@link Enumeration}
+	 * @return new instance of {@link Iterable}
+	 */
 	public static <T> Iterable<T> enumeration(Enumeration<T> keys) {
 		return new Iterable<T>() {
 			@Override
