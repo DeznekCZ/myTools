@@ -5,23 +5,46 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 
+/**
+ * RandomAccessList is simply implementation of real memory. 
+ * This implementation includes some warnings:
+ * <br>- the size of memory from OS must be respected
+ * <br>- list is implemented by ARRAY, which is growing slow
+ * <br>- list is growing only
+ * @author Zdenek Novotny (DeznekCZ)
+ *
+ * @param <E>
+ */
 public class RandomAccessList<E> extends AbstractList<E> {
+
+	@SuppressWarnings("serial")
+	public static class MemoryException extends RuntimeException {
+		public MemoryException(int index) {
+			super("Memory is not rewritable, aborted at address \""+index+"\"");
+		}
+	}
 
 	private static final int DEFAULT_SIZE = 16;
 	private Object[] elements;
 	private int memorySize;
 	private int count;
+	private boolean onlyWritable;
 
 	public RandomAccessList() {
 		this(DEFAULT_SIZE);
 	}
 	
 	public RandomAccessList(int memorySize) {
+		this.onlyWritable = false;
 		this.memorySize = memorySize;
 		this.count = 0;
 		this.elements = new Object[memorySize];
 	}
 
+	/**
+	 * {@inheritDoc}
+	 * @throws MemoryException exception is thrown while rewriting an address.
+	 */
 	@Override
 	public synchronized void add(int index, E element) {
 		if (index >= memorySize)
@@ -29,6 +52,9 @@ public class RandomAccessList<E> extends AbstractList<E> {
 		
 		boolean wasSet = elements[index] != null;
 		
+		if (onlyWritable && wasSet && element != null)
+			throw new MemoryException(index);
+			
 		elements[index] = element;
 		
 		if (element == null && wasSet)
@@ -141,5 +167,9 @@ public class RandomAccessList<E> extends AbstractList<E> {
 		}
 		
 		return stored.toArray(a);
+	}
+
+	public void setOnlyWritable(boolean b) {
+		this.onlyWritable = b;
 	}
 }
