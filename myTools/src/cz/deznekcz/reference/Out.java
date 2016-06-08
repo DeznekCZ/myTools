@@ -1,8 +1,10 @@
 package cz.deznekcz.reference;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import cz.deznekcz.reference.Out.OutString;
 import cz.deznekcz.util.EqualAble;
 
 /**
@@ -37,9 +39,9 @@ import cz.deznekcz.util.EqualAble;
  *     
  * <br>
  * <br><b>New usable declarations</b>
- * <br>{@link ExceptionOut}, {@link StringOut}, {@link NumberOut}, 
- *     {@link ByteOut}, {@link ShortOut}, {@link IntegerOut}, {@link LongOut}, 
- *     {@link FloatOut}, {@link DoubleOut}
+ * <br>{@link OutException}, {@link OutString}, {@link OutNumber}, 
+ *     {@link OutByte}, {@link OutShort}, {@link OutInteger}, {@link OutLong}, 
+ *     {@link OutFloat}, {@link OutDouble}
  *
  * @author Zdenek Novotny (DeznekCZ)
  * @param <C> Class of stored instances
@@ -52,26 +54,6 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * **************************************** */
 	
 	/**
-	 * Functional interface used in method {@link Out#set(Object, Condition)}.
-	 * Is replaceable with the lambda function.
-	 * @author Zdenek Novotny (DeznekCZ)
-	 *
-	 * @param <C> Instance Class of checked instance
-	 * @see InvalidValueException
-	 * @see Out#set(Object, boolean)
-	 * @see Out#set(Object, Condition)
-	 */
-	@FunctionalInterface
-	public static interface Condition<C> {
-		/**
-		 * Returns ability to be set to reference
-		 * @param value instance of new referenced value
-		 * @return true/false
-		 */
-		public boolean check(C value);
-	}
-	
-	/**
 	 * While using condition to set a Out value, methods
 	 * are throwing {@link InvalidValueException}.
 	 * <br>Format of exception: "Invalid value: "<code>value.toString()</code>"" 
@@ -81,7 +63,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see Out#set(Object, Condition)
 	 */
 	@SuppressWarnings("serial")
-	public static class InvalidValueException extends Exception {
+	public static class InvalidValueException extends RuntimeException {
 		
 		/** Message formation */
 		public static final String EXCEPTION_FORMAT = "Invalid value: \"%s\"";
@@ -96,22 +78,6 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			super(String.format(EXCEPTION_FORMAT, value.toString()));
 		}
 	}
-	
-	/**
-	 * Functional interface is usable to export variable
-	 * without calling {@link Out#get()}. Can be replaced
-	 * with lambda function.
-	 * @author Zdenek Novotny (DeznekCZ)
-	 * @param <C> Class of stored instance
-	 */
-	@FunctionalInterface
-	public static interface OnSetAction<C> {
-		/**
-		 * Brings new value into body of method {@link #onSet(Object)}
-		 * @param newValue instance of {@link C}
-		 */
-		public void onSet(C newValue);
-	}
 
 	/* BLOCK*********************************** *
 	 * Instance handling
@@ -124,7 +90,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	/** Referenced instance of {@link C} */
 	private C value;
 	/** On set action function */
-	private OnSetAction<C> onSetAction;
+	private Consumer<C> onSetAction;
 
 	/**
 	 * Constructor references an external instance
@@ -197,7 +163,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	public void set(C newValue) {
 		value = newValue;
 		if (onSetAction != null)
-			onSetAction.onSet(newValue);
+			onSetAction.accept(newValue);
 	}
 	
 	/**
@@ -227,16 +193,16 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #set(Object, boolean)
 	 * @see #get()
 	 */
-	public void set(C newValue, Condition<C> conditionFunction)
+	public void set(C newValue, Predicate<C> conditionFunction)
 	throws InvalidValueException {
-		set(newValue, conditionFunction.check(newValue));
+		set(newValue, conditionFunction.test(newValue));
 	}
 	
 	/**
 	 * Method sets an onSet action of an Out reference, getting of action is not allowed.
 	 * @param onSetAction instance of {@link OnSetAction} or lambda expression
 	 */
-	public void setOnSetAction(OnSetAction<C> onSetAction) {
+	public void setOnSetAction(Consumer<C> onSetAction) {
 		this.onSetAction = onSetAction;
 	}
 	
@@ -373,23 +339,23 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @param action action on set new value
 	 * @return new instance of {@link Out}
 	 */
-	public static <C> Out<C> init(OnSetAction<C> action) {
-		return init(null, action);
+	public static <C> Out<C> init(Consumer<C> onSetAction) {
+		return init(null, onSetAction);
 	}
 	
 	/**
 	 * Initializer for simple reference by type.
 	 * @param <C> Class of stored instance
 	 * @param defaultValue new stored instance
-	 * @param action action on set new value
+	 * @param onSetAction action on set new value
 	 * @return new instance of {@link Out}
 	 */
-	public static <C> Out<C> init(C defaultValue, OnSetAction<C> action) {
+	public static <C> Out<C> init(C defaultValue, Consumer<C> onSetAction) {
 		/* Overriding of default set method */
-		if (action == null)
+		if (onSetAction == null)
 			throw new NullPointerException(NO_ACTION_EXCEPTION);
 		Out<C> out = Out.init(defaultValue);
-		out.setOnSetAction(action);
+		out.setOnSetAction(onSetAction);
 		return out;
 	}
 	
@@ -403,8 +369,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #printStackTrace()
 	 * @see #get() get() for other acces to an Exception
 	 */
-	public static class ExceptionOut extends Out<Exception> {
-		public ExceptionOut() {
+	public static class OutException extends Out<Exception> {
+		public OutException() {
 			super(null);
 		}
 		
@@ -428,11 +394,23 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see CharSequence
 	 * @see Appendable
 	 */
-	public static class StringOut extends Out<String> implements CharSequence, Appendable {
-		public StringOut() {
-			super("");
+	public static class OutString extends Out<String> implements CharSequence, Appendable {
+		private OutString(String string) {
+			super(string == null ? "" : string);
 		}
 
+		@Override
+		public void set() {
+			// Empty String only, null reference can break functionality.
+			super.set("");
+		}
+		
+		@Override
+		public void set(String value) {
+			// Empty String only, null reference can break functionality.
+			super.set(value == null ? "" : value);
+		}
+		
 		@Override
 		public int length() {
 			return get().length();
@@ -449,26 +427,29 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 		}
 
 		@Override
-		public StringOut append(CharSequence csq) {
+		public OutString append(CharSequence csq) {
 			if (csq != null)
-				set(get().concat( csq instanceof StringOut 
-							? ((StringOut) csq).get() 
+				synchronized (this) {
+					set(get().concat( 
+							csq instanceof OutString 
+							? OutString.copy((OutString) csq).get()
+									// safer because it could be not null
 							: csq.toString()));
+				}
 			return this;
 		}
 
 		@Override
-		public StringOut append(CharSequence csq, int start, int end) {
+		public OutString append(CharSequence csq, int start, int end) {
 			return append(csq.subSequence(start, end));
 		}
 
 		@Override
-		public StringOut append(char c) {
-			set(get().concat(""+c));
-			return this;
+		public OutString append(char c) {
+			return append(Character.toString(c));
 		}
 		
-		public static final String TO_STRING_FORMAT = "String reference: \"%s\"";
+		private static final String TO_STRING_FORMAT = "String reference: \"%s\"";
 		
 		/**
 		 * Returns a string in format:
@@ -477,12 +458,41 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 		 */
 		@Override
 		public String toString() {
-			return String.format(StringOut.TO_STRING_FORMAT, get());
+			return String.format(OutString.TO_STRING_FORMAT, get());
 		}
 		
-		@Override
-		public boolean isNull() {
+		/**
+		 * Returns <b>true</b> if the length equals to "0"
+		 * @return <b>true</b>/<b>false</b>
+		 */
+		public boolean isEmpty() {
 			return super.isNull() || length() == 0;
+		}
+
+		/**
+		 * Returns an empty reference.
+		 * @return new instance of {@link OutString} with value ""
+		 */
+		public static OutString empty() {
+			return new OutString("");
+		}
+
+		/**
+		 * Copies value from {@link String} value.
+		 * @param string instance of {@link String}
+		 * @return new instance of {@link OutString}
+		 */
+		public static OutString from(String string) {
+			return new OutString(string);
+		}
+
+		/**
+		 * Copies value of another reference.
+		 * @param stringOut another instance of {@link OutString}
+		 * @return new instance of {@link OutString}
+		 */
+		public static OutString copy(OutString stringOut) {
+			return new OutString(stringOut.get());
 		}
 	}
 	
@@ -490,14 +500,14 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #add(Number)
 	 * @see #mul(Number)
 	 */
-	public static abstract class NumberOut<I extends Number> extends Out<I> {
-		public NumberOut(I n) {
+	public static abstract class OutNumber<I extends Number> extends Out<I> {
+		public OutNumber(I n) {
 			super(n);
 		}
 		
-		public abstract NumberOut<I> add(Number n);
+		public abstract OutNumber<I> add(Number n);
 		
-		public abstract NumberOut<I> mul(Number n);
+		public abstract OutNumber<I> mul(Number n);
 		
 		@SuppressWarnings("unchecked")
 		@Override
@@ -510,17 +520,17 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #add(Number)
 	 * @see #mul(Number)
 	 */
-	public static class ByteOut extends NumberOut<Byte> {
-		public ByteOut(byte n) {
+	public static class OutByte extends OutNumber<Byte> {
+		public OutByte(byte n) {
 			super(n);
 		}
 		
-		public synchronized ByteOut add(Number n) {
+		public synchronized OutByte add(Number n) {
 			set((byte) (get() + n.byteValue()));
 			return this;
 		}
 		
-		public synchronized ByteOut mul(Number n) {
+		public synchronized OutByte mul(Number n) {
 			set((byte) (get() * n.byteValue()));
 			return this;
 		}
@@ -530,17 +540,17 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #add(Number)
 	 * @see #mul(Number)
 	 */
-	public static class ShortOut extends NumberOut<Short> {
-		public ShortOut(short n) {
+	public static class OutShort extends OutNumber<Short> {
+		public OutShort(short n) {
 			super(n);
 		}
 		
-		public synchronized ShortOut add(Number n) {
+		public synchronized OutShort add(Number n) {
 			set((short) (get() + n.intValue()));
 			return this;
 		}
 		
-		public synchronized ShortOut mul(Number n) {
+		public synchronized OutShort mul(Number n) {
 			set((short) (get() * n.intValue()));
 			return this;
 		}
@@ -570,44 +580,44 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #binaryNOR(int)
 	 * @see #binaryXOR(int)
 	 */
-	public static class IntegerOut extends NumberOut<Integer> {
-		public static IntegerOut create() {
-			return new IntegerOut(0);
+	public static class OutInteger extends OutNumber<Integer> {
+		public static OutInteger create() {
+			return new OutInteger(0);
 		}
 		
-		public static IntegerOut create(int initial) {
-			return new IntegerOut(initial);
+		public static OutInteger create(int initial) {
+			return new OutInteger(initial);
 		}
 		
-		private IntegerOut(int n) {
+		private OutInteger(int n) {
 			super(n);
 		}
 		
-		public synchronized IntegerOut add(Number n) {
+		public synchronized OutInteger add(Number n) {
 			set(get() + n.intValue());
 			return this;
 		}
 		
-		public synchronized IntegerOut mul(Number n) {
+		public synchronized OutInteger mul(Number n) {
 			set(n instanceof Integer 
 					?	get() * n.intValue()
 					:	(int) (get() * n.doubleValue()));
 			return this;
 		}
 		
-		public synchronized IntegerOut div(Number n) {
+		public synchronized OutInteger div(Number n) {
 			set(n instanceof Integer 
 					?	get() / n.intValue()
 					:	(int) (get() / n.doubleValue()));
 			return this;
 		}
 		
-		public synchronized IntegerOut mod(Number n) {
+		public synchronized OutInteger mod(Number n) {
 			set(get() % n.intValue());
 			return this;
 		}
 		
-		public synchronized IntegerOut div(int divider, IntegerOut modulo) {
+		public synchronized OutInteger div(int divider, OutInteger modulo) {
 			int divident = get();
 			if (modulo != null) {
 				modulo.set(divident % divider);
@@ -616,7 +626,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			return this;
 		}
 		
-		public synchronized IntegerOut mod(int divider, IntegerOut division) {
+		public synchronized OutInteger mod(int divider, OutInteger division) {
 			int divident = get();
 			if (division != null) {
 				division.set(divident / divider);
@@ -625,12 +635,12 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			return this;
 		}
 
-		public synchronized IntegerOut increment() {
+		public synchronized OutInteger increment() {
 			set(get() + 1);
 			return this;
 		}
 
-		public synchronized IntegerOut decrement() {
+		public synchronized OutInteger decrement() {
 			set(get() - 1);
 			return this;
 		}
@@ -655,32 +665,32 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 			return value <= get();
 		}
 		
-		public synchronized IntegerOut binaryAND(int value) {
+		public synchronized OutInteger binaryAND(int value) {
 			set(get() & value);
 			return this;
 		}
 		
-		public synchronized IntegerOut binaryOR(int value) {
+		public synchronized OutInteger binaryOR(int value) {
 			set(get() | value);
 			return this;
 		}
 		
-		public synchronized IntegerOut binaryXOR(int value) {
+		public synchronized OutInteger binaryXOR(int value) {
 			set(get() ^ value);
 			return this;
 		}
 		
-		public synchronized IntegerOut binaryNAND(int value) {
+		public synchronized OutInteger binaryNAND(int value) {
 			set(~(get() & value));
 			return this;
 		}
 		
-		public synchronized IntegerOut binaryNOR(int value) {
+		public synchronized OutInteger binaryNOR(int value) {
 			set(~(get() ^ value));
 			return this;
 		}
 		
-		public synchronized IntegerOut binary(Function<Integer, Integer> applyFunction) {
+		public synchronized OutInteger binary(Function<Integer, Integer> applyFunction) {
 			set(applyFunction.apply(get()));
 			return this;
 		}
@@ -690,17 +700,17 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #add(Number)
 	 * @see #mul(Number)
 	 */
-	public static class LongOut extends NumberOut<Long> {
-		public LongOut(long n) {
+	public static class OutLong extends OutNumber<Long> {
+		public OutLong(long n) {
 			super(n);
 		}
 		
-		public synchronized LongOut add(Number n) {
+		public synchronized OutLong add(Number n) {
 			set(get() + n.longValue());
 			return this;
 		}
 		
-		public synchronized LongOut mul(Number n) {
+		public synchronized OutLong mul(Number n) {
 			set(get() * n.longValue());
 			return this;
 		}
@@ -710,17 +720,17 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #add(Number)
 	 * @see #mul(Number)
 	 */
-	public static class FloatOut extends NumberOut<Float> {
-		public FloatOut(float n) {
+	public static class OutFloat extends OutNumber<Float> {
+		public OutFloat(float n) {
 			super(n);
 		}
 		
-		public synchronized FloatOut add(Number n) {
+		public synchronized OutFloat add(Number n) {
 			set(get() + n.floatValue());
 			return this;
 		}
 		
-		public synchronized FloatOut mul(Number n) {
+		public synchronized OutFloat mul(Number n) {
 			set(get() * n.floatValue());
 			return this;
 		}
@@ -730,17 +740,17 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #add(Number)
 	 * @see #mul(Number)
 	 */
-	public static class DoubleOut extends NumberOut<Double> {
-		public DoubleOut(double n) {
+	public static class OutDouble extends OutNumber<Double> {
+		public OutDouble(double n) {
 			super(n);
 		}
 		
-		public synchronized DoubleOut add(Number n) {
+		public synchronized OutDouble add(Number n) {
 			set(get() + n.doubleValue());
 			return this;
 		}
 		
-		public synchronized DoubleOut mul(Number n) {
+		public synchronized OutDouble mul(Number n) {
 			set(get() * n.doubleValue());
 			return this;
 		}
