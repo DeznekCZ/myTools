@@ -139,11 +139,14 @@ public class ForEach {
 	/**
 	 * Creates {@link Iterable} from a {@link Random} values (max-1). 
 	 * Predicate function tests final count of ramdom values.
+	 * Example:
+	 * <br>ForEach.random(new Random(), (count)-> count <= 5)
+	 * <br>Means: loop stops after 5 cycles
 	 * @param r instance of {@link Random}
 	 * @param predicate instance or lambda of {@link Predicate}
 	 * @return new instance of {@link Iterable}
 	 */
-	public static Iterable<Random> random(Random r, Predicate<Object> predicate) {
+	public static Iterable<Random> random(Random r, Predicate<Integer> predicate) {
 		return new Iterable<Random>() {
 			@Override
 			public Iterator<Random> iterator() {
