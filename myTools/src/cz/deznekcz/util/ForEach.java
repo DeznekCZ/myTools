@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-import cz.deznekcz.reference.Out.OutInteger;
+import cz.deznekcz.reference.OutInteger;
 
 /**
  * Provider class {@link ForEach} creates a new access to loop iterables.

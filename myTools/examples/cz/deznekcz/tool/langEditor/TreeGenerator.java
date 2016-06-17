@@ -103,10 +103,10 @@ public class TreeGenerator {
 
 	/**
 	 * Returns a reference to renamed document root
-	 * @param string new name of document
-	 * @return
+	 * @param root document root
+	 * @param documentName new name of document
 	 */
-	public static void renameRoot(RootLangKey root, String langName) {
+	public static void renameRoot(RootLangKey root, String documentName) {
 		Node rootNode = root.getDocumentRoot();
 		NodeList nodes = rootNode.getChildNodes();
 		Node node = null;
@@ -122,11 +122,11 @@ public class TreeGenerator {
 			break;
 		}
 		if (found) {
-			node.setTextContent(langName);
+			node.setTextContent(documentName);
 		} else {
 			Element element = rootNode.getOwnerDocument().createElement(NODE_ENTRY);
 			element.setAttribute(ATTRIBUTE_KEY, Lang.LANG_SHORT_NAME);
-			element.setTextContent(langName);
+			element.setTextContent(documentName);
 			rootNode.appendChild(element);
 		}
 	}

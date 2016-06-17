@@ -6,11 +6,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.TreeSet;
+import java.util.concurrent.Executors;
+import java.util.function.Predicate;
 
 import org.junit.Test;
 
 import cz.deznekcz.reference.Out;
 import cz.deznekcz.reference.Out.InvalidValueException;
+import cz.deznekcz.reference.OutInteger;
 
 public class OutTest {
 
@@ -30,6 +33,50 @@ public class OutTest {
 
 	@Test
 	public void testInit() {
+		OutInteger count = OutInteger.create();
+		
+		boolean threads = true;
+		
+		if (threads) {
+			Thread counter = new Thread(() -> {
+				long lastTime = 0;
+				long newTime = 0;
+				int i = 0;
+				
+				while (true) {
+					if ((newTime = System.currentTimeMillis()) > lastTime) {
+						lastTime = newTime + 1000;
+						synchronized (count) {
+							System.out.println("Thread one: "+count.get());
+							count.set(0);
+						}
+					} Thread.yield();
+					if (i < 0) break;
+				}
+			}); counter.start();
+			Executors.newCachedThreadPool().execute(() -> {
+				while(true){
+					count.increment();
+				}
+			});
+		} else {
+			long lastTime = 0;
+			long newTime = 0;
+			int i = 0;
+			while (true) {
+				count.increment();
+				
+				if ((newTime = System.currentTimeMillis()) > lastTime) {
+					lastTime = newTime + 1000;
+					synchronized (count) {
+						System.out.println("Thread one: "+count.get());
+						count.set(0);
+					}
+				}
+				if (i < 0) break;
+			}
+		}
+		
 		Out<Integer> value = Out.init(5);
 		assertEquals("Default value", 5, (int)value.get());
 	}
@@ -69,9 +116,9 @@ public class OutTest {
 	@Test
 	public void testSetImplementCondition() throws InvalidValueException {
 		Out<String> value = Out.init();
-		value.set("stringAfter", new Out.Condition<String>() {
+		value.set("stringAfter", new Predicate<String>() {
 			@Override
-			public boolean check(String value) {
+			public boolean test(String value) {
 				return value.contains("string");
 			}
 		});

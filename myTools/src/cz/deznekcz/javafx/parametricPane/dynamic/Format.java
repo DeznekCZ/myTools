@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.deznekcz.javafx.parametricPane.ParametricPane;
-import cz.deznekcz.reference.Out.OutString;
+import cz.deznekcz.reference.OutString;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyStringWrapper;

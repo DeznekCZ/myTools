@@ -13,7 +13,7 @@ import cz.deznekcz.javafx.parametricPane.parameters.AParameter;
 import cz.deznekcz.javafx.parametricPane.parameters.MissingParameter;
 import cz.deznekcz.javafx.parametricPane.parsing.ParameterElement;
 import cz.deznekcz.reference.Out;
-import cz.deznekcz.reference.Out.OutString;
+import cz.deznekcz.reference.OutString;
 import cz.deznekcz.tool.ILangKey;
 import cz.deznekcz.tool.Interruptable;
 import cz.deznekcz.util.ForEach;
@@ -152,14 +152,15 @@ public class ParametricPane extends BorderPane {
 		OutString stringBuilder = OutString.empty();
 		
 		getStreamOfParams().map((value) -> {
+			if (value == null) return "";
 			return value.getValue().contains(" ")
 					? String.format("\"-D%s=%s\"", value.getKey(), value.getValue())
 					: String.format(  "-D%s=%s"  , value.getKey(), value.getValue());
 		}).forEach((value) -> {
-			stringBuilder.append(value).append(" ");
+			stringBuilder.append(value).appendIf((last) -> !last.endsWith(" ")," ");
 		});
 		
-		return stringBuilder.length() > 0 ? stringBuilder.subSequence(0, stringBuilder.length()-2) : stringBuilder.get();
+		return stringBuilder.trim().get();
 	}
 
 	public List<Pair<String,String>> getListOfParams() {

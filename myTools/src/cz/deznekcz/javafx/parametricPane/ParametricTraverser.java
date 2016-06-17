@@ -1,7 +1,7 @@
 package cz.deznekcz.javafx.parametricPane;
 
 import cz.deznekcz.javafx.parametricPane.parameters.AParameter;
-import cz.deznekcz.reference.Out.OutInteger;
+import cz.deznekcz.reference.OutInteger;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.TableView;

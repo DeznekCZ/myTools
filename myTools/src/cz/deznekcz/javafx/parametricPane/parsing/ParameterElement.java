@@ -15,7 +15,7 @@ import cz.deznekcz.javafx.parametricPane.parameters.CheckParameter;
 import cz.deznekcz.javafx.parametricPane.parameters.ListParameter;
 import cz.deznekcz.javafx.parametricPane.parameters.PasswordParameter;
 import cz.deznekcz.javafx.parametricPane.parameters.TextParameter;
-import cz.deznekcz.reference.Out.OutInteger;
+import cz.deznekcz.reference.OutInteger;
 import cz.deznekcz.tool.ILangKey;
 import cz.deznekcz.tool.RandomAccessList;
 import cz.deznekcz.util.XMLLoader;

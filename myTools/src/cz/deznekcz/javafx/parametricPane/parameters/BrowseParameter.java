@@ -5,7 +5,7 @@ import java.io.File;
 import cz.deznekcz.javafx.parametricPane.ParametricPane;
 import cz.deznekcz.javafx.parametricPane.ParametricTraverser;
 import cz.deznekcz.javafx.parametricPane.parsing.ParameterElement;
-import cz.deznekcz.reference.Out.OutInteger;
+import cz.deznekcz.reference.OutInteger;
 import cz.deznekcz.tool.ILangKey;
 import cz.deznekcz.tool.Lang;
 import javafx.beans.property.StringProperty;
