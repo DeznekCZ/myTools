@@ -84,6 +84,13 @@ public class Lang {
 				, "Converted from early version");
 		instance = l;
 	}
+	
+
+
+	public static void LANGload(Locale locale) {
+		Locale.setDefault(locale);
+		LANGload(locale.toString());
+	}
 
 	/**
 	 * Method loads language from a {@link Lang} file.

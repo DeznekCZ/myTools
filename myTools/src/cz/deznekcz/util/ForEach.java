@@ -1,5 +1,7 @@
 package cz.deznekcz.util;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Random;
@@ -68,15 +70,14 @@ public class ForEach {
 	 * </pre>
 	 * 
 	 * @param iterable instance of {@link Iterable}
-	 * @param iteration instance of {@link FunctionalInterface} 
-	 * {@link Function}&lt;{@link T}&gt;&lt;{@link Boolean}&gt;
-	 * @param <T> Class of array object
+	 * @param iteration lambda function of instance of {@link Predicate}&lt;{@link T}&gt;
+	 * @param <T> Class of element object
 	 */
-	public static <T> void start(Iterable<T> iterable, Function<T,Boolean> iteration) {
+	public static <T> void start(Iterable<T> iterable, Predicate<T> iteration) {
 		Iterator<T> it = iterable.iterator();
 		while(
 				it.hasNext() 		// items exists
-			&&  iteration.apply(it.next())		// normal use of Out.set(true) 
+			&&  iteration.test(it.next())		// normal use of Out.set(true) 
 			)	; // loop action
 	}
 
@@ -86,7 +87,7 @@ public class ForEach {
 	 * @param threadCount
 	 * @param iteration instance of {@link FunctionalInterface} 
 	 * {@link Function}&lt;{@link T}&gt;&lt;{@link Boolean}&gt;
-	 * @param <T> Class of array object
+	 * @param <T> Class of element object
 	 * @see #start(Iterable, Function)
 	 */
 	public static <T> void paralel(Iterable<T> iterable, int threadCount, Consumer<T> iteration) {
@@ -110,11 +111,14 @@ public class ForEach {
 
 	/**
 	 * Creates {@link Iterable} from an integer i to integer (max-1)
+	 * <br><font color="red">!WARNING - May work not correctly while paralel foreach!
+	 * External lock would be needed.</font>
 	 * @param i lover value
 	 * @param max upper value
+	 * @param <T> Class of element object
 	 * @return new instance of {@link Iterable}
 	 */
-	public static Iterable<Integer> integer(final int i, final int max) {
+	public static Iterable<Integer> intAscend(final int i, final int max) {
 		return new Iterable<Integer>() {
 			@Override
 			public Iterator<Integer> iterator() {
@@ -137,13 +141,46 @@ public class ForEach {
 	}
 
 	/**
+	 * Creates {@link Iterable} from an integer i to 0 (i-1 count)
+	 * <br><font color="red">!WARNING - May work not correctly while paralel foreach!
+	 * External lock would be needed.</font>
+	 * @param i lover value
+	 * @param max upper value
+	 * @param <T> Class of element object
+	 * @return new instance of {@link Iterable}
+	 */
+	public static Iterable<Integer> intDescend(final int i) {
+		return new Iterable<Integer>() {
+			@Override
+			public Iterator<Integer> iterator() {
+				return new Iterator<Integer>() {
+					int iteration = i;
+
+					@Override
+					public boolean hasNext() {
+						return iteration > 0;
+					}
+
+					@Override
+					public Integer next() {
+						return iteration--;
+					}
+				};
+			}
+		};
+	}
+
+	/**
 	 * Creates {@link Iterable} from a {@link Random} values (max-1). 
 	 * Predicate function tests final count of ramdom values.
 	 * Example:
 	 * <br>ForEach.random(new Random(), (count)-> count <= 5)
 	 * <br>Means: loop stops after 5 cycles
+	 * <br><font color="red">!WARNING - May work not correctly while paralel foreach!
+	 * External lock would be needed.</font>
 	 * @param r instance of {@link Random}
 	 * @param predicate instance or lambda of {@link Predicate}
+	 * @param <T> Class of element object
 	 * @return new instance of {@link Iterable}
 	 */
 	public static Iterable<Random> random(Random r, Predicate<Integer> predicate) {
@@ -171,6 +208,7 @@ public class ForEach {
 	/**
 	 * Creates {@link Iterable} from an {@link Enumeration} 
 	 * @param keys instance of {@link Enumeration}
+	 * @param <T> Class of element object
 	 * @return new instance of {@link Iterable}
 	 */
 	public static <T> Iterable<T> enumeration(Enumeration<T> keys) {
@@ -190,5 +228,15 @@ public class ForEach {
 				};
 			}
 		};
+	}
+
+	/**
+	 * Creates {@link Iterable} from an array
+	 * @param tArray array or list of instances of {@link T}
+	 * @param <T> Class of element object
+	 * @return new instance of {@link Iterable}
+	 */
+	public static <T> Iterable<T> array(@SuppressWarnings("unchecked") T... tArray) {
+		return Arrays.asList(tArray);
 	}
 }

@@ -1,5 +1,7 @@
 package cz.deznekcz.reference;
 
+import java.text.Collator;
+import java.util.Comparator;
 import java.util.function.Predicate;
 
 import cz.deznekcz.util.Builder;
@@ -153,6 +155,26 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 		} else {
 			return false;
 		}
+	}
+	
+	public boolean equalsToString(String s) {
+		return get().equals(s);
+	}
+	
+	public boolean equalsToStringIgnoreCase(String s) {
+		return get().equalsIgnoreCase(s);
+	}
+	
+	public int compareToString(String s) {
+		return get().compareTo(s);
+	}
+	
+	public int compareToStringIgnoreCase(String s) {
+		return get().compareToIgnoreCase(s);
+	}
+	
+	public int compareToString(String s, Comparator<String> comparator) {
+		return comparator.compare(get(), s);
 	}
 }
 

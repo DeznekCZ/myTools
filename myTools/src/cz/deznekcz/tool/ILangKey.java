@@ -1,6 +1,8 @@
 package cz.deznekcz.tool;
 
 import java.util.IllegalFormatException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * New type of searching key in lang file.
@@ -9,6 +11,9 @@ import java.util.IllegalFormatException;
  * <br><b>Output</b>: "Keys.KEY_1", "Keys.KEY_2"
  * @author Zdenek Novotny (DeznekCZ)
  * @version Needs {@link Lang} version 4.0
+ * 
+ * @see IContextedLangKey
+ * @see IGroupLangKey
  */
 
 public interface ILangKey {
@@ -71,12 +76,13 @@ public interface ILangKey {
 	 * @return <b>new</b> instance of {@link ILangKey}
 	 */
 	public default ILangKey extended(String symbolExtension) {
-		ILangKey templateKey = ILangKey.this;
+		final String finalSymbol = ILangKey.this.symbol().concat(symbolExtension);
+		
 		if (symbolExtension != null) {
 			return new ILangKey() {
 				@Override
 				public String symbol() {
-					return templateKey.symbol().concat(symbolExtension);
+					return finalSymbol;
 				}
 				@Override
 				public String name() {
@@ -84,7 +90,7 @@ public interface ILangKey {
 				}
 			};
 		} else {
-			return templateKey;
+			return ILangKey.this;
 		}
 	}
 
@@ -97,18 +103,27 @@ public interface ILangKey {
 	 * @see String#format(String,Object...)
 	 */
 	public default ILangKey format(Object...arguments) {
-		ILangKey templateKey = ILangKey.this;
-		String finalString = String.format(templateKey.symbol(), arguments);
-		
-		return new ILangKey() {
-			@Override
-			public String symbol() {
-				return finalString;
-			}
-			@Override
-			public String name() {
-				return null;
-			}
-		};
+		try {
+			final String finalSymbol = String.format(ILangKey.this.symbol(), arguments);
+			
+			return new ILangKey() {
+				@Override
+				public String symbol() {
+					return finalSymbol;
+				}
+				@Override
+				public String name() {
+					return null;
+				}
+			};
+		} catch (IllegalFormatException e) {
+			Logger.getGlobal().log(
+					Level.FINER, String.format("LangKey<%s>[%s]:\n%s",
+						ILangKey.this.getClass().getSimpleName(), 
+						ILangKey.this.symbol(),
+						e.getLocalizedMessage()
+					));
+			return ILangKey.this;
+		}
 	}
 }
