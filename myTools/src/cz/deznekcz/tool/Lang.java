@@ -18,6 +18,12 @@ import java.util.Properties;
 import java.util.ResourceBundle;
 
 import cz.deznekcz.util.ForEach;
+import javafx.beans.property.ObjectProperty;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
+import javafx.css.PseudoClass;
+import javafx.scene.control.Control;
+import javafx.scene.control.Skin;
 
 /**
  * Lanuguage configuration class<br><br>
@@ -128,7 +134,7 @@ public class Lang {
 		File file = new File("lang");
 		URL[] urls = {file.toURI().toURL()};
 		ClassLoader loader = new URLClassLoader(urls);
-		ResourceBundle bundle = ResourceBundle.getBundle("lang", Locale.getDefault(), loader);
+		ResourceBundle bundle = ResourceBundle.getBundle("lang", new Locale(langName), loader);
 		ForEach.start(ForEach.enumeration(bundle.getKeys()), (String key) -> {
 			LANGset(key, bundle.getString(key));
 			return true;

@@ -2,6 +2,7 @@ package cz.deznekcz.reference;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import cz.deznekcz.reference.OutInteger;
 import cz.deznekcz.reference.OutNumber;
@@ -51,7 +52,7 @@ import cz.deznekcz.util.EqualAble;
  *
  * @author Zdenek Novotny (DeznekCZ)
  * @param <C> Class of stored instances
- * @version 2.5 (method sorting, #getParameterClass() fixed)
+ * @version 3.0 (method sorting, #getParameterClass() fixed)
  */
 public class Out<C> implements Comparable<Out<C>>, EqualAble {
 
@@ -208,10 +209,12 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	
 	/**
 	 * Method sets an onSet action of an Out reference, getting of action is not allowed.
+	 * @since 3.0 Is able to use as a build
 	 * @param onSetAction instance of {@link Consumer} or lambda expression
 	 */
-	public void setOnSetAction(Consumer<C> onSetAction) {
+	public Out<C> setOnSetAction(Consumer<C> onSetAction) {
 		this.onSetAction = onSetAction;
+		return this;
 	}
 	
 	/**
@@ -346,17 +349,20 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @param action action on set new value
 	 * @return new instance of {@link Out}
 	 */
+	@Deprecated
 	public static <C> Out<C> init(Consumer<C> onSetAction) {
 		return init(null, onSetAction);
 	}
 	
 	/**
 	 * Initializer for simple reference by type.
+	 * @since 3.0 Is replaced with build method {@link #onSetAction};
 	 * @param <C> Class of stored instance
 	 * @param defaultValue new stored instance
 	 * @param onSetAction action on set new value
 	 * @return new instance of {@link Out}
 	 */
+	@Deprecated
 	public static <C> Out<C> init(C defaultValue, Consumer<C> onSetAction) {
 		/* Overriding of default set method */
 		if (onSetAction == null)
@@ -364,6 +370,16 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 		Out<C> out = Out.init(defaultValue);
 		out.setOnSetAction(onSetAction);
 		return out;
+	}
+	
+	/**
+	 * Initializer for complicated references like filled arrays.
+	 * @since 3.0
+	 * @param valueGenerator instance or lambda of {@link Supplier}
+	 * @return new instance of {@link Out}
+	 */
+	public static <C> Out<C> init(Supplier<C> valueGenerator) {
+		return init(valueGenerator.get());
 	}
 	
 	/* BLOCK*********************************** *

@@ -48,10 +48,32 @@ import cz.deznekcz.reference.OutInteger;
  * @see #start(Iterable, Function)
  * @see #paralel(Iterable, Consumer)
  * @author Zdenek Novotny (DeznekCZ)
- * @version 3 Removed instantiation, Only static methods
+ * @version 3.1 (Added non-break loop)
  */
 public class ForEach {
-	
+
+	/**
+	 * Method starts foreach.
+	 * 
+	 * <br>Example:
+	 * <pre>
+	 * <code>
+	 * Iterable&lt;T> iterable = ... ;
+	 * ForEach.&lt;T>(iterable, (T element) -&gt; {
+	 * 	do some...
+	 * });
+	 * </pre>
+	 * 
+	 * @param iterable instance of {@link Iterable}
+	 * @param iteration lambda function of instance of {@link Consumer}&lt;{@link T}&gt;
+	 * @param <T> Class of element object
+	 */
+	public static <T> void start(Iterable<T> iterable, Consumer<T> iteration) {
+		Iterator<T> it = iterable.iterator();
+		while(
+				it.hasNext() 		// items exists
+			)	iteration.accept(it.next());; // loop action
+	}
 	/**
 	 * Method starts a breakable foreach.
 	 * 
@@ -238,5 +260,17 @@ public class ForEach {
 	 */
 	public static <T> Iterable<T> array(@SuppressWarnings("unchecked") T... tArray) {
 		return Arrays.asList(tArray);
+	}
+	
+	/**
+	 * Returns count of elements in {@link Iterable}
+	 * @param iterable instance of {@link Iterable}
+	 * @return count of elements {@link T}
+	 * @param <T> Class of element object
+	 */
+	public static <T> int count(Iterable<T> iterable) {
+		OutInteger counter = OutInteger.create();
+		ForEach.start(iterable, (v) -> {counter.increment();});
+		return counter.get();
 	}
 }
