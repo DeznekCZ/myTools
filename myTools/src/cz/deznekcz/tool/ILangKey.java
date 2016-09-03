@@ -4,6 +4,10 @@ import java.util.IllegalFormatException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import javafx.beans.binding.StringBinding;
+import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableValue;
+
 /**
  * New type of searching key in lang file.
  * Is a better form for Object oriented programing.
@@ -125,5 +129,22 @@ public interface ILangKey {
 					));
 			return ILangKey.this;
 		}
+	}
+
+	/**
+	 * Returns new {@link StringBinding} for observable value with instances of {@link ILangKey}
+	 * @param simpleKey {@link ObservableValue} of {@link ILangKey}
+	 * @return new instance of {@link StringBinding}
+	 */
+	public static ObservableValue<? extends String> binding(ObservableValue<ILangKey> simpleKey) {
+		return new StringBinding() {
+			{
+				bind(simpleKey);
+			}
+			@Override
+			protected String computeValue() {
+				return simpleKey.getValue().value();
+			}
+		};
 	}
 }
