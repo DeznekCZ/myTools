@@ -37,7 +37,7 @@ public class LangApplication extends Application {
 		primaryStage.setScene(new Scene(FXMLLoader.load(getClass().getResource("lang.fxml"), Lang.asResourceBundle())));
 		
 		if (file != null) {
-			Node rootNode = XMLLoader.load(file, Out.init(ex->XMLLoader.showError(ex)));
+			Node rootNode = XMLLoader.load(file, Out.<Exception>init().setOnSetAction(ex->XMLLoader.showError(ex)));
 			TreeGenerator.from(file.getName(), file, rootNode, 
 					(TreeView<String>) primaryStage.getScene().lookup("#xmlTreeView"));
 		}

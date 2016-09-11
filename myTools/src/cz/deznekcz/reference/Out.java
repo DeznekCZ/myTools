@@ -1,6 +1,7 @@
 package cz.deznekcz.reference;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -32,16 +33,6 @@ import cz.deznekcz.util.EqualAble;
  * <br>void method(Out&lt;String&gt; out) {
  * <br>&nbsp;out.set("myValue");
  * <br>}
- * <br>
- * <br><b>Using in (old deprecated) code:</b><code>
- * <br>Out&lt;String&gt; out = new Out&lt;&gt;("optional default string");
- * <br>method(out);
- * <br>String fromMethod = out.value();
- *     </code>
- * <br><b>Declared method:</b><code>
- * <br>void method(Out&lt;String&gt; out) {
- * <br>&nbsp;out.lock("myValue");
- * <br>}
  *     </code>
  *     
  * <br>
@@ -52,9 +43,9 @@ import cz.deznekcz.util.EqualAble;
  *
  * @author Zdenek Novotny (DeznekCZ)
  * @param <C> Class of stored instances
- * @version 3.0 (method sorting, #getParameterClass() fixed)
+ * @version 3.2 (method sorting, #getParameterClass() fixed)
  */
-public class Out<C> implements Comparable<Out<C>>, EqualAble {
+public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predicate<C>, Function<C, Out<C>> {
 
 	/* BLOCK*********************************** *
 	 * Class declaration
@@ -116,6 +107,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #set(Object)
 	 * @see #set(Object, boolean)
 	 * @see #set(Object, Predicate)
+	 * @see #apply(Object)
 	 */
 	public C get() {
 		return value;
@@ -153,6 +145,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #set(Object, boolean)
 	 * @see #set(Object, Predicate)
 	 * @see #get()
+	 * @see #apply(Object)
 	 */
 	public void set() {
 		set(null);
@@ -165,6 +158,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #set(Object, boolean)
 	 * @see #set(Object, Predicate)
 	 * @see #get()
+	 * @see #apply(Object)
 	 */
 	public void set(C newValue) {
 		value = newValue;
@@ -182,6 +176,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #set(Object)
 	 * @see #set(Object, Predicate)
 	 * @see #get()
+	 * @see #apply(Object)
 	 */
 	public void set(C newValue, boolean condition)
 	throws InvalidValueException {
@@ -201,10 +196,35 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 * @see #set(Object)
 	 * @see #set(Object, boolean)
 	 * @see #get()
+	 * @see #apply(Object)
 	 */
 	public void set(C newValue, Predicate<C> conditionFunction)
 	throws InvalidValueException {
 		set(newValue, conditionFunction.test(newValue));
+	}
+	
+	/**
+	 * Method tests stored value versus tested value. In case they equals returns true;
+	 * @param tested instance of {@link C}
+	 * @return boolean value true/false
+	 */
+	public boolean test(C tested) {
+		return (tested == null && tested == null) || (tested != null && tested.equals(get()));
+	}
+	
+	/**
+	 * Method sets value to this reference and returns the reference.
+	 * @param value stored value
+	 * @return this instance of {@link Out}
+	 * @see #set()
+	 * @see #set(Object)
+	 * @see #set(Object, boolean)
+	 * @see #set(Object, Predicate)
+	 * @see #get()
+	 */
+	public Out<C> apply(C value) {
+		set(value);
+		return this;
 	}
 	
 	/**
@@ -339,37 +359,6 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble {
 	 */
 	public static <C> Out<C> init(C defaultValue) {
 		return new Out<C>(defaultValue);
-	}
-	
-	/**
-	 * Initializer for simple reference by type.
-	 * <br>Default value is null.
-	 * @param <C> Class of stored instance
-	 * @param defaultValue new stored instance
-	 * @param action action on set new value
-	 * @return new instance of {@link Out}
-	 */
-	@Deprecated
-	public static <C> Out<C> init(Consumer<C> onSetAction) {
-		return init(null, onSetAction);
-	}
-	
-	/**
-	 * Initializer for simple reference by type.
-	 * @since 3.0 Is replaced with build method {@link #onSetAction};
-	 * @param <C> Class of stored instance
-	 * @param defaultValue new stored instance
-	 * @param onSetAction action on set new value
-	 * @return new instance of {@link Out}
-	 */
-	@Deprecated
-	public static <C> Out<C> init(C defaultValue, Consumer<C> onSetAction) {
-		/* Overriding of default set method */
-		if (onSetAction == null)
-			throw new NullPointerException(NO_ACTION_EXCEPTION);
-		Out<C> out = Out.init(defaultValue);
-		out.setOnSetAction(onSetAction);
-		return out;
 	}
 	
 	/**

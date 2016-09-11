@@ -43,6 +43,25 @@ public class OutBoolean extends Out<Boolean> {
 	}
 
 	/**
+	 * Returns actual <b>boolean</b> value
+	 * @see #getNot()
+	 * @return boolean value
+	 */
+	@Override
+	public Boolean get() {
+		return super.get();
+	}
+	
+	/**
+	 * Returns inverted <b>boolean</b> value
+	 * @see #get()
+	 * @return boolean value
+	 */
+	public Boolean getNot() {
+		return !get();
+	}
+
+	/**
 	 * Boolean operation <b>"OR"</b>
 	 * @param value second operand
 	 * @return <b>this</b> instance of {@link OutBoolean}
@@ -215,10 +234,9 @@ public class OutBoolean extends Out<Boolean> {
 
 	/**
 	 * Boolean operation <b>"NOT"</b>
-	 * @param value second operand
 	 * @return <b>this</b> instance of {@link OutBoolean}
 	 */
-	public synchronized OutBoolean not(boolean value) {
+	public synchronized OutBoolean not() {
 		set(!get());
 		return this;
 	}

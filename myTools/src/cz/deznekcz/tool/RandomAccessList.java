@@ -19,8 +19,19 @@ public class RandomAccessList<E> extends AbstractList<E> {
 
 	@SuppressWarnings("serial")
 	public static class MemoryException extends RuntimeException {
-		public MemoryException(int index) {
-			super("Memory is not rewritable, aborted at address \""+index+"\"");
+		public MemoryException(String message) {
+			super(message);
+		}
+
+		public static MemoryException writeOrDeleteOnly(int index) {
+			return new MemoryException("Memory is not rewritable, aborted at address \""+index+"\"");
+		}
+
+		public static MemoryException maxInteger(int index) {
+			return new MemoryException(
+					  "Illegal memory index, expected: 0 - \""
+					+ (Integer.MAX_VALUE - 1)
+					+ "\", entered: \""+index+"\"");
 		}
 	}
 
@@ -47,13 +58,15 @@ public class RandomAccessList<E> extends AbstractList<E> {
 	 */
 	@Override
 	public synchronized void add(int index, E element) {
-		if (index >= memorySize)
+		if (index >= memorySize && index < Integer.MAX_VALUE)
 			grow(index);
+		else if (index >= Integer.MAX_VALUE)
+			throw MemoryException.maxInteger(index);
 		
 		boolean wasSet = elements[index] != null;
 		
 		if (onlyWritable && wasSet && element != null)
-			throw new MemoryException(index);
+			throw MemoryException.writeOrDeleteOnly(index);
 			
 		elements[index] = element;
 		

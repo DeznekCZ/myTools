@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Properties;
+import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 import cz.deznekcz.util.ForEach;
@@ -131,8 +132,8 @@ public class Lang {
 
 	private static void loadBundle(String langName) throws IOException, MissingResourceException {
 		Locale.setDefault(new Locale(langName));
-		File file = new File("lang");
-		URL[] urls = {file.toURI().toURL()};
+		
+		URL[] urls = {new File("lang").toURI().toURL()};
 		ClassLoader loader = new URLClassLoader(urls);
 		ResourceBundle bundle = ResourceBundle.getBundle("lang", new Locale(langName), loader);
 		ForEach.start(ForEach.enumeration(bundle.getKeys()), (String key) -> {
