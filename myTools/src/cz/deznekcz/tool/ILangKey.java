@@ -18,6 +18,7 @@ import javafx.beans.value.ObservableValue;
  * 
  * @see IContextedLangKey
  * @see IGroupLangKey
+ * @see Arguments
  */
 
 public interface ILangKey {

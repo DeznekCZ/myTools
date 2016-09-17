@@ -176,6 +176,10 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 	public int compareToString(String s, Comparator<String> comparator) {
 		return comparator.compare(get(), s);
 	}
+
+	public synchronized void format(Object... arguments) {
+		set(String.format(get(), arguments));
+	}
 }
 
 

@@ -18,6 +18,7 @@ import java.util.Properties;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
+import cz.deznekcz.reference.OutString;
 import cz.deznekcz.util.ForEach;
 import javafx.beans.property.ObjectProperty;
 import javafx.collections.ObservableList;
@@ -234,13 +235,30 @@ public class Lang {
 		
 		if (args == null || args.length == 0) {
 			return langItem.getValue();
+		} else {
+			OutString finalValue = OutString.empty();
+			OutString mistake = OutString.empty();
+			
+			if (symbol.getClass().isAnnotationPresent(Arguments.class)) {
+				if (!ArgumentsTest.test(
+						symbol.getClass().getAnnotation(Arguments.class), 
+						args, symbol, finalValue, mistake))
+					System.err.println(mistake.get());
+				return finalValue.get();
+			} else {
+				try {
+					return String.format(langItem.getValue(), args);
+				} catch (FormatFlagsConversionMismatchException e) {
+					return langItem.getValue();
+				}
+			}
 		}
 		
-		try {
-			return String.format(langItem.getValue(), args);
-		} catch (FormatFlagsConversionMismatchException e) {
-			return langItem.getValue();
-		}
+//		try {
+//			return String.format(langItem.getValue(), args);
+//		} catch (FormatFlagsConversionMismatchException e) {
+//			return langItem.getValue();
+//		}
 	}
 	
 	/**
