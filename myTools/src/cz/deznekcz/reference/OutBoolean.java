@@ -62,6 +62,24 @@ public class OutBoolean extends Out<Boolean> {
 	}
 
 	/**
+	 * Sets value of reference to <b>true</b>
+	 * @see #set()
+	 * @see #setFalse()
+	 */
+	public void setTrue() {
+		set(true);
+	}
+
+	/**
+	 * Sets value of reference to <b>false</b>
+	 * @see #set()
+	 * @see #setTrue()
+	 */
+	public void setFalse() {
+		set(false);
+	}
+
+	/**
 	 * Boolean operation <b>"OR"</b>
 	 * @param value second operand
 	 * @return <b>this</b> instance of {@link OutBoolean}

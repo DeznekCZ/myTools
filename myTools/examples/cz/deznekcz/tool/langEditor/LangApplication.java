@@ -6,6 +6,7 @@ import java.util.Arrays;
 import org.w3c.dom.Node;
 
 import cz.deznekcz.reference.Out;
+import cz.deznekcz.reference.OutException;
 import cz.deznekcz.tool.Lang;
 import cz.deznekcz.util.XMLLoader;
 import javafx.application.Application;
@@ -37,7 +38,10 @@ public class LangApplication extends Application {
 		primaryStage.setScene(new Scene(FXMLLoader.load(getClass().getResource("lang.fxml"), Lang.asResourceBundle())));
 		
 		if (file != null) {
-			Node rootNode = XMLLoader.load(file, Out.<Exception>init().setOnSetAction(ex->XMLLoader.showError(ex)));
+			OutException exception = new OutException();
+			Node rootNode = XMLLoader.load(file, exception);
+			if (exception.isExcepted())
+				XMLLoader.showError(exception.get());
 			TreeGenerator.from(file.getName(), file, rootNode, 
 					(TreeView<String>) primaryStage.getScene().lookup("#xmlTreeView"));
 		}

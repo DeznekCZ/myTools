@@ -1,5 +1,7 @@
 package cz.deznekcz.reference;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -14,6 +16,10 @@ import cz.deznekcz.reference.OutDouble;
 import cz.deznekcz.reference.OutFloat;
 import cz.deznekcz.reference.OutException;
 import cz.deznekcz.util.EqualAble;
+import javafx.beans.InvalidationListener;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  *     Instance of class {@link Out} represent a returnable parameter
@@ -43,14 +49,14 @@ import cz.deznekcz.util.EqualAble;
  *
  * @author Zdenek Novotny (DeznekCZ)
  * @param <C> Class of stored instances
- * @version 3.2 (method sorting, #getParameterClass() fixed)
+ * @version 4.0 (fx.beans implemented)
  */
-public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predicate<C>, Function<C, Out<C>> {
+public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predicate<C>, Function<C, Out<C>>, ObservableValue<C> {
 
 	/* BLOCK*********************************** *
-	 * Class declaration
-	 * **************************************** */
-	
+		 * Class declaration
+		 * **************************************** */
+
 	/**
 	 * While using condition to set a Out value, methods
 	 * are throwing {@link InvalidValueException}.
@@ -83,8 +89,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	
 	/** ToString formating */
 	private static final String TO_STRING_FORMAT = "Reference@%x: <%s>";
-	/** No action exception */
-	private static final String NO_ACTION_EXCEPTION = "No action is used";
+//	/** No action exception */
+//	private static final String NO_ACTION_EXCEPTION = "No action is used";
 	/** Referenced instance of {@link C} */
 	private C value;
 	/** On set action function */
@@ -111,6 +117,13 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 */
 	public C get() {
 		return value;
+	}
+
+	/**
+	 * @see #get()
+	 */
+	public C getValue() {
+		return get();
 	}
 	
 	/**
@@ -161,9 +174,16 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 * @see #apply(Object)
 	 */
 	public void set(C newValue) {
-		value = newValue;
-		if (onSetAction != null)
-			onSetAction.accept(newValue);
+		if (observable && newValue != value) {
+			C lastValue = value;
+			value = newValue;
+			invalList.forEach((listener) -> listener.invalidated(this));
+			changeList.forEach((listener) -> listener.changed(this, lastValue, newValue));
+		} else {
+			value = newValue;
+		}
+//		if (onSetAction != null)
+//			onSetAction.accept(newValue);
 	}
 	
 	/**
@@ -231,7 +251,9 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 * Method sets an onSet action of an Out reference, getting of action is not allowed.
 	 * @since 3.0 Is able to use as a build
 	 * @param onSetAction instance of {@link Consumer} or lambda expression
+	 * @return this instance of {@link Out}
 	 */
+	@Deprecated
 	public Out<C> setOnSetAction(Consumer<C> onSetAction) {
 		this.onSetAction = onSetAction;
 		return this;
@@ -242,6 +264,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 * OnSetAction will be copied.
 	 */
 	@Override
+	@Deprecated
 	public Out<C> clone() {
 		return new Out<C>(value){{setOnSetAction(onSetAction);}};
 	}
@@ -361,6 +384,10 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		return new Out<C>(defaultValue);
 	}
 	
+	/* BLOCK*********************************** *
+	 * Beans implementation
+	 * **************************************** */
+	
 	/**
 	 * Initializer for complicated references like filled arrays.
 	 * @since 3.0
@@ -371,9 +398,79 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		return init(valueGenerator.get());
 	}
 	
+	private boolean observable = false;
+	private List<InvalidationListener> invalList;
+	private List<ChangeListener<? super C>> changeList;
+	
+	/**
+	 * Allows instance to be observable ({@link ObservableValue})
+	 * @since 4.0
+	 * @return this instance of {@link Out}
+	 */
+	public synchronized Out<C> allowObservable() {
+		if (observable) return this;
+		invalList = new ArrayList<InvalidationListener>(1);
+		changeList = new ArrayList<ChangeListener<? super C>>(1);
+		observable = true;
+		return this;
+	}
+
+	public synchronized boolean isObservable() {
+		return observable;
+	}
+	
+	@Override
+	public synchronized void addListener(InvalidationListener listener) {
+		if (observable) {
+			invalList.add(listener);
+		} else {
+			throw new NotImplementedException();
+		}
+	}
+
+	@Override
+	public synchronized void removeListener(InvalidationListener listener) {
+		if (observable) {
+			invalList.remove(listener);
+		} else {
+			throw new NotImplementedException();
+		}
+	}
+
+	@Override
+	public synchronized void addListener(ChangeListener<? super C> listener) {
+		if (observable) {
+			changeList.add(listener);
+		} else {
+			throw new NotImplementedException();
+		}
+	}
+
+	@Override
+	public synchronized void removeListener(ChangeListener<? super C> listener) {
+		if (observable) {
+			changeList.remove(listener);
+		} else {
+			throw new NotImplementedException();
+		}
+	}
+	
 	/* BLOCK*********************************** *
 	 * Usable declarations
 	 * **************************************** */
 	
-	
+	/**
+	 * Raw reference to an instance of {@link C}
+	 * @author Zdenek Novotny (DeznekCZ)
+	 *
+	 * @param <C> stored instance
+	 */
+	public static class Raw<C> {
+		private C value = null;
+		private Raw() {};
+		public C get() { return value; }
+		public void set(C value) { this.value = value; };
+		public Raw<C> init() { return new Raw<>(); };
+		public Raw<C> init(C initial) { Raw<C> raw = new Raw<>(); raw.value = initial; return raw; };
+	}
 }
