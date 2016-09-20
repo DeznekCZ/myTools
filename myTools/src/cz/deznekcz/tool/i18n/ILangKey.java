@@ -1,4 +1,4 @@
-package cz.deznekcz.tool;
+package cz.deznekcz.tool.i18n;
 
 import java.util.IllegalFormatException;
 import java.util.logging.Level;
@@ -16,8 +16,8 @@ import javafx.beans.value.ObservableValue;
  * @author Zdenek Novotny (DeznekCZ)
  * @version Needs {@link Lang} version 4.0
  * 
- * @see IContextedLangKey
- * @see IGroupLangKey
+ * @see IContextClassLangKey
+ * @see IKeysClassLangKey
  * @see Arguments
  */
 

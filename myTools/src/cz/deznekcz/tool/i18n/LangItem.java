@@ -1,4 +1,4 @@
-package cz.deznekcz.tool;
+package cz.deznekcz.tool.i18n;
 
 //import cz.deznekcz.util.EqualAble;
 

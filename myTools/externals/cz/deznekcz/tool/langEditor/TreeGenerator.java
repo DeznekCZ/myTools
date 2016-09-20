@@ -19,7 +19,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.UserDataHandler;
 
-import cz.deznekcz.tool.Lang;
+import cz.deznekcz.tool.i18n.Lang;
 import cz.deznekcz.util.XMLLoader;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;

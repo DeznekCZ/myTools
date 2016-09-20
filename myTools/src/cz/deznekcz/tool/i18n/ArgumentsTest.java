@@ -1,6 +1,10 @@
-package cz.deznekcz.tool;
+package cz.deznekcz.tool.i18n;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Time;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.FormatFlagsConversionMismatchException;
 import java.util.IllegalFormatException;
 
@@ -46,5 +50,24 @@ public class ArgumentsTest {
 			}
 		}
 		return mistake.length() <= mistakeTitleLen;
+	}
+
+	public static String writeObjects(Object[] args) {
+		OutString result = OutString.empty();
+		for (int i = 0; i < args.length; i++) {
+			Object o = args[i];
+			if (o instanceof String) {
+				result.append("%s ");
+			} else if (o instanceof Integer || o instanceof Byte || o instanceof Long || o instanceof BigInteger) {
+				result.append("%d ");
+			} else if (o instanceof Double || o instanceof Float || o instanceof BigDecimal) {
+				result.append("%g ");
+			} else if (o instanceof Calendar || o instanceof Time || o instanceof java.util.Date || o instanceof java.sql.Date) {
+				result.append("date(%t)");
+			} else if (o instanceof Character) {
+				result.append("%c ");
+			}
+		}
+		return result.get();
 	}
 }

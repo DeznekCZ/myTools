@@ -1,4 +1,4 @@
-package cz.deznekcz.tool;
+package cz.deznekcz.tool.i18n;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -202,39 +202,12 @@ public class Lang {
 	 * @param args array of params
 	 * @return a {@link String} value
 	 * 
-	 * @since 4.0 Deprecated
-	 * @see String#format(String, Object...)
-	 */
-	@Deprecated
-	public static String LANG(String symbol, Object... args) {
-		LangItem langItem = LANGgetItem(symbol, args);
-		
-		if (args == null || args.length == 0) {
-			return langItem.getValue();
-		}
-		
-		try {
-			return String.format(langItem.getValue(), args);
-		} catch (FormatFlagsConversionMismatchException e) {
-			return langItem.getValue();
-		}
-	}
-	
-	/**
-	 * Method returns a {@link String} value of language symbol<br><br>
-	 * <b>using:</b> symbol_name, out_string_param...
-	 * @param symbol array of params
-	 * @param args array of params
-	 * @return a {@link String} value
-	 * 
 	 * @since 4.0
 	 * @see String#format({@link ILangKey} {@link Enum}, Object...)
 	 */
 	public static String LANG(ILangKey symbol, Object... args) {
-		LangItem langItem = LANGgetItem(symbol.symbol(), args);
-		
 		if (args == null || args.length == 0) {
-			return langItem.getValue();
+			return newOrExistingKey(symbol.symbol());
 		} else {
 			OutString finalValue = OutString.empty();
 			OutString mistake = OutString.empty();
@@ -247,9 +220,11 @@ public class Lang {
 				return finalValue.get();
 			} else {
 				try {
-					return String.format(langItem.getValue(), args);
+					return String.format(newOrExistingKey(symbol.symbol()), args);
 				} catch (FormatFlagsConversionMismatchException e) {
-					return langItem.getValue();
+					String newValue = newOrExistingKey(symbol.symbol()).concat(ArgumentsTest.writeObjects(args));
+					instance.SYMBOLS.setProperty(symbol.symbol(), newValue);
+					return String.format(newValue, args);
 				}
 			}
 		}
@@ -261,19 +236,13 @@ public class Lang {
 //		}
 	}
 	
-	/**
-	 * Method calls default value and replaces
-	 * every "/n/" value to new line
-	 * character '\n'.
-	 * @param value default string
-	 * @return replaced string
-	 * 
-	 * @since 4.0 Deprecated
-	 * @see #LANG(String, Object...)
-	 */
-	@Deprecated
-	public static String LANGlined(String symbol, Object... args) {
-		return LANG(symbol, args).replaceAll("/n/", ""+'\n');
+	private static String newOrExistingKey(String symbol) {
+		String value = instance.SYMBOLS.getProperty(symbol);
+		if (value == null) {
+			value = "<".concat(symbol).concat(">");
+			instance.SYMBOLS.setProperty(symbol, value);
+		}
+		return value;
 	}
 
 	/**
@@ -350,32 +319,9 @@ public class Lang {
 			LANGgetItem(key);
 			return true;
 		}
-		
-		/**
-		 * Is not used but a nice part of code
-		 */
-		@Deprecated
-		@Override
-		public Enumeration<String> getKeys() {
-			return new Enumeration<String>() {
-				String[] values = Collections
-						.list(instance.SYMBOLS.keys())
-						.stream()
-						.map(object -> (String) object)
-						.toArray(String[]::new);
-				
-				int step = 0;
-				
-				@Override
-				public boolean hasMoreElements() {
-					return step < values.length;
-				}
-				@Override
-				public String nextElement() {
-					return values[step++];
-				}
-			};
-		}
+
+		@Override @Deprecated
+		public Enumeration<String> getKeys() { return null;	}
 	};
 
 	/**

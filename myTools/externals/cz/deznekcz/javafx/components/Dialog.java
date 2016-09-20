@@ -3,7 +3,8 @@ package cz.deznekcz.javafx.components;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import cz.deznekcz.tool.ILangKey;
+import cz.deznekcz.tool.i18n.Arguments;
+import cz.deznekcz.tool.i18n.ILangKey;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
 
@@ -11,7 +12,8 @@ public abstract class Dialog extends Alert {
 	
 	final static ILangKey ILK_EXCEPTION       = ILangKey.simple("Dialog.Exception.");
 	final static ILangKey ILK_EXCEPTION_TITLE = ILK_EXCEPTION.extended("Title");
-	final static ILangKey ILK_EXCEPTION_NAME  = ILK_EXCEPTION.extended("Name[%s]");
+	final static @Arguments(String.class) 
+				 ILangKey ILK_EXCEPTION_NAME  = ILK_EXCEPTION.extended("Name[%s]");
 	
 	public static final Dialog EXCEPTION = new Dialog(AlertType.ERROR) {
 		private TextArea textArea;

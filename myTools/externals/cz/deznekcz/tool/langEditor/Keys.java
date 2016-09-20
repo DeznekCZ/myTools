@@ -1,9 +1,9 @@
 package cz.deznekcz.tool.langEditor;
 
-import cz.deznekcz.tool.IContextedLangKey;
+import cz.deznekcz.tool.i18n.IContextClassLangKey;
 
 public class Keys {
-	private static interface IKey extends IContextedLangKey {
+	private static interface IKey extends IContextClassLangKey {
 		@Override
 		default String contextName() {
 			return "Lang";

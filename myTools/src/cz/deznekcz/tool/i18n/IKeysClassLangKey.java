@@ -1,4 +1,4 @@
-package cz.deznekcz.tool;
+package cz.deznekcz.tool.i18n;
 
 /**
  *     New type of searching key in lang file.
@@ -21,11 +21,24 @@ package cz.deznekcz.tool;
  * 
  * @author Zdenek Novotny (DeznekCZ)
  * @see ILangKey
+ * @see IContextClassLangKey
  * @version Needs {@link Lang} version 4.0
  */
-public interface IGroupLangKey extends IContextedLangKey {
-	@Override
+public interface IKeysClassLangKey extends ILangKey {
+	
+	/**
+	 * Overridable method returns class of context.
+	 * Default context is got from first declaring class.
+	 * @return returns instance of {@link String}
+	 * @see IContextClassLangKey
+	 */
 	default String contextName() {
 		return getClass().getDeclaringClass().getSimpleName();
 	}
+	
+	/**
+	 * Method returns a symbol value of lang key
+	 * @return instance of {@link String}
+	 */
+	public default String symbol() {return contextName() + "." + ILangKey.super.symbol();}
 }
