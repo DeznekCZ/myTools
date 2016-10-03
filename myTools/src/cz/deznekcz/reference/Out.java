@@ -177,15 +177,14 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		if (observable && newValue != value) {
 			C lastValue = value;
 			value = newValue;
-			invalList.forEach((listener) -> listener.invalidated(this));
-			changeList.forEach((listener) -> listener.changed(this, lastValue, newValue));
+			invokeChange(lastValue, newValue);
 		} else {
 			value = newValue;
 		}
 //		if (onSetAction != null)
 //			onSetAction.accept(newValue);
 	}
-	
+
 	/**
 	 * Method stores an instance of {@link C}.
 	 * Condition parameter enables storing to reference.
@@ -421,11 +420,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	
 	@Override
 	public synchronized void addListener(InvalidationListener listener) {
-		if (observable) {
-			invalList.add(listener);
-		} else {
-			throw new NotImplementedException();
-		}
+		if (!observable) allowObservable();
+		invalList.add(listener);
 	}
 
 	@Override
@@ -439,11 +435,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 
 	@Override
 	public synchronized void addListener(ChangeListener<? super C> listener) {
-		if (observable) {
-			changeList.add(listener);
-		} else {
-			throw new NotImplementedException();
-		}
+		if (!observable) allowObservable();
+		changeList.add(listener);
 	}
 
 	@Override
@@ -453,6 +446,16 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		} else {
 			throw new NotImplementedException();
 		}
+	}
+	
+	/**
+	 * 
+	 * @param lastValue
+	 * @param newValue
+	 */
+	protected final void invokeChange(C lastValue, C newValue) {
+		invalList.forEach((listener) -> listener.invalidated(this));
+		changeList.forEach((listener) -> listener.changed(this, lastValue, newValue));
 	}
 	
 	/* BLOCK*********************************** *

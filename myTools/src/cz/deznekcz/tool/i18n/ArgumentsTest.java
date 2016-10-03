@@ -28,15 +28,15 @@ public class ArgumentsTest {
 		int mistakeTitleLen = mistake.length();
 		
 		if (instances == null) {
-			mistake.append(String.format(INVALID_COUNT, arguments.value().length, 0));
-		} else if (arguments.value().length != instances.length) {
-			mistake.append(String.format(INVALID_COUNT, arguments.value().length, instances.length));
+			mistake.append(String.format(INVALID_COUNT, arguments.types().length, 0));
+		} else if (arguments.types().length != instances.length) {
+			mistake.append(String.format(INVALID_COUNT, arguments.types().length, instances.length));
 		} else {
 			OutBoolean ok = OutBoolean.TRUE();
 			for (int i = 0; i < instances.length; i++) {
-				ok.and(arguments.value()[i].isInstance(instances[i]));
+				ok.and(arguments.types()[i].isInstance(instances[i]));
 				if (ok.getNot()) {
-					mistake.append(String.format(INVALID_ARGUMENT_CLASS, i, arguments.value()[i].toString(), instances[i].getClass().toString()));
+					mistake.append(String.format(INVALID_ARGUMENT_CLASS, i, arguments.types()[i].toString(), instances[i].getClass().toString()));
 					break;
 				}
 			}

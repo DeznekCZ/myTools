@@ -7,7 +7,12 @@ package cz.deznekcz.reference;
  * @see #get() get() for other acces to an Exception
  */
 public class OutException extends Out<Exception> {
-	public OutException() {
+	
+	public static OutException create() {
+		return new OutException();
+	}
+	
+	private OutException() {
 		super(null);
 	}
 	
@@ -24,5 +29,9 @@ public class OutException extends Out<Exception> {
 	
 	public void printStackTrace() {
 		get().printStackTrace();
+	}
+
+	public void callListenersIfNotExcepded() {
+		if (!isExcepted()) invokeChange(get(), get());
 	}
 }

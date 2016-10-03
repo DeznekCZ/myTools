@@ -38,7 +38,7 @@ public class LangApplication extends Application {
 		primaryStage.setScene(new Scene(FXMLLoader.load(getClass().getResource("lang.fxml"), Lang.asResourceBundle())));
 		
 		if (file != null) {
-			OutException exception = new OutException();
+			OutException exception = OutException.create();
 			Node rootNode = XMLLoader.load(file, exception);
 			if (exception.isExcepted())
 				XMLLoader.showError(exception.get());
