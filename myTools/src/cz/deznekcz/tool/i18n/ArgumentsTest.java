@@ -63,7 +63,7 @@ public class ArgumentsTest {
 			} else if (o instanceof Double || o instanceof Float || o instanceof BigDecimal) {
 				result.append("%g ");
 			} else if (o instanceof Calendar || o instanceof Time || o instanceof java.util.Date || o instanceof java.sql.Date) {
-				result.append("date(%t)");
+				result.append("date(%t) ");
 			} else if (o instanceof Character) {
 				result.append("%c ");
 			}
