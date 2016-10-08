@@ -1,6 +1,5 @@
 package cz.deznekcz.reference;
 
-import java.text.Collator;
 import java.util.Comparator;
 import java.util.function.Predicate;
 
@@ -50,8 +49,9 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 	}
 
 	@Override
-	public String subSequence(int start, int end) {
-		return get().substring(start, end);
+	public synchronized OutString subSequence(int start, int end) {
+		set(get().substring(start, end));
+		return this;
 	}
 
 	@Override
