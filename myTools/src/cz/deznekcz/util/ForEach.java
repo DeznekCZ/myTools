@@ -1,6 +1,5 @@
 package cz.deznekcz.util;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -10,6 +9,9 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
+
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import cz.deznekcz.reference.OutInteger;
 
@@ -99,7 +101,7 @@ public class ForEach {
 		Iterator<T> it = iterable.iterator();
 		while(
 				it.hasNext() 		// items exists
-			&&  iteration.test(it.next())		// normal use of Out.set(true) 
+			&&  iteration.test(it.next())
 			)	; // loop action
 	}
 
@@ -272,5 +274,26 @@ public class ForEach {
 		OutInteger counter = OutInteger.create();
 		ForEach.start(iterable, (v) -> {counter.increment();});
 		return counter.get();
+	}
+	public static Iterable<Node> DOMNodeList(NodeList el) {
+		return new Iterable<Node>() {
+			
+			@Override
+			public Iterator<Node> iterator() {
+				return new Iterator<Node>() {
+					private int index = 0;
+					@Override
+					public boolean hasNext() {
+						return index < el.getLength();
+					}
+
+					@Override
+					public Node next() {
+						return el.item(index++);
+					}
+					
+				};
+			}
+		};
 	}
 }

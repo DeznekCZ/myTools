@@ -5,7 +5,7 @@ package cz.deznekcz.reference;
  * @see #mul(Number)
  */
 public class OutDouble extends OutNumber<Double> {
-	public OutDouble(double n) {
+	private OutDouble(double n) {
 		super(n);
 	}
 	
@@ -17,6 +17,14 @@ public class OutDouble extends OutNumber<Double> {
 	public synchronized OutDouble mul(Number n) {
 		set(get() * n.doubleValue());
 		return this;
+	}
+
+	public static OutDouble create() {
+		return new OutDouble(0);
+	}
+
+	public static OutDouble create(double i) {
+		return new OutDouble(i);
 	}
 }
 

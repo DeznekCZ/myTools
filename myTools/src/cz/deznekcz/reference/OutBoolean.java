@@ -1,6 +1,12 @@
 package cz.deznekcz.reference;
 
+import java.util.Objects;
 import java.util.function.Function;
+
+import cz.deznekcz.util.ForEach;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
 
 public class OutBoolean extends Out<Boolean> {
 	private OutBoolean(boolean value) {
@@ -49,7 +55,7 @@ public class OutBoolean extends Out<Boolean> {
 	 */
 	@Override
 	public Boolean get() {
-		return super.get();
+		return OutBoolean.super.get();
 	}
 	
 	/**
@@ -267,5 +273,61 @@ public class OutBoolean extends Out<Boolean> {
 	public synchronized OutBoolean function(Function<Boolean,Boolean> f) {
 		set(f.apply(get()));
 		return this;
+	}
+
+	@SafeVarargs
+	public static OutBoolean bindOr(ObservableValue<Boolean>... args) {
+		Objects.requireNonNull(args);
+		OutBoolean result = OutBoolean.FALSE();
+		ChangeListener<Boolean> listener = (o, l, n) -> {
+			OutBoolean presult = OutBoolean.FALSE();
+			ForEach.start(ForEach.array(args), (arg) -> {
+				presult.or(n);
+				return presult.getNot();
+			});
+			result.set(presult.get());
+		};
+		for (ObservableValue<Boolean> arg : args) {
+			arg.addListener(listener);
+		}
+		return result;
+	}
+
+	@SafeVarargs
+	public static OutBoolean bindAnd(ObservableValue<Boolean>... args) {
+		Objects.requireNonNull(args);
+		OutBoolean result = OutBoolean.FALSE();
+		ChangeListener<Boolean> listener = (o, l, n) -> {
+			OutBoolean presult = OutBoolean.FALSE();
+			ForEach.start(ForEach.array(args), (arg) -> {
+				presult.and(n);
+				return presult.getNot();
+			});
+			result.set(presult.get());
+		};
+		for (ObservableValue<Boolean> arg : args) {
+			arg.addListener(listener);
+		}
+		return result;
+	}
+
+	public static OutBoolean bind(ObservableValue<Boolean> arg) {
+		Objects.requireNonNull(arg);
+		OutBoolean result = OutBoolean.FALSE();
+		ChangeListener<Boolean> listener = (o, l, n) -> {
+			result.set(n);
+		};
+		arg.addListener(listener);
+		return result;
+	}
+
+	public static OutBoolean bindNot(ObservableValue<Boolean> arg) {
+		Objects.requireNonNull(arg);
+		OutBoolean result = OutBoolean.FALSE();
+		ChangeListener<Boolean> listener = (o, l, n) -> {
+			result.set(l);
+		};
+		arg.addListener(listener);
+		return result;
 	}
 }

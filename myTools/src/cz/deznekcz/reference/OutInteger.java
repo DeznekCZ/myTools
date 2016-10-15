@@ -2,6 +2,8 @@ package cz.deznekcz.reference;
 
 import java.util.function.Function;
 
+import javafx.beans.value.ObservableValue;
+
 /**
  * @see Out
  * @see #create() create(): stored value 0
@@ -17,8 +19,8 @@ import java.util.function.Function;
  * @see #isEqual(int)
  * @see #isLower(int)
  * @see #isGreather(int)
- * @see #isLowerAndEqual(int)
- * @see #isGreatherAndEqual(int)
+ * @see #isLowerOrEqual(int)
+ * @see #isGreatherOrEqual(int)
  * @see #binary(Function)
  * @see #binaryAND(int)
  * @see #binaryNAND(int)
@@ -116,11 +118,11 @@ public class OutInteger extends OutNumber<Integer> {
 		return value < get();
 	}
 
-	public synchronized boolean isLowerAndEqual(int value) {
+	public synchronized boolean isLowerOrEqual(int value) {
 		return value >= get();
 	}
 
-	public synchronized boolean isGreatherAndEqual(int value) {
+	public synchronized boolean isGreatherOrEqual(int value) {
 		return value <= get();
 	}
 	
