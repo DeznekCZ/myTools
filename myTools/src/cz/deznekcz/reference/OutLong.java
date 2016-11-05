@@ -18,5 +18,25 @@ public class OutLong extends OutNumber<Long> {
 		set(get() * n.longValue());
 		return this;
 	}
+
+	public synchronized boolean isEqual(Long value) {
+		return value == get();
+	}
+
+	public synchronized boolean isLower(Long value) {
+		return value > get();
+	}
+
+	public synchronized boolean isGreater(Long value) {
+		return value < get();
+	}
+
+	public synchronized boolean isLowerOrEqual(Long value) {
+		return value >= get();
+	}
+
+	public synchronized boolean isGreatherOrEqual(Long value) {
+		return value <= get();
+	}
 }
 

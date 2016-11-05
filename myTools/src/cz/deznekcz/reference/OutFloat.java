@@ -18,5 +18,25 @@ public class OutFloat extends OutNumber<Float> {
 		set(get() * n.floatValue());
 		return this;
 	}
+
+	public synchronized boolean isEqual(Float value) {
+		return value == get();
+	}
+
+	public synchronized boolean isLower(Float value) {
+		return value > get();
+	}
+
+	public synchronized boolean isGreater(Float value) {
+		return value < get();
+	}
+
+	public synchronized boolean isLowerOrEqual(Float value) {
+		return value >= get();
+	}
+
+	public synchronized boolean isGreatherOrEqual(Float value) {
+		return value <= get();
+	}
 }
 

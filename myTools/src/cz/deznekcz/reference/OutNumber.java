@@ -1,6 +1,6 @@
 package cz.deznekcz.reference;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * @see #add(Number)
@@ -25,13 +25,55 @@ public abstract class OutNumber<I extends Number> extends Out<I> {
 	public void set() {
 		set((I) get().getClass().cast(0));
 	}
-	
-	public OutBoolean bindCompared(Function<I,Boolean> transform, I value) {
-		OutBoolean transformed = OutBoolean.FALSE();
-		this.addListener((o, l, n) -> {
-			transformed.set(transform.apply(value));
-		});
-		return transformed;
-	}
+
+	/**
+	 * TODO
+	 * @param value number value
+	 * @return condition result
+	 * @see PredictionAble
+	 * @see #bindChecked(Predicate, Object)
+	 */
+	@PredictionAble
+	public abstract boolean isEqual(I value);
+
+	/**
+	 * TODO
+	 * @param value number value
+	 * @return condition result
+	 * @see PredictionAble
+	 * @see #bindChecked(Predicate, Object)
+	 */
+	@PredictionAble
+	public abstract boolean isLower(I value);
+
+	/**
+	 * TODO
+	 * @param value number value
+	 * @return condition result
+	 * @see PredictionAble
+	 * @see #bindChecked(Predicate, Object)
+	 */
+	@PredictionAble
+	public abstract boolean isGreater(I value); 
+
+	/**
+	 * TODO
+	 * @param value number value
+	 * @return condition result
+	 * @see PredictionAble
+	 * @see #bindChecked(Predicate, Object)
+	 */
+	@PredictionAble
+	public abstract boolean isLowerOrEqual(I value); 
+
+	/**
+	 * TODO
+	 * @param value number value
+	 * @return condition result
+	 * @see PredictionAble
+	 * @see #bindChecked(Predicate, Object)
+	 */
+	@PredictionAble
+	public abstract boolean isGreatherOrEqual(I value);
 }
 

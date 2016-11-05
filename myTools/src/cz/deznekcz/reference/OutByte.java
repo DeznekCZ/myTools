@@ -19,5 +19,25 @@ public class OutByte extends OutNumber<Byte> {
 		set((byte) (get() * n.byteValue()));
 		return this;
 	}
+
+	public synchronized boolean isEqual(Byte value) {
+		return value == get();
+	}
+
+	public synchronized boolean isLower(Byte value) {
+		return value > get();
+	}
+
+	public synchronized boolean isGreater(Byte value) {
+		return value < get();
+	}
+
+	public synchronized boolean isLowerOrEqual(Byte value) {
+		return value >= get();
+	}
+
+	public synchronized boolean isGreatherOrEqual(Byte value) {
+		return value <= get();
+	}
 }
 

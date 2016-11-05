@@ -1,5 +1,7 @@
 package cz.deznekcz.reference;
 
+import java.lang.annotation.Documented;
+
 /**
  * @see #add(Number)
  * @see #mul(Number)
@@ -25,6 +27,26 @@ public class OutDouble extends OutNumber<Double> {
 
 	public static OutDouble create(double i) {
 		return new OutDouble(i);
+	}
+
+	public synchronized boolean isEqual(Double value) {
+		return value == get();
+	}
+
+	public synchronized boolean isLower(Double value) {
+		return value > get();
+	}
+
+	public synchronized boolean isGreater(Double value) {
+		return value < get();
+	}
+
+	public synchronized boolean isLowerOrEqual(Double value) {
+		return value >= get();
+	}
+
+	public synchronized boolean isGreatherOrEqual(Double value) {
+		return value <= get();
 	}
 }
 

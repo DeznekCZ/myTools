@@ -273,4 +273,9 @@ public class Utils {
 		}
 		return array;
 	}
+
+	public static void copyProperties(ResourceBundle asBundle, ResourceBundle classFieldValues) {
+		// TODO Auto-generated method stub
+		
+	}
 }

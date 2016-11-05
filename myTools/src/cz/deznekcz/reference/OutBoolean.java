@@ -1,15 +1,17 @@
 package cz.deznekcz.reference;
 
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import cz.deznekcz.util.ForEach;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableBooleanValue;
 import javafx.beans.value.ObservableValue;
 
 public class OutBoolean extends Out<Boolean> {
-	private OutBoolean(boolean value) {
+
+	protected OutBoolean(boolean value) {
 		super(value);
 	}
 	
@@ -329,5 +331,68 @@ public class OutBoolean extends Out<Boolean> {
 		};
 		arg.addListener(listener);
 		return result;
+	}
+	
+	public static abstract class ALinkable extends OutBoolean implements ChangeListener<Boolean> {
+		
+		protected ALinkable() {
+			super(false);
+		}
+		private ArrayList<ObservableValue<Boolean>> from = new ArrayList<>();
+		
+		public void addListenable(ObservableValue<Boolean> observable) {
+			from.add(observable);
+			observable.addListener(this);
+		}
+		public void removeListenable(ObservableValue<Boolean> observable) {
+			from.remove(observable);
+			observable.removeListener(this);
+		}
+		@Override
+		public void changed(ObservableValue<? extends Boolean> o, Boolean l, Boolean n) {
+			OutBoolean newValue = resetValue();
+			Consumer<Boolean> action = getAction(newValue);
+			from.forEach((obs) -> action.accept(obs.getValue()));
+			this.set(newValue.get());
+		}
+		
+		public abstract Consumer<Boolean> getAction(OutBoolean value);
+		
+		public abstract OutBoolean resetValue();
+		
+		public void stopListening() {
+			from.forEach((obs) -> obs.removeListener(this));
+			from.clear();
+		}
+	}
+
+	public static ALinkable orBinding(boolean init) {
+		return new ALinkable() {
+
+			@Override
+			public Consumer<Boolean> getAction(OutBoolean value) {
+				return value::or;
+			}
+
+			@Override
+			public OutBoolean resetValue() {
+				return OutBoolean.FALSE();
+			}
+		};
+	}
+
+	public static ALinkable andBinding(boolean init) {
+		return new ALinkable() {
+
+			@Override
+			public Consumer<Boolean> getAction(OutBoolean value) {
+				return value::and;
+			}
+
+			@Override
+			public OutBoolean resetValue() {
+				return OutBoolean.TRUE();
+			}
+		};
 	}
 }

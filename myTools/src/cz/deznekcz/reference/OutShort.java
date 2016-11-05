@@ -18,5 +18,25 @@ public class OutShort extends OutNumber<Short> {
 		set((short) (get() * n.intValue()));
 		return this;
 	}
+
+	public synchronized boolean isEqual(Short value) {
+		return value == get();
+	}
+
+	public synchronized boolean isLower(Short value) {
+		return value > get();
+	}
+
+	public synchronized boolean isGreater(Short value) {
+		return value < get();
+	}
+
+	public synchronized boolean isLowerOrEqual(Short value) {
+		return value >= get();
+	}
+
+	public synchronized boolean isGreatherOrEqual(Short value) {
+		return value <= get();
+	}
 }
 

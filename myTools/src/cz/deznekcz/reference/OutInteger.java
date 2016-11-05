@@ -1,6 +1,7 @@
 package cz.deznekcz.reference;
 
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javafx.beans.value.ObservableValue;
 
@@ -18,7 +19,7 @@ import javafx.beans.value.ObservableValue;
  * @see #decrement()
  * @see #isEqual(int)
  * @see #isLower(int)
- * @see #isGreather(int)
+ * @see #isGreater(int)
  * @see #isLowerOrEqual(int)
  * @see #isGreatherOrEqual(int)
  * @see #binary(Function)
@@ -106,23 +107,23 @@ public class OutInteger extends OutNumber<Integer> {
 		return this;
 	}
 
-	public synchronized boolean isEqual(int value) {
+	public synchronized boolean isEqual(Integer value) {
 		return value == get();
 	}
 
-	public synchronized boolean isLower(int value) {
+	public synchronized boolean isLower(Integer value) {
 		return value > get();
 	}
 
-	public synchronized boolean isGreather(int value) {
+	public synchronized boolean isGreater(Integer value) {
 		return value < get();
 	}
 
-	public synchronized boolean isLowerOrEqual(int value) {
+	public synchronized boolean isLowerOrEqual(Integer value) {
 		return value >= get();
 	}
 
-	public synchronized boolean isGreatherOrEqual(int value) {
+	public synchronized boolean isGreatherOrEqual(Integer value) {
 		return value <= get();
 	}
 	

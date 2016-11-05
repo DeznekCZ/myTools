@@ -130,7 +130,7 @@ public class ForEach {
 				};
 			});	// loop action
 		}
-		while (countOfRunning.isGreather(1)) Thread.yield();
+		while (countOfRunning.isGreater(1)) Thread.yield();
 	}
 
 	/**

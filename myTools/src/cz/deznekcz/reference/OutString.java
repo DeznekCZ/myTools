@@ -1,7 +1,10 @@
 package cz.deznekcz.reference;
 
+import java.io.OutputStream;
 import java.util.Comparator;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import cz.deznekcz.util.Builder;
 
@@ -157,6 +160,7 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 		}
 	}
 	
+	@PredictionAble
 	public boolean equalsToString(String s) {
 		return get().equals(s);
 	}
@@ -179,6 +183,43 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 
 	public synchronized void format(Object... arguments) {
 		set(String.format(get(), arguments));
+	}
+	
+	/**
+	 * Usable for pipelining:<br>
+	 * <pre>
+OutInteger length = outStringInstance.bindLenght();
+OutBoolean.ALinked condition = OutBoolean.andBinding();
+condition.addListenable(length.bindCompared(length::isGreater, 5));
+condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStringInstance::contains, "name")));
+
+// condition is True if the string value not contains "name" and the length is bigger than 5
+	 * </pre>
+	 * @return
+	 * @see #bindStringValue(Predicate)
+	 */
+	public OutInteger bindLength() {
+		OutInteger length = OutInteger.create(get().length());
+		addListener((o,l,n) -> length.set(n.length()));
+		return length;
+	}
+	
+	@PredictionAble
+	public boolean contains(String seq) {
+		return get().contains(seq);
+	}
+	
+	public boolean contains(CharSequence seq) {
+		return get().contains(seq);
+	}
+	
+	@PredictionAble
+	public boolean matches(String regex) {
+		return get().matches(regex);
+	}
+
+	public void print(Consumer<String> printMethod) {
+		printMethod.accept(get());
 	}
 }
 

@@ -18,6 +18,7 @@ import java.util.Properties;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
+import cz.deznekcz.reference.OutArray;
 import cz.deznekcz.reference.OutString;
 import cz.deznekcz.util.ForEach;
 import javafx.beans.property.ObjectProperty;
@@ -132,7 +133,7 @@ public class Lang {
 	}
 
 	private static void loadBundle(String langName) throws IOException, MissingResourceException {
-		Locale.setDefault(new Locale(langName));
+		Locale.setDefault((OutArray.from(langName.split("_")).to((value) -> new Locale(value[0], value[1]))));
 		
 		URL[] urls = {new File("lang").toURI().toURL()};
 		ClassLoader loader = new URLClassLoader(urls);

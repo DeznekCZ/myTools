@@ -1,5 +1,7 @@
 package cz.deznekcz.reference;
 
+import java.util.Random;
+
 import cz.deznekcz.reference.Out;
 
 public class Refferences {
@@ -20,8 +22,7 @@ public class Refferences {
 		
 		callByInstanceOut(out);
 		
-		aStringVariable = out.get(); // or out.value(); in older version
-		System.out.println(aStringVariable); // after change
+		System.out.println(out); // after change
 		
 		/* Default value set from typed initialzer */
 		
@@ -36,9 +37,22 @@ public class Refferences {
 		System.out.println("Answer: " + answer);
 		
 		/* Global using */
-		callByOnSetAction(Out.<Double>init().setOnSetAction(value -> globalDouble = value));
+		callByOnSetAction(Out.<Double>init().listened((obs,lastVal,newVal) -> globalDouble = newVal));
 		/* globalDouble can be a property of instance or class */
 		System.out.println(globalDouble);
+		
+		OutDouble doubleI = OutDouble.create();
+		OutBoolean booleanI = doubleI.bindChecked(doubleI::isGreater, 6.);
+		booleanI.addListener((o,l,n) -> {
+			System.out.println(n ? "New number: " + doubleI.get() + " is greater then 6" : "New number: " + doubleI.get() + " is less or equal to 6");
+		});
+		
+		Random r = new Random(7777L);
+		for (int i = 0; i < 10; i++) {
+			Double d = r.nextDouble() * 10;
+			System.out.println("Changing to: " + d);
+			doubleI.set(d);
+		}
 	}
 	
 	private static void callByOnSetAction(Out<Double> doubleOutArg) {

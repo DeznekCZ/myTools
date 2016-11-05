@@ -1,7 +1,9 @@
 package cz.deznekcz.reference;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -16,9 +18,11 @@ import cz.deznekcz.reference.OutDouble;
 import cz.deznekcz.reference.OutFloat;
 import cz.deznekcz.reference.OutException;
 import cz.deznekcz.util.EqualAble;
+import cz.deznekcz.util.ForEach;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import sun.reflect.CallerSensitive;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
@@ -89,12 +93,10 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	
 	/** ToString formating */
 	private static final String TO_STRING_FORMAT = "Reference@%x: <%s>";
-//	/** No action exception */
-//	private static final String NO_ACTION_EXCEPTION = "No action is used";
+	/** ToString formating */
+	private static final String LISTENERS = " Invalidation Listeners: %s, Change Listeners: %s";
 	/** Referenced instance of {@link C} */
 	private C value;
-	/** On set action function */
-	private Consumer<C> onSetAction;
 
 	/**
 	 * Constructor references an external instance
@@ -247,25 +249,27 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	}
 	
 	/**
-	 * Method sets an onSet action of an Out reference, getting of action is not allowed.
-	 * @since 3.0 Is able to use as a build
-	 * @param onSetAction instance of {@link Consumer} or lambda expression
-	 * @return this instance of {@link Out}
-	 */
-	@Deprecated
-	public Out<C> setOnSetAction(Consumer<C> onSetAction) {
-		this.onSetAction = onSetAction;
-		return this;
-	}
-	
-	/**
 	 * Returns new instance of {@link Out} with same reference.
 	 * OnSetAction will be copied.
 	 */
 	@Override
-	@Deprecated
 	public Out<C> clone() {
-		return new Out<C>(value){{setOnSetAction(onSetAction);}};
+		Out<C> clone = new Out<C>(value);
+		if( this.isObservable() ) {
+			this.changeList.forEach((obs) -> clone.addListener(obs));
+			this.invalList.forEach((obs) -> clone.addListener(obs));
+		}
+		return clone;
+	}
+
+	/**
+	 * Method converts current referenced value to an instance of {@link R}
+	 * @param converter conversion function
+	 * @param <R> Class of returned value
+	 * @return instance of {@link R}
+	 */
+	public <R> R to(Function<C, R> converter) {
+		return converter.apply(get());
 	}
 	
 	/* BLOCK*********************************** *
@@ -280,7 +284,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		return (  value == null
 			? String.format(TO_STRING_FORMAT, hashCode(), "null")
 			: String.format(TO_STRING_FORMAT, hashCode(), value.toString())
-		);
+		) + (observable ? String.format(LISTENERS, Arrays.toString(invalList.toArray()), Arrays.toString(changeList.toArray())) : "");
 	}
 	
 	/**
@@ -311,13 +315,9 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equalsTo(Object obj) {
-		try {
-			return equalsTo((Out<C>) obj);
-		} catch (ClassCastException outException) {
-			return value instanceof EqualAble 
-					? ((EqualAble) value).equalsTo(obj) 
-					: value.equals(obj);
-		}
+		return obj instanceof Out && value != null && value.getClass().isInstance(obj) ? equalsTo((Out<C>) obj) :
+			(( obj instanceof EqualAble && value != null) ? ((EqualAble) value).equalsTo(obj) :
+			(( value != null && value.equals(obj) ) || (value == null && obj == null))); 
 	}
 	
 	/**
@@ -458,6 +458,41 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		changeList.forEach((listener) -> listener.changed(this, lastValue, newValue));
 	}
 	
+	public Out<C> listened(ChangeListener<? super C> listener) {
+		Objects.requireNonNull(listener);
+		this.addListener(listener);
+		return this;
+	}
+	
+	public Out<C> listened(InvalidationListener listener) {
+		Objects.requireNonNull(listener);
+		this.addListener(listener);
+		return this;
+	}
+	
+	public void previousIfNull(ObservableValue<? extends C> observable, C lastV, C newV) {
+		if (newV == null)
+			this.set(lastV);
+	}
+	
+	/**
+	 * <b>WARNING</b> only marked functions by annotation {@link PredictionAble} in {@link Out} implementations can be used.<br>
+	 * Examples:<br>
+	 * OutBoolean conditionOutBoolean = instanceOutInteger.bindCompared(instanceOutInteger::isLoverOrEqual, 3);
+	 * OutBoolean conditionOutBoolean = instanceOutDouble.bindCompared(instanceOutDouble::isEqual, 5.);
+	 * OutBoolean conditionOutBoolean = instanceOutString.bindCompared(instanceOutString::contains, "yes");
+	 * @param checkingFunction
+	 * @param value versus checking value
+	 * @return new instance of {@link OutBoolean}
+	 */
+	public OutBoolean bindChecked(Predicate<C> checkingFunction, C value) {
+		OutBoolean transformed = OutBoolean.FALSE();
+		this.addListener((o, l, n) -> {
+			transformed.set(checkingFunction.test(value));
+		});
+		return transformed;
+	}
+	
 	/* BLOCK*********************************** *
 	 * Usable declarations
 	 * **************************************** */
@@ -473,7 +508,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		private Raw() {};
 		public C get() { return value; }
 		public void set(C value) { this.value = value; };
-		public Raw<C> init() { return new Raw<>(); };
-		public Raw<C> init(C initial) { Raw<C> raw = new Raw<>(); raw.value = initial; return raw; };
+		public static <C> Raw<C> init() { return new Raw<>(); };
+		public static <C> Raw<C> init(C initial) { Raw<C> raw = new Raw<>(); raw.value = initial; return raw; };
 	}
 }
