@@ -8,12 +8,15 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.text.Collator;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.function.BiFunction;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -277,5 +280,29 @@ public class Utils {
 	public static void copyProperties(ResourceBundle asBundle, ResourceBundle classFieldValues) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	/**
+	 * Combine comparators by delegated functions that is represented by {@link BiFunction} instances.
+	 * Comparing is solving like OR conditions for boolean. If is taken first non zero result returns that result. 
+	 * <br><b>Using:</b>
+	 * <br>Utils.priorityComparator(String::compare, Collator.getInstance()::compare, AnotherClass::methodWithSameNotation)
+	 * @param comparators
+	 * @return
+	 */
+	@SafeVarargs
+	public static <C> Comparator<C> priorityComparator(BiFunction<C,C,Integer>...comparators) {
+		return new Comparator<C>() {
+			@Override
+			public int compare(C o1, C o2) {
+				int result = 0;
+				for (int i = 0; i < comparators.length; i++) {
+					result = comparators[i].apply(o1, o2);
+					if (result != 0)
+						break;
+				}
+				return result;
+			}
+		};
 	}
 }

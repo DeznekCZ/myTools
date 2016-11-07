@@ -20,10 +20,14 @@ import cz.deznekcz.reference.OutException;
 import cz.deznekcz.util.EqualAble;
 import cz.deznekcz.util.ForEach;
 import javafx.beans.InvalidationListener;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
+import javafx.scene.layout.BorderPane;
 import sun.reflect.CallerSensitive;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import sun.security.jca.GetInstance.Instance;
 
 /**
  *     Instance of class {@link Out} represent a returnable parameter
@@ -400,6 +404,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	private boolean observable = false;
 	private List<InvalidationListener> invalList;
 	private List<ChangeListener<? super C>> changeList;
+	private ObservableValue<?> bean;
+	private ChangeListener<?> beanListener;
 	
 	/**
 	 * Allows instance to be observable ({@link ObservableValue})
@@ -476,23 +482,67 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	}
 	
 	/**
+	 * This method allow check value only versus constant.
 	 * <b>WARNING</b> only marked functions by annotation {@link PredictionAble} in {@link Out} implementations can be used.<br>
 	 * Examples:<br>
 	 * OutBoolean conditionOutBoolean = instanceOutInteger.bindCompared(instanceOutInteger::isLoverOrEqual, 3);
 	 * OutBoolean conditionOutBoolean = instanceOutDouble.bindCompared(instanceOutDouble::isEqual, 5.);
 	 * OutBoolean conditionOutBoolean = instanceOutString.bindCompared(instanceOutString::contains, "yes");
+	 * @see #bindChecked(Predicate, Supplier)
 	 * @param checkingFunction
 	 * @param value versus checking value
 	 * @return new instance of {@link OutBoolean}
 	 */
 	public OutBoolean bindChecked(Predicate<C> checkingFunction, C value) {
 		OutBoolean transformed = OutBoolean.FALSE();
-		this.addListener((o, l, n) -> {
+		ChangeListener<C> listener = (o, l, n) -> {
 			transformed.set(checkingFunction.test(value));
-		});
+		};
+		this.addListener(listener);
+		transformed.setBean(this, listener);
 		return transformed;
 	}
+
+	/**
+	 * This method allow to have variable constant to check.
+	 * @see #bindChecked(Predicate, Object)
+	 * @param checkingFunction
+	 * @param value versus checking getter delegate, lambda or instance of {@link Supplier}
+	 * @return new instance of {@link OutBoolean}
+	 */
+	public OutBoolean bindChecked(Predicate<C> checkingFunction, Supplier<C> value) {
+		OutBoolean transformed = OutBoolean.FALSE();
+		ChangeListener<C> listener = (o, l, n) -> {
+			transformed.set(checkingFunction.test(value.get()));
+		};
+		this.addListener(listener);
+		transformed.setBean(this, listener);
+		return transformed;
+	}
+
+	/**
+	 * Simple binding from javafx.beans
+	 * @param observable
+	 * @return new instance of {@link Out}
+	 */
+	public static <C> Out<C> bind(ObservableValue<C> observable) {
+		Out<C> out = Out.init(observable.getValue());
+		ChangeListener<C> listener = (o,l,n) -> out.set(n);
+		observable.addListener(listener);
+		out.setBean(observable, listener);
+		return out;
+	}
 	
+	protected <O> void setBean(ObservableValue<O> bean, ChangeListener<O> beanListener) {
+		this.bean = bean;
+		this.beanListener = beanListener;
+	}
+
+	@SuppressWarnings("unchecked")
+	public <O> void unbind() {
+		((ObservableValue<O>) bean).removeListener((ChangeListener<O>) beanListener);
+	}
+
 	/* BLOCK*********************************** *
 	 * Usable declarations
 	 * **************************************** */

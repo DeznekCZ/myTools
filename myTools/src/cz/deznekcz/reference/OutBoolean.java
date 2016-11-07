@@ -35,9 +35,11 @@ public class OutBoolean extends Out<Boolean> {
 	 * Returns new reference to boolean value stored in casted reference, 
 	 * if the reference is null returns new reference with true value
 	 * @param reference instance of {@link Out}
-	 * @return new instance of {@link OutBoolean}
+	 * @return new instance of {@link OutBoolean} or same instance if it is same implementation
 	 */
 	public static OutBoolean cast(Out<Boolean> reference) {
+		if (reference instanceof OutBoolean)
+			return (OutBoolean) reference;
 		return new OutBoolean(reference == null || reference.get());
 	}
 	
@@ -313,16 +315,6 @@ public class OutBoolean extends Out<Boolean> {
 		return result;
 	}
 
-	public static OutBoolean bind(ObservableValue<Boolean> arg) {
-		Objects.requireNonNull(arg);
-		OutBoolean result = OutBoolean.FALSE();
-		ChangeListener<Boolean> listener = (o, l, n) -> {
-			result.set(n);
-		};
-		arg.addListener(listener);
-		return result;
-	}
-
 	public static OutBoolean bindNot(ObservableValue<Boolean> arg) {
 		Objects.requireNonNull(arg);
 		OutBoolean result = OutBoolean.FALSE();
@@ -366,7 +358,7 @@ public class OutBoolean extends Out<Boolean> {
 		}
 	}
 
-	public static ALinkable orBinding(boolean init) {
+	public static ALinkable orBinding() {
 		return new ALinkable() {
 
 			@Override
@@ -381,7 +373,7 @@ public class OutBoolean extends Out<Boolean> {
 		};
 	}
 
-	public static ALinkable andBinding(boolean init) {
+	public static ALinkable andBinding() {
 		return new ALinkable() {
 
 			@Override
