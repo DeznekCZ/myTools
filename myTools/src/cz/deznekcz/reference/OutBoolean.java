@@ -2,10 +2,12 @@ package cz.deznekcz.reference;
 
 import java.util.ArrayList;
 import java.util.Objects;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 import cz.deznekcz.util.ForEach;
+import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 

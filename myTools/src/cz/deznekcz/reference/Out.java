@@ -541,8 +541,26 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	@SuppressWarnings("unchecked")
 	public <O> void unbind() {
 		((ObservableValue<O>) bean).removeListener((ChangeListener<O>) beanListener);
+		bean = null;
+		beanListener = null;
 	}
 
+	public Out<Object> objectReference() {
+		Out<Object> ref = Out.init();
+		ChangeListener<C> listener = (o, l, n) -> {
+			ref.set(n);
+		};
+		this.addListener(listener);
+		ref.setBean(this, listener);
+		return ref;
+	}
+	
+	@Override
+	protected void finalize() throws Throwable {
+		unbind();
+		super.finalize();
+	}
+	
 	/* BLOCK*********************************** *
 	 * Usable declarations
 	 * **************************************** */

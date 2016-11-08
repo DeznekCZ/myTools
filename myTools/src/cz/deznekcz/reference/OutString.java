@@ -1,12 +1,18 @@
 package cz.deznekcz.reference;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
+import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.util.Builder;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 
 /**
  * Enclosing implementation of {@link Out} for manipulation with strings
@@ -220,6 +226,49 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 
 	public void print(Consumer<String> printMethod) {
 		printMethod.accept(get());
+	}
+
+	@SafeVarargs
+	public static OutString bindFormat(String attachments, ObservableValue<Object>... fileCount) {
+		List<ObservableValue<Object>> mBeans = new ArrayList<>();
+		List<ChangeListener<Object>> mListeners = new ArrayList<>();
+		OutString out = new OutString(attachments) {
+			List<ObservableValue<Object>> beans = mBeans;
+			List<ChangeListener<Object>> listeners = mListeners;
+			@Override
+			public <O> void unbind() {
+				for (int i = 0; i < beans.size(); i++) {
+					beans.get(i).removeListener(listeners.get(i));
+				}
+				beans.clear();
+				listeners.clear();
+			}
+			
+			@Override
+			protected void finalize() throws Throwable {
+				unbind();
+				super.finalize();
+			}
+		};
+		for (ObservableValue<Object> observableValue : fileCount) {
+			observableValue.addListener(new ChangeListener<Object>() {
+				{
+					mBeans.add(observableValue);
+					mListeners.add(this);
+				}
+				@Override
+				public void changed(ObservableValue<? extends Object> observable, Object oldValue, Object newValue) {
+					Object[] converted = Arrays.asList(fileCount).stream().map((ov)->ov.getValue()).toArray(Object[]::new);
+					out.set(String.format(attachments, converted));
+				}
+			});
+		}
+		return out;
+	}
+
+	@SafeVarargs
+	public static OutString bindFormat(ILangKey attachments, ObservableValue<Object>... fileCount) {
+		return bindFormat(attachments.symbol(), fileCount);
 	}
 }
 
