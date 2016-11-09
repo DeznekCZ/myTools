@@ -1,7 +1,5 @@
 package cz.deznekcz.reference;
 
-import java.lang.annotation.Documented;
-
 /**
  * @see #add(Number)
  * @see #mul(Number)
@@ -47,6 +45,14 @@ public class OutDouble extends OutNumber<Double> {
 
 	public synchronized boolean isGreatherOrEqual(Double value) {
 		return value <= get();
+	}
+
+	public static <N extends Number> OutDouble cast(Out<N> bind) {
+		if (bind instanceof OutDouble) {
+			return (OutDouble) bind;
+		} else {
+			return bind.bindTransform(OutDouble::new, (numb) -> numb.doubleValue());
+		}
 	}
 }
 

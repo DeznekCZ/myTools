@@ -579,4 +579,17 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		public static <C> Raw<C> init() { return new Raw<>(); };
 		public static <C> Raw<C> init(C initial) { Raw<C> raw = new Raw<>(); raw.value = initial; return raw; };
 	}
+
+	public Out<C> onChange(Consumer<C> setter) {
+		addListener((o,l,n) -> setter.accept(n));
+		return this;
+	}
+	
+	public <O extends Out<N>, N> O bindTransform(Function<N, O> function, Function<C, N> function2) {
+		O output = function.apply(function2.apply(get()));
+		ChangeListener<C> beanListener = (o, l, n) -> output.set(function2.apply(n));
+		this.addListener(beanListener);
+		output.setBean(this, beanListener);
+		return output;
+	}
 }

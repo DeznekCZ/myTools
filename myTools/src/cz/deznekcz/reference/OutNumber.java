@@ -1,6 +1,10 @@
 package cz.deznekcz.reference;
 
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import javafx.beans.value.ChangeListener;
 
 /**
  * @see #add(Number)
@@ -75,5 +79,7 @@ public abstract class OutNumber<I extends Number> extends Out<I> {
 	 */
 	@PredictionAble
 	public abstract boolean isGreatherOrEqual(I value);
+	
+	
 }
 
