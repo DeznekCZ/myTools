@@ -22,7 +22,11 @@ public abstract class OutNumber<I extends Number> extends Out<I> {
 	
 	public abstract OutNumber<I> add(Number n);
 	
+	public abstract OutNumber<I> sub(Number n);
+	
 	public abstract OutNumber<I> mul(Number n);
+	
+	public abstract OutNumber<I> div(Number n);
 	
 	@SuppressWarnings("unchecked")
 	@Override
@@ -79,7 +83,5 @@ public abstract class OutNumber<I extends Number> extends Out<I> {
 	 */
 	@PredictionAble
 	public abstract boolean isGreatherOrEqual(I value);
-	
-	
 }
 

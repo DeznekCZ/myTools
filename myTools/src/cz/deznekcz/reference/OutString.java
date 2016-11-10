@@ -263,6 +263,7 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 				}
 			});
 		}
+		mListeners.get(0).changed(null, null, null);
 		return out;
 	}
 

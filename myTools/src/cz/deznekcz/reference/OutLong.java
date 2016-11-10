@@ -14,8 +14,18 @@ public class OutLong extends OutNumber<Long> {
 		return this;
 	}
 	
+	public synchronized OutLong sub(Number n) {
+		set(get() - n.longValue());
+		return this;
+	}
+	
 	public synchronized OutLong mul(Number n) {
 		set(get() * n.longValue());
+		return this;
+	}
+	
+	public synchronized OutLong div(Number n) {
+		set(get() / n.longValue());
 		return this;
 	}
 

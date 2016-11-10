@@ -39,5 +39,17 @@ public class OutByte extends OutNumber<Byte> {
 	public synchronized boolean isGreatherOrEqual(Byte value) {
 		return value <= get();
 	}
+
+	@Override
+	public OutByte sub(Number n) {
+		set((byte) (get() - n.byteValue()));
+		return this;
+	}
+
+	@Override
+	public OutByte div(Number n) {
+		set((byte) (get() / n.byteValue()));
+		return this;
+	}
 }
 

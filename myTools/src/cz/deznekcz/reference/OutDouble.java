@@ -13,9 +13,21 @@ public class OutDouble extends OutNumber<Double> {
 		set(get() + n.doubleValue());
 		return this;
 	}
+
+	@Override
+	public OutDouble sub(Number n) {
+		set(get() - n.doubleValue());
+		return this;
+	}
 	
 	public synchronized OutDouble mul(Number n) {
 		set(get() * n.doubleValue());
+		return this;
+	}
+
+	@Override
+	public OutDouble div(Number n) {
+		set(get() / n.doubleValue());
 		return this;
 	}
 

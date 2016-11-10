@@ -14,8 +14,18 @@ public class OutShort extends OutNumber<Short> {
 		return this;
 	}
 	
+	public synchronized OutShort sub(Number n) {
+		set((short) (get() - n.intValue()));
+		return this;
+	}
+	
 	public synchronized OutShort mul(Number n) {
 		set((short) (get() * n.intValue()));
+		return this;
+	}
+	
+	public synchronized OutShort div(Number n) {
+		set((short) (get() / n.intValue()));
 		return this;
 	}
 

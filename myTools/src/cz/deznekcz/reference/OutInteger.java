@@ -60,6 +60,11 @@ public class OutInteger extends OutNumber<Integer> {
 		return this;
 	}
 	
+	public synchronized OutInteger sub(Number n) {
+		set(get() - n.intValue());
+		return this;
+	}
+	
 	public synchronized OutInteger mul(Number n) {
 		set(n instanceof Integer 
 				?	get() * n.intValue()

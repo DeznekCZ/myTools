@@ -13,9 +13,21 @@ public class OutFloat extends OutNumber<Float> {
 		set(get() + n.floatValue());
 		return this;
 	}
+
+	@Override
+	public OutFloat sub(Number n) {
+		set(get() - n.floatValue());
+		return this;
+	}
 	
 	public synchronized OutFloat mul(Number n) {
 		set(get() * n.floatValue());
+		return this;
+	}
+
+	@Override
+	public OutFloat div(Number n) {
+		set(get() / n.floatValue());
 		return this;
 	}
 

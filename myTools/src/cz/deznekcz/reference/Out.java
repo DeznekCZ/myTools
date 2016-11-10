@@ -19,6 +19,7 @@ import cz.deznekcz.reference.OutFloat;
 import cz.deznekcz.reference.OutException;
 import cz.deznekcz.util.EqualAble;
 import cz.deznekcz.util.ForEach;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
@@ -443,6 +444,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	public synchronized void addListener(ChangeListener<? super C> listener) {
 		if (!observable) allowObservable();
 		changeList.add(listener);
+		
 	}
 
 	@Override
@@ -534,6 +536,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	}
 	
 	protected <O> void setBean(ObservableValue<O> bean, ChangeListener<O> beanListener) {
+		beanListener.changed(bean, bean.getValue(), bean.getValue());
 		this.bean = bean;
 		this.beanListener = beanListener;
 	}
@@ -560,6 +563,32 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		unbind();
 		super.finalize();
 	}
+
+	public Out<C> onChange(Consumer<C> setter) {
+		addListener((o,l,n) -> setter.accept(n));
+		return this;
+	}
+	
+	public <O extends Out<N>, N> O bindTransform(Function<N, O> constructor, Function<C, N> tranformer) {
+		O output = constructor.apply(tranformer.apply(get()));
+		ChangeListener<C> beanListener = (o, l, n) -> output.set(tranformer.apply(n));
+		this.addListener(beanListener);
+		output.setBean(this, beanListener);
+		return output;
+	}
+
+	public Out<C> fxThread() {
+		Out<C> ref = Out.init();
+		ChangeListener<C> listener = (o, l, n) -> {
+			if (!Platform.isFxApplicationThread())
+				Platform.runLater(() -> ref.set(n));
+			else
+				ref.set(n);
+		};
+		this.addListener(listener);
+		ref.setBean(this, listener);
+		return ref;
+	}
 	
 	/* BLOCK*********************************** *
 	 * Usable declarations
@@ -578,18 +607,5 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		public void set(C value) { this.value = value; };
 		public static <C> Raw<C> init() { return new Raw<>(); };
 		public static <C> Raw<C> init(C initial) { Raw<C> raw = new Raw<>(); raw.value = initial; return raw; };
-	}
-
-	public Out<C> onChange(Consumer<C> setter) {
-		addListener((o,l,n) -> setter.accept(n));
-		return this;
-	}
-	
-	public <O extends Out<N>, N> O bindTransform(Function<N, O> function, Function<C, N> function2) {
-		O output = function.apply(function2.apply(get()));
-		ChangeListener<C> beanListener = (o, l, n) -> output.set(function2.apply(n));
-		this.addListener(beanListener);
-		output.setBean(this, beanListener);
-		return output;
 	}
 }
