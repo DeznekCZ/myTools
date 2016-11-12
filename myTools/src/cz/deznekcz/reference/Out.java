@@ -580,10 +580,10 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	public Out<C> fxThread() {
 		Out<C> ref = Out.init();
 		ChangeListener<C> listener = (o, l, n) -> {
-			if (!Platform.isFxApplicationThread())
-				Platform.runLater(() -> ref.set(n));
-			else
+			if (Platform.isFxApplicationThread())
 				ref.set(n);
+			else
+				Platform.runLater(() -> ref.set(n));
 		};
 		this.addListener(listener);
 		ref.setBean(this, listener);

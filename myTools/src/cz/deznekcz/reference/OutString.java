@@ -228,11 +228,21 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 		printMethod.accept(get());
 	}
 
+	public static OutString bindFormat(ILangKey format, Out<?>... references) {
+		return bindFormat(format.symbol(), references);
+	}
+
+	public static OutString bindFormat(String format, Out<?>... references) {
+		@SuppressWarnings("unchecked")
+		ObservableValue<Object>[] objectRef = Arrays.asList(references).stream().map((ref) -> ref.objectReference()).toArray(ObservableValue[]::new);
+		return bindFormat(format, objectRef);
+	}
+	
 	@SafeVarargs
-	public static OutString bindFormat(String attachments, ObservableValue<Object>... fileCount) {
+	public static OutString bindFormat(String format, ObservableValue<Object>... observables) {
 		List<ObservableValue<Object>> mBeans = new ArrayList<>();
 		List<ChangeListener<Object>> mListeners = new ArrayList<>();
-		OutString out = new OutString(attachments) {
+		OutString out = new OutString(format) {
 			List<ObservableValue<Object>> beans = mBeans;
 			List<ChangeListener<Object>> listeners = mListeners;
 			@Override
@@ -250,7 +260,7 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 				super.finalize();
 			}
 		};
-		for (ObservableValue<Object> observableValue : fileCount) {
+		for (ObservableValue<Object> observableValue : observables) {
 			observableValue.addListener(new ChangeListener<Object>() {
 				{
 					mBeans.add(observableValue);
@@ -258,8 +268,8 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 				}
 				@Override
 				public void changed(ObservableValue<? extends Object> observable, Object oldValue, Object newValue) {
-					Object[] converted = Arrays.asList(fileCount).stream().map((ov)->ov.getValue()).toArray(Object[]::new);
-					out.set(String.format(attachments, converted));
+					Object[] converted = Arrays.asList(observables).stream().map((ov)->ov.getValue()).toArray(Object[]::new);
+					out.set(String.format(format, converted));
 				}
 			});
 		}
