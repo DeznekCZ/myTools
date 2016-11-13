@@ -8,7 +8,7 @@ import java.util.ResourceBundle;
 import org.w3c.dom.Node;
 
 import cz.deznekcz.reference.Out;
-import cz.deznekcz.util.XMLLoader;
+import cz.deznekcz.util.xml.XMLLoader;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
 import javafx.event.ActionEvent;

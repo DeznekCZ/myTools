@@ -1,5 +1,6 @@
 package cz.deznekcz.util;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -57,6 +58,10 @@ public class MarkedArray<T> implements Iterable<Elem<T>> {
 		return new Elem<>(indices[index], instances[index]);
 	}
 	
+	public int getIndex(T element) {
+		return Arrays.asList(instances).indexOf(element);
+	}
+	
 	public boolean isMarked(int index) {
 		return indices[index];
 	}
@@ -80,5 +85,13 @@ public class MarkedArray<T> implements Iterable<Elem<T>> {
 				return new Elem<T>(indices[index], instances[index++]);
 			}
 		};
+	}
+
+	public void replace(int index, T newValue) {
+		instances[index] = newValue;
+	}
+
+	public void replace(T lastValue, T newValue) {
+		replace(Arrays.asList(instances).indexOf(lastValue), newValue);
 	}
 }

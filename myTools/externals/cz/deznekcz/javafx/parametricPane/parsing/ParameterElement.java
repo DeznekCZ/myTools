@@ -18,7 +18,7 @@ import cz.deznekcz.javafx.parametricPane.parameters.TextParameter;
 import cz.deznekcz.reference.OutInteger;
 import cz.deznekcz.tool.RandomAccessList;
 import cz.deznekcz.tool.i18n.ILangKey;
-import cz.deznekcz.util.XMLLoader;
+import cz.deznekcz.util.xml.XMLLoader;
 import javafx.application.Platform;
 import cz.deznekcz.javafx.components.Dialog;
 

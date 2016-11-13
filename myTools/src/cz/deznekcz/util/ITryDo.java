@@ -32,7 +32,7 @@ public interface ITryDo {
 
 	@FunctionalInterface
 	public interface CheckAction {
-		Object get();
+		void get() throws Exception;
 	}
 	
 	/**
@@ -49,6 +49,33 @@ public interface ITryDo {
 	 * @see #doAction()
 	 */
 	static Exception checkValue(CheckAction castAction) {
+		return new ITryDo() {
+			@Override
+			public void defineAction() throws Exception {
+				castAction.get();
+			}
+		}.doAction();
+	}
+	
+	@FunctionalInterface
+	public interface CheckActionReturnable<A> {
+		A get() throws Exception;
+	}
+	
+	/**
+	 *     Method is usable to check casting classes.
+	 * <br>
+	 * <br><b>Using:</b>
+	 * <br>
+	 * <code>ITryDo.checkValue(()-&gt;(List&lt;T&gt;) object)
+	 * <br>&nbsp; != null
+	 * <br>&nbsp;&nbsp;? false
+	 * <br>&nbsp;&nbsp;: (List&lt;T&gt;) object</code>
+	 * @param castAction intance of {@link CheckAction} or lambda "()->(Integer) 5"
+	 * @return instance of {@link Exception}
+	 * @see #doAction()
+	 */
+	static <A> Exception checkValue(CheckActionReturnable<A> castAction) {
 		return new ITryDo() {
 			@Override
 			public void defineAction() throws Exception {

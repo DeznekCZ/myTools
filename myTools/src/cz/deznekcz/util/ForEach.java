@@ -275,7 +275,8 @@ public class ForEach {
 		ForEach.start(iterable, (v) -> {counter.increment();});
 		return counter.get();
 	}
-	public static Iterable<Node> DOMNodeList(NodeList el) {
+	
+	public static Iterable<Node> DOMNodeIterable(NodeList el) {
 		return new Iterable<Node>() {
 			
 			@Override
