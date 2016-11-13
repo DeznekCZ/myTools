@@ -5,9 +5,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,8 +19,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Scanner;
 import java.util.function.BiFunction;
 import java.util.function.IntFunction;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -229,38 +234,6 @@ public class Utils {
 		return sw.toString();
 	}
 
-	public static void externalExecution(String execution, OutBoolean anyError, OutString errorValue) throws IOException {
-		String s;
-		System.out.println(execution);
-		Matcher m = Pattern.compile("\\.exe").matcher(execution);
-		m.find();
-		String appname = execution.substring(0, m.end());
-
-    	System.out.println("External execution "+appname+"\n"+execution);
-    	Process p = Runtime.getRuntime().exec(execution);
-
-    	BufferedReader stdInput = new BufferedReader(new 
-    			InputStreamReader(p.getInputStream()));
-
-    	BufferedReader stdError = new BufferedReader(new 
-    			InputStreamReader(p.getErrorStream()));
-
-    	// read the output from the command
-    	System.out.println("["+appname+"] Here is the standard output of the command:\n");
-    	while ((s = stdInput.readLine()) != null) {
-    		System.out.println("["+appname+"]".concat(s));
-    	}
-
-    	errorValue.set();
-    	// read any errors from the attempted command
-    	System.out.println("["+appname+"]Here is the standard error of the command (if any):\n");
-    	while ((s = stdError.readLine()) != null) {
-    		System.out.println("["+appname+"]".concat(s));
-    		anyError.setTrue();
-    		errorValue.append(s).append("\n");
-    	}
-	}
-
 	public static <T> T[] bindArrays(IntFunction<T[]> generator, T[] original, @SuppressWarnings("unchecked") T... added) {
 		if (added == null) return original;
 		if (added.length < 1) return original;
@@ -304,5 +277,126 @@ public class Utils {
 				return result;
 			}
 		};
+	}
+
+	public static String textFromFile(URI uri) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public static void externalExecution(String execution, OutBoolean anyError, OutString errorValue) throws IOException, InterruptedException {
+		externalExecution(execution, anyError, errorValue, (String[]) null);
+	}
+	
+	public static void externalExecution(String execution, OutBoolean anyError, OutString errorValue, String... commands) throws IOException, InterruptedException {
+		String s;
+		System.out.println(execution);
+		Matcher m = Pattern.compile("\\.exe").matcher(execution);
+		m.find();
+		String appname = execution.substring(0, m.end());
+
+    	System.out.println("External execution "+appname+"\n"+execution);
+    	Process p = Runtime.getRuntime().exec(execution); //"cmd.exe"
+    	
+    	OutputStream ps = p.getOutputStream();
+//    	ps.println(execution);
+    	
+    	Thread.sleep(300L);
+    	
+    	if (commands != null && commands.length > 0) {
+    		for (String string : commands) {
+				ps.write((string + " /r/n").getBytes());
+				ps.flush();
+			}
+    	}
+    	
+//    	ps.println("exit");
+
+    	BufferedReader stdInput = new BufferedReader(new 
+    			InputStreamReader(p.getInputStream()));
+
+    	BufferedReader stdError = new BufferedReader(new 
+    			InputStreamReader(p.getErrorStream()));
+
+    	// read the output from the command
+    	System.out.println("["+appname+"] Here is the standard output of the command:\n");
+    	while ((s = stdInput.readLine()) != null) {
+    		System.out.println("["+appname+"]".concat(s));
+    	}
+
+    	errorValue.set();
+    	// read any errors from the attempted command
+    	System.out.println("["+appname+"] Here is the standard error of the command (if any):\n");
+    	while ((s = stdError.readLine()) != null) {
+    		System.err.println("["+appname+"]".concat(s));
+    		anyError.setTrue();
+    		errorValue.append(s).append("\n");
+    	}
+	}
+
+	public static String[] readLines(URI uri, Predicate<String> filter, String encoding) throws MalformedURLException, IOException {
+		Scanner sc = new Scanner(uri.toURL().openStream(), encoding);
+		ArrayList<String> list = new ArrayList<>();
+		String line;
+		while(sc.hasNextLine()) {
+			line = sc.nextLine();
+			if (filter.test(line))
+				continue;
+			list.add(line);
+		}
+		sc.close();
+		return list.toArray(new String[list.size()]);
+	}
+	
+	public static enum LineFilter implements Predicate<String> {
+		NONE((s) -> false),
+		FREE((s) -> s == null || s.trim().length() == 0);
+		
+		public static class Match implements Predicate<String> {
+			private final String ANY = "\\.*";
+			
+			public Match contains(String substring) {
+				return pattern(ANY+substring+ANY);
+			}
+			
+			public Match startsWith(String substring) {
+				return pattern(substring+ANY);
+			}
+			
+			public Match endsWith(String substring) {
+				return pattern(ANY+substring);
+			}
+			
+			public Match pattern(String patern) {
+				return new Match((line) -> line.matches(patern));
+			}
+
+			private Match(Predicate<String> predicate) {
+				this.predicate = predicate;
+			}
+
+			private Predicate<String> predicate;
+			
+			@Override
+			public boolean test(String t) {
+				return predicate.test(t);
+			}
+		}
+
+		private LineFilter(Predicate<String> predicate) {
+			this.predicate = predicate;
+		}
+
+		private Predicate<String> predicate;
+		
+		@Override
+		public boolean test(String t) {
+			return predicate.test(t);
+		}
+	}
+
+	@SafeVarargs
+	public static <A> A[] array(A... array) {
+		return array;
 	}
 }

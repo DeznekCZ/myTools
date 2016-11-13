@@ -74,6 +74,23 @@ public final class Builder<E> {
 			set(methods);
 		return this;
 	}
+
+	/**
+	 * Method sets a parameters of instance by methods if enabling function is passed
+	 * @param enablingFunction lambda, delegate or instance of {@link Predicate}
+	 * @param methods lambdas, delegates, array or list instance of {@link Consumer} 
+	 * @return returns <b>this</b> instance of {@link Builder}
+	 * @throws NullPointerException OutBoolean reference is null
+	 */
+	@SafeVarargs
+	public final Builder<E> setWhile(
+			Predicate<E> enablingFunction, 
+			Consumer<E> ...methods
+	) {
+		while(enablingFunction.test(value))
+			set(methods);
+		return this;
+	}
 	
 	/**
 	 * Returns a final builded instance

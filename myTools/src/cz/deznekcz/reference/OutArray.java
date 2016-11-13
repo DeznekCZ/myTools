@@ -1,11 +1,24 @@
 package cz.deznekcz.reference;
 
+import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
 
-public class OutArray<C> extends Out<C[]> {
+import cz.deznekcz.util.Builder;
+import cz.deznekcz.util.ForEach;
+
+public class OutArray<C> extends Out<C[]> implements Iterable<C> {
+
+	private Function<C[], String> toStringConfiguration;
+	
+	public final Function<C[], String> DEFAULT_TO_STRING = (ref) -> String.format(TO_STRING_FORMAT, Arrays.toString(ref));
 
 	private OutArray(C[] defaultValue) {
 		super(defaultValue);
+		toStringConfiguration = DEFAULT_TO_STRING;
 	}
 
 	@SafeVarargs
@@ -80,5 +93,55 @@ public class OutArray<C> extends Out<C[]> {
 				throw new RuntimeException("Not egnouth length to compare: "+length());
 			}
 		}
+	}
+	
+	/**
+	 * In defalut implements {@link Arrays#toString(Object[])}
+	 */
+	@Override
+	public String toString() {
+		return toStringConfiguration.apply(get());
+	}
+	
+	public Function<C[], String> getToStringConfiguration() {
+		return toStringConfiguration;
+	}
+	
+	/**
+	 * 
+	 * @param toStringConfiguration
+	 * @see ToString
+	 */
+	public void setToStringConfiguration(Function<C[], String> toStringConfiguration) {
+		this.toStringConfiguration = toStringConfiguration;
+	}
+	
+	public static class ToString {
+		public static <S> Function<S[],String> create(String start, String join, String end) {
+			return (outArray) -> {
+				Iterator<S> it = ForEach.array(outArray).iterator();
+				return Builder
+						.create(OutString.from(start))
+						.setIf((string) -> it.hasNext(), (string) -> string.append(it.next().toString()))
+						.setWhile((string) -> it.hasNext(), 
+								(string) -> string.append(join),
+								(string) -> string.append(it.next().toString())
+								)
+						.set((string) -> string.append(end == null ? "" : end))
+						.build()
+					.get();
+			};
+		}
+	}
+
+	@Override
+	public Iterator<C> iterator() {
+		return Arrays.asList(get()).iterator();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public void set(C... newValue) {
+		super.set(newValue);
 	}
 }

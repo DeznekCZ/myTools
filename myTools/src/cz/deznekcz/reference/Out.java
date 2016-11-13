@@ -14,6 +14,7 @@ import cz.deznekcz.reference.OutNumber;
 import cz.deznekcz.reference.OutLong;
 import cz.deznekcz.reference.OutShort;
 import cz.deznekcz.reference.OutString;
+import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.reference.OutDouble;
 import cz.deznekcz.reference.OutFloat;
 import cz.deznekcz.reference.OutException;
@@ -97,9 +98,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 * **************************************** */
 	
 	/** ToString formating */
-	private static final String TO_STRING_FORMAT = "Reference@%x: <%s>";
-	/** ToString formating */
-	private static final String LISTENERS = " Invalidation Listeners: %s, Change Listeners: %s";
+	protected static final String TO_STRING_FORMAT = "Reference@%x: <%s> Invalidation Listeners: %s, Change Listeners: %s";
 	/** Referenced instance of {@link C} */
 	private C value;
 
@@ -286,10 +285,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 */
 	@Override
 	public String toString() {
-		return (  value == null
-			? String.format(TO_STRING_FORMAT, hashCode(), "null")
-			: String.format(TO_STRING_FORMAT, hashCode(), value.toString())
-		) + (observable ? String.format(LISTENERS, Arrays.toString(invalList.toArray()), Arrays.toString(changeList.toArray())) : "");
+		return String.format(TO_STRING_FORMAT, hashCode(),invalList,changeList);
 	}
 	
 	/**
