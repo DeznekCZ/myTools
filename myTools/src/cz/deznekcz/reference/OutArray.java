@@ -1,11 +1,10 @@
 package cz.deznekcz.reference;
 
-import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.IntFunction;
 
 import cz.deznekcz.util.Builder;
 import cz.deznekcz.util.ForEach;
@@ -133,7 +132,90 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 			};
 		}
 	}
+	
+	public static class Filler {
+		/**
+		 * Returns Array from array: "0,5,6,8"<br>
+		 * with fill: "1"<br>
+		 * to array: "0,1,5,1,6,1,8"
+		 * @param arrayConstructor
+		 * @param fillValue
+		 * @return new {@link C}[]
+		 */
+		public static <C> Function<C[], C[]> join(IntFunction<C[]> arrayConstructor, C fillValue) {
+			return (outArray) -> {
+				Iterator<C> it = ForEach.array(outArray).iterator();
+				return Builder
+						.create(new ArrayList<>(outArray != null ? outArray.length : 1))
+						.setIf((list) -> it.hasNext(), (list) -> list.add(it.next()))
+						.setWhile((list) -> it.hasNext(), (list) -> {
+							list.add(fillValue);
+							list.add(it.next());
+						})
+						.build()
+					.stream().toArray(arrayConstructor);
+			};
+		}
+		
+		/**
+		 * Returns Array from array: "0,5,6,8"<br>
+		 * with fill: "1"<br>
+		 * to array: "0,1,5,1,6,1,8,1"
+		 * @param arrayConstructor
+		 * @param fillValue
+		 * @return new {@link C}[]
+		 */
+		public static <C> Function<C[], C[]> even(IntFunction<C[]> arrayConstructor, C fillValue) {
+			return (outArray) -> {
+				Iterator<C> it = ForEach.array(outArray).iterator();
+				return Builder
+						.create(new ArrayList<>(outArray != null ? outArray.length : 1))
+						.setIf((list) -> it.hasNext(), (list) -> list.add(it.next()))
+						.setWhile((list) -> it.hasNext(), (list) -> {
+							list.add(fillValue);
+							list.add(it.next());
+						})
+						.set((list) -> list.add(fillValue))
+						.build()
+					.stream().toArray(arrayConstructor);
+			};
+		}
+		
+		/**
+		 * Returns Array from array: "0,5,6,8"<br>
+		 * with fill: "1"<br>
+		 * to array: "1,0,1,5,1,6,1,8"
+		 * @param arrayConstructor
+		 * @param fillValue
+		 * @return
+		 * @return new {@link C}[]
+		 */
+		public static <C> Function<C[], C[]> odd(IntFunction<C[]> arrayConstructor, C fillValue) {
+			return (outArray) -> {
+				Iterator<C> it = ForEach.array(outArray).iterator();
+				return Builder
+						.create(new ArrayList<>(outArray != null ? outArray.length : 1))
+						.set((list) -> list.add(fillValue))
+						.setIf((list) -> it.hasNext(), (list) -> list.add(it.next()))
+						.setWhile((list) -> it.hasNext(), (list) -> {
+							list.add(fillValue);
+							list.add(it.next());
+						})
+						.build()
+					.stream().toArray(arrayConstructor);
+			};
+		}
+	}
 
+	/**
+	 * @see ToString
+	 * @see Filler
+	 */
+	@Override
+	public <R> R to(Function<C[], R> converter) {
+		return super.to(converter);
+	}
+	
 	@Override
 	public Iterator<C> iterator() {
 		return Arrays.asList(get()).iterator();

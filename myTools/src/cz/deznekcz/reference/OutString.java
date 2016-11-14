@@ -1,13 +1,11 @@
 package cz.deznekcz.reference;
 
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
 
 import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.util.Builder;
@@ -280,6 +278,16 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 	@SafeVarargs
 	public static OutString bindFormat(ILangKey attachments, ObservableValue<Object>... fileCount) {
 		return bindFormat(attachments.symbol(), fileCount);
+	}
+
+	/**
+	 * Return reference started with value of lang key
+	 * @param noActualMessages
+	 * @param args arguments of key
+	 * @return new instance of {@link OutString}
+	 */
+	public static OutString from(ILangKey noActualMessages, Object... args) {
+		return new OutString(noActualMessages.value(args));
 	}
 }
 

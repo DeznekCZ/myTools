@@ -12,6 +12,7 @@ import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.Collator;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -165,16 +166,21 @@ public class Utils {
 		return list;
 	}
 
-	public static <C> ResourceBundle classFieldValues(C instance, Class<C> clazz) {
+	public static <C> ResourceBundle classFieldValues(C instance, Class<C> clazz, boolean normalizedString) {
 		try {
 			return new ResourceBundle() {
 				private HashMap<String, Object> fields = new HashMap<>();
 				private Enumeration<String> keys;
 				{
 					for (Field field : clazz.getDeclaredFields()) {
+						boolean accesible = field.isAccessible();
 						field.setAccessible(true);
-						fields.put(field.toString(), field.get(instance));
-						field.setAccessible(false);
+						Object obj = field.get(instance);
+						if (obj instanceof String)
+							fields.put(field.toString(), normalized((String) obj));
+						else 
+							fields.put(field.toString(), field.get(instance));
+						field.setAccessible(accesible);
 					}
 					
 					keys = Utils.iterableToEnumeration(fields.keySet());
@@ -183,12 +189,17 @@ public class Utils {
 				@Override
 				public Enumeration<String> getKeys() {
 					return keys;
-							
 				}
 
 				@Override
 				protected Object handleGetObject(String key) {
 					return fields.get(key);
+				}
+				
+				private String normalized(String str) {
+				    String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD); 
+				    Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+				    return pattern.matcher(nfdNormalizedString).replaceAll("");
 				}
 			};
 		} catch (IllegalAccessException e) {
@@ -196,6 +207,10 @@ public class Utils {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public static <C> ResourceBundle classFieldValues(C instance, Class<C> clazz) {
+		return classFieldValues(instance, clazz, false);
 	}
 
 	public static <C> String classField(Class<C> clazz, String fieldName) {
@@ -398,5 +413,14 @@ public class Utils {
 	@SafeVarargs
 	public static <A> A[] array(A... array) {
 		return array;
+	}
+
+	public static <T> ChangeListener<T> streamChange(Class<T> printer, PrintStream stream) {
+		return new ChangeListener<T>() {
+			@Override
+			public void changed(ObservableValue<? extends T> observable, T oldValue, T newValue) {
+				stream.println(newValue);
+			}
+		};
 	}
 }
