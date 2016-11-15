@@ -285,7 +285,10 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 */
 	@Override
 	public String toString() {
-		return String.format(TO_STRING_FORMAT, hashCode(),invalList,changeList);
+		return String.format(TO_STRING_FORMAT, hashCode(), 
+				value != null ? value.toString() : "null",
+				invalList != null ? invalList.toString() : "none",
+				changeList != null ? changeList.toString() : "none");
 	}
 	
 	/**

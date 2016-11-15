@@ -227,7 +227,7 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 	}
 
 	public static OutString bindFormat(ILangKey format, Out<?>... references) {
-		return bindFormat(format.symbol(), references);
+		return bindFormat(format.value(), references);
 	}
 
 	public static OutString bindFormat(String format, Out<?>... references) {
