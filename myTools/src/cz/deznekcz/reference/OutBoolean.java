@@ -335,18 +335,24 @@ public class OutBoolean extends Out<Boolean> {
 		private ArrayList<ObservableValue<Boolean>> from = new ArrayList<>();
 		
 		public void addListenable(ObservableValue<Boolean> observable) {
-			from.add(observable);
+			synchronized (from) {
+				from.add(observable);
+			}
 			observable.addListener(this);
 		}
 		public void removeListenable(ObservableValue<Boolean> observable) {
-			from.remove(observable);
+			synchronized (from) {
+				from.remove(observable);
+			}
 			observable.removeListener(this);
 		}
 		@Override
-		public synchronized void changed(ObservableValue<? extends Boolean> o, Boolean l, Boolean n) {
+		public void changed(ObservableValue<? extends Boolean> o, Boolean l, Boolean n) {
 			OutBoolean newValue = resetValue();
 			Consumer<Boolean> action = getAction(newValue);
-			from.forEach((obs) -> action.accept(obs.getValue()));
+			synchronized (from) {
+				from.forEach((obs) -> action.accept(obs.getValue()));
+			}
 			this.set(newValue.get());
 		}
 		
@@ -355,8 +361,10 @@ public class OutBoolean extends Out<Boolean> {
 		public abstract OutBoolean resetValue();
 		
 		public void stopListening() {
-			from.forEach((obs) -> obs.removeListener(this));
-			from.clear();
+			synchronized (from) {
+				from.forEach((obs) -> obs.removeListener(this));
+				from.clear();
+			}
 		}
 		
 		@Override
