@@ -33,7 +33,7 @@ public class OutLong extends OutNumber<Long> {
 		return value == get();
 	}
 
-	public synchronized boolean isLower(Long value) {
+	public synchronized boolean isLess(Long value) {
 		return value > get();
 	}
 
@@ -41,7 +41,7 @@ public class OutLong extends OutNumber<Long> {
 		return value < get();
 	}
 
-	public synchronized boolean isLowerOrEqual(Long value) {
+	public synchronized boolean isLessOrEqual(Long value) {
 		return value >= get();
 	}
 

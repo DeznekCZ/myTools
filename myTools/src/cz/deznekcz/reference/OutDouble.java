@@ -43,7 +43,7 @@ public class OutDouble extends OutNumber<Double> {
 		return value == get();
 	}
 
-	public synchronized boolean isLower(Double value) {
+	public synchronized boolean isLess(Double value) {
 		return value > get();
 	}
 
@@ -51,7 +51,7 @@ public class OutDouble extends OutNumber<Double> {
 		return value < get();
 	}
 
-	public synchronized boolean isLowerOrEqual(Double value) {
+	public synchronized boolean isLessOrEqual(Double value) {
 		return value >= get();
 	}
 

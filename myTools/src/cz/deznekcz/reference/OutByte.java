@@ -24,7 +24,7 @@ public class OutByte extends OutNumber<Byte> {
 		return value == get();
 	}
 
-	public synchronized boolean isLower(Byte value) {
+	public synchronized boolean isLess(Byte value) {
 		return value > get();
 	}
 
@@ -32,7 +32,7 @@ public class OutByte extends OutNumber<Byte> {
 		return value < get();
 	}
 
-	public synchronized boolean isLowerOrEqual(Byte value) {
+	public synchronized boolean isLessOrEqual(Byte value) {
 		return value >= get();
 	}
 

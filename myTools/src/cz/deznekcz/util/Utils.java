@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -415,11 +416,11 @@ public class Utils {
 		return array;
 	}
 
-	public static <T> ChangeListener<T> streamChange(Class<T> printer, PrintStream stream) {
+	public static <T> ChangeListener<T> streamChange(Class<T> classOfChangeAble, Consumer<T> stream) {
 		return new ChangeListener<T>() {
 			@Override
 			public void changed(ObservableValue<? extends T> observable, T oldValue, T newValue) {
-				stream.println(newValue);
+				stream.accept(newValue);
 			}
 		};
 	}

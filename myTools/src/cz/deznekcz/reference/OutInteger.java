@@ -18,9 +18,9 @@ import javafx.beans.value.ObservableValue;
  * @see #increment()
  * @see #decrement()
  * @see #isEqual(int)
- * @see #isLower(int)
+ * @see #isLess(int)
  * @see #isGreater(int)
- * @see #isLowerOrEqual(int)
+ * @see #isLessOrEqual(int)
  * @see #isGreatherOrEqual(int)
  * @see #binary(Function)
  * @see #binaryAND(int)
@@ -116,7 +116,7 @@ public class OutInteger extends OutNumber<Integer> {
 		return value == get();
 	}
 
-	public synchronized boolean isLower(Integer value) {
+	public synchronized boolean isLess(Integer value) {
 		return value > get();
 	}
 
@@ -124,7 +124,7 @@ public class OutInteger extends OutNumber<Integer> {
 		return value < get();
 	}
 
-	public synchronized boolean isLowerOrEqual(Integer value) {
+	public synchronized boolean isLessOrEqual(Integer value) {
 		return value >= get();
 	}
 

@@ -52,7 +52,7 @@ public abstract class OutNumber<I extends Number> extends Out<I> {
 	 * @see #bindChecked(Predicate, Object)
 	 */
 	@PredictionAble
-	public abstract boolean isLower(I value);
+	public abstract boolean isLess(I value);
 
 	/**
 	 * TODO
@@ -72,7 +72,7 @@ public abstract class OutNumber<I extends Number> extends Out<I> {
 	 * @see #bindChecked(Predicate, Object)
 	 */
 	@PredictionAble
-	public abstract boolean isLowerOrEqual(I value); 
+	public abstract boolean isLessOrEqual(I value); 
 
 	/**
 	 * TODO

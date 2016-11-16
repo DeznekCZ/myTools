@@ -35,7 +35,7 @@ public class OutFloat extends OutNumber<Float> {
 		return value == get();
 	}
 
-	public synchronized boolean isLower(Float value) {
+	public synchronized boolean isLess(Float value) {
 		return value > get();
 	}
 
@@ -43,7 +43,7 @@ public class OutFloat extends OutNumber<Float> {
 		return value < get();
 	}
 
-	public synchronized boolean isLowerOrEqual(Float value) {
+	public synchronized boolean isLessOrEqual(Float value) {
 		return value >= get();
 	}
 

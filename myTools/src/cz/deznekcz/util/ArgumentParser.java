@@ -97,7 +97,7 @@ public class ArgumentParser {
 		Argument lastArgument = null;
 		OutInteger i = OutInteger.create();
 		try {
-			while (i.isLower(args.length)) {
+			while (i.isLess(args.length)) {
 				lastArgument = ((Argument) keys.get(args[i.get()]));
 				lastArgument.parse(args, i.increment());
 			}
