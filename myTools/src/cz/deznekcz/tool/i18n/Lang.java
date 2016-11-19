@@ -332,5 +332,9 @@ public class Lang {
 	public static ResourceBundle asResourceBundle() {
 		return langResourceBundle;
 	}
+
+	public static boolean LANGexists(ILangKey iLangKey) {
+		return instance.SYMBOLS.containsKey(iLangKey.symbol());
+	}
 }
 

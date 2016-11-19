@@ -1,10 +1,15 @@
 package cz.deznekcz.reference;
 
+import java.util.function.Function;
+
 /**
  * @see #add(Number)
  * @see #mul(Number)
  */
 public class OutDouble extends OutNumber<Double> {
+	
+	public static final Function<Number, Double> NUMBER_TO_DOUBLE = (number) -> number.doubleValue();
+	
 	private OutDouble(double n) {
 		super(n);
 	}

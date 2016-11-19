@@ -1,5 +1,7 @@
 package cz.deznekcz.reference;
 
+import java.util.function.Supplier;
+
 /**
  * @see #add(Number)
  * @see #mul(Number)
@@ -47,6 +49,14 @@ public class OutLong extends OutNumber<Long> {
 
 	public synchronized boolean isGreatherOrEqual(Long value) {
 		return value <= get();
+	}
+
+	public static OutLong from(Supplier<Long> function) {
+		return from(function.get());
+	}
+
+	public static OutLong from(long longValue) {
+		return new OutLong(longValue);
 	}
 }
 

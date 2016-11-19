@@ -4,6 +4,7 @@ import java.util.IllegalFormatException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import cz.deznekcz.tool.langEditor.LangKey;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
@@ -22,7 +23,7 @@ import javafx.beans.value.ObservableValue;
  */
 
 public interface ILangKey {
-	
+
 	/**
 	 * Returns a name of <code>enum</code> constant or user defined
 	 * @return instance of {@link String}
@@ -45,7 +46,13 @@ public interface ILangKey {
 	 * @see #symbol()
 	 * @return returns translated value
 	 */
-	public default String value(Object... args) {return Lang.LANG(this, args);}
+	public default String value(Object... args) {
+		if (!Lang.LANGexists(this)) {
+			Lang.LANGset(this.symbol(), defaultValue());
+		}
+		
+		return Lang.LANG(this, args);
+	}
 	
 	/**
 	 * Method returns a translated value of language key
@@ -54,7 +61,20 @@ public interface ILangKey {
 	 * @see #symbol()
 	 * @return returns translated value
 	 */
-	public default String value() {return Lang.LANG(this);}
+	public default String value() {
+		if (!Lang.LANGexists(this)) {
+			Lang.LANGset(this.symbol(), defaultValue());
+		}
+		return Lang.LANG(this);
+	}
+
+	/**
+	 * Returns default generated values
+	 * @return default string value
+	 */
+	public default String defaultValue() {
+		return LangItem.compile(symbol(), getClass().getAnnotation(Arguments.class).types()).getValue();
+	}
 
 	/**
 	 * Returns a simple language key
@@ -70,6 +90,29 @@ public interface ILangKey {
 			@Override
 			public String name() {
 				return null;
+			}
+		};
+	}
+
+	/**
+	 * Returns a simple language key
+	 * @param symbol symbol of key
+	 * @param defaultValue symbol of key
+	 * @return instance of {@link ILangKey}
+	 */
+	public static ILangKey simple(String symbol, String defaultValue) {
+		return new ILangKey() {
+			@Override
+			public String symbol() {
+				return symbol;
+			}
+			@Override
+			public String name() {
+				return null;
+			}
+			@Override
+			public String defaultValue() {
+				return defaultValue;
 			}
 		};
 	}
@@ -147,5 +190,10 @@ public interface ILangKey {
 				return simpleKey.getValue().value();
 			}
 		};
+	}
+	
+	public default ILangKey initDefault(String defaultValue) {
+		Lang.LANGset(this.symbol(), defaultValue);
+		return this;
 	}
 }
