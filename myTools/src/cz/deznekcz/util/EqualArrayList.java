@@ -3,7 +3,6 @@ package cz.deznekcz.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -166,5 +165,9 @@ implements EqualAble {
 	
 	public boolean equalsTo(EqualArrayList<T> o) {
 		return super.equals(o);
+	}
+
+	public T getEquals(Object searchObject) {
+		return get(indexOf(searchObject));
 	}
 }

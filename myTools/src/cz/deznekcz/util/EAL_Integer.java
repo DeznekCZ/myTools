@@ -8,8 +8,12 @@ package cz.deznekcz.util;
  * @author Zdenek Novotny (DeznekCZ)
  * @version 1.0.1 Comment update
  */
-public class EAL_Integer implements EqualAble {
+public class EAL_Integer extends Number implements EqualAble {
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 9032448734392919187L;
 	private int value;
 
 	/**
@@ -108,6 +112,30 @@ public class EAL_Integer implements EqualAble {
 	 */
 	public boolean equalsTo(int integer) {
 		return integer == value;
+	}
+
+	public String stringValue() {
+		return value + "";
+	}
+
+	@Override
+	public int intValue() {
+		return value;
+	}
+
+	@Override
+	public long longValue() {
+		return (long) value;
+	}
+
+	@Override
+	public float floatValue() {
+		return (float) value;
+	}
+
+	@Override
+	public double doubleValue() {
+		return (double) value;
 	}
 	
 	

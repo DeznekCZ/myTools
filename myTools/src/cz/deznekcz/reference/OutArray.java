@@ -133,6 +133,39 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 		}
 	}
 	
+	public static class Filter {
+		public static <C> Function<C[], C[]> even(IntFunction<C[]> arrayConstructor) {
+			return (outArray) -> {
+				Iterator<C> it = ForEach.array(outArray).iterator();
+				return Builder
+						.create(new ArrayList<>(outArray != null ? outArray.length : 1))
+						.setIf((list) -> it.hasNext(), (list) -> list.add(it.next()))
+						.setWhile((list) -> it.hasNext(), (list) -> {
+							it.hasNext(); // skip odd
+							if (it.hasNext())
+								list.add(it.next());
+						})
+						.build()
+					.stream().toArray(arrayConstructor);
+			};
+		}
+		
+		public static <C> Function<C[], C[]> odd(IntFunction<C[]> arrayConstructor) {
+			return (outArray) -> {
+				Iterator<C> it = ForEach.array(outArray).iterator();
+				return Builder
+						.create(new ArrayList<>(outArray != null ? outArray.length : 1))
+						.setWhile((list) -> it.hasNext(), (list) -> {
+							it.hasNext(); // skip even
+							if (it.hasNext())
+								list.add(it.next());
+						})
+						.build()
+					.stream().toArray(arrayConstructor);
+			};
+		}
+	}
+	
 	public static class Filler {
 		/**
 		 * Returns Array from array: "0,5,6,8"<br>

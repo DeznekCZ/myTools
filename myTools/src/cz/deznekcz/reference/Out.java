@@ -443,7 +443,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	public synchronized void addListener(ChangeListener<? super C> listener) {
 		if (!observable) allowObservable();
 		changeList.add(listener);
-		
+//		listener.changed(this, value, value);
 	}
 
 	@Override
@@ -460,7 +460,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 * @param lastValue
 	 * @param newValue
 	 */
-	protected final void invokeChange(C lastValue, C newValue) {
+	protected synchronized final void invokeChange(C lastValue, C newValue) {
 		invalList.forEach((listener) -> listener.invalidated(this));
 		changeList.forEach((listener) -> listener.changed(this, lastValue, newValue));
 	}
