@@ -5,6 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import cz.deznekcz.reference.OutBoolean;
 import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.util.ObservableQueue;
 import cz.deznekcz.util.ObservableQueue.QueueChangeListener.Change;
@@ -30,32 +31,20 @@ public class QueuedExecutor implements Executor {
 
 		@Override
 		public void run() {
-			boolean notEnd = false;
+			OutBoolean notEnd = OutBoolean.FALSE();
 			Runnable task;
 			do {
 				synchronized (queue) {
 					task = queue.poll();
+					notEnd.set(!queue.isEmpty());
+					running = false;
 					Logger.getGlobal().log(Level.INFO, "Active task = \"" + task + "\" queue is " + (queue.isEmpty() ? "" : "not ") + "empty");
 				}
 				if (task == null) continue;
 				task.run();
 				if (halt) break;
-				synchronized (queue) {
-					notEnd = !queue.isEmpty();
-					running = false;
-				}
 				
-			} while (notEnd);
-			
-			if (!halt) {
-				try {
-					Thread.sleep(200);
-					startExecute();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
+			} while (notEnd.get());
 		}
 
 		public boolean isRunning() {
