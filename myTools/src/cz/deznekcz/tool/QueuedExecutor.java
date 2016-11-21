@@ -27,6 +27,8 @@ public class QueuedExecutor implements Executor {
 			this.queue = queue;
 			this.running = true;
 			this.halt = false;
+			
+			Runtime.getRuntime().addShutdownHook(new Thread(() -> this.halt()));
 		}
 
 		@Override
@@ -50,10 +52,10 @@ public class QueuedExecutor implements Executor {
 		public boolean isRunning() {
 			return running;
 		}
-
+		
 		public void halt() {
 			halt = true;
-			System.out.println(getClass().getSimpleName().concat(": - Wait for complete 1 of sequence."));
+			System.out.println(getClass().getSimpleName().concat(" " + QueuedExecutor.this.getName() +  ": - Wait for complete 1 of sequence."));
 		}
 	}
 

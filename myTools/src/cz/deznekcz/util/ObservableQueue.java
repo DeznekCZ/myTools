@@ -62,7 +62,7 @@ public class ObservableQueue<E> extends AbstractQueue<E> implements Observable, 
 	}
 	
 	@Override
-	public boolean offer(E e) {
+	public synchronized boolean offer(E e) {
 		boolean offer = link(e);
 		if (offer) {
 			invalidationlisteners.forEach((listener) -> listener.invalidated(ObservableQueue.this));
@@ -72,7 +72,7 @@ public class ObservableQueue<E> extends AbstractQueue<E> implements Observable, 
 	}
 
 	@Override
-	public E poll() {
+	public synchronized E poll() {
 		E e = unlink();
 		if (e != null) {
 			invalidationlisteners.forEach((listener) -> listener.invalidated(ObservableQueue.this));
@@ -144,22 +144,26 @@ public class ObservableQueue<E> extends AbstractQueue<E> implements Observable, 
 			
 			@Override
 			public boolean hasNext() {
-				return head != tail /* Queue may be changed */
-						&& head != null;
+				synchronized (ObservableQueue.this) {
+					return head != tail /* Queue may be changed */
+							&& head != null;
+				}
 			}
 			@Override
 			public E next() {
-				Item<E> tmp = head;
-				if (head == null)
-					throw new NullPointerException("No more elements");
-				head = head.next;
-				return tmp.value;
+				synchronized (ObservableQueue.this) {
+					Item<E> tmp = head;
+					if (head == null)
+						throw new NullPointerException("No more elements");
+					head = head.next;
+					return tmp.value;
+				}
 			}
 		};
 	}
 
 	@Override
-	public int size() {
+	public synchronized int size() {
 		if (head == null) return 0;
 		
 		int count = 1;
