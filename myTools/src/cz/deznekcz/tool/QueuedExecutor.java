@@ -2,6 +2,8 @@ package cz.deznekcz.tool;
 
 import java.util.Queue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -46,7 +48,7 @@ public class QueuedExecutor implements Executor {
 				task.run();
 				if (halt) break;
 				
-			} while (notEnd.get());
+			} while (notEnd.get() && !running);
 		}
 
 		public boolean isRunning() {
@@ -63,35 +65,38 @@ public class QueuedExecutor implements Executor {
 	ThreadSequence running = null;
 	private String name;
 	private boolean ignoring = false;
+	private ExecutorService executor;
 
 	public QueuedExecutor(String executorName) {
 		this.name = executorName;
-		commands.addListener((Change<? extends Runnable> change) -> {
-			if (change.wasOffer() && (running == null || !running.isRunning())) {
-				startExecute();
-			}
-			});
+//		commands.addListener((Change<? extends Runnable> change) -> {
+//			if (change.wasOffer() && (running == null || !running.isRunning())) {
+//				startExecute();
+//			}
+//			});
+		this.executor = Executors.newSingleThreadExecutor();
 	}
 	
-	private void startExecute() {
-		synchronized (commands) {
-			if (!isRunning()) {
-				running = new ThreadSequence(commands, name);
-				running.start();
-			}
-		}
-	}
+//	private void startExecute() {
+//		synchronized (commands) {
+//			if (!isRunning()) {
+//				running = new ThreadSequence(commands, name);
+//				running.start();
+//			}
+//		}
+//	}
 
 	private static final ILangKey IGNORE_EXECUTION = ILangKey.simple("QueuedExecutor.Action.IGNORE_EXECUTION", "Execution of \"%s\" is ignored");
 	
 	@Override
 	public void execute(Runnable command) {
-		if ( isIgnoring() ) {
-			Logger.getGlobal().log(Level.CONFIG, IGNORE_EXECUTION.value(command.toString()));
-		}
-		synchronized (commands) {
-			commands.offer(command);
-		}
+//		if ( isIgnoring() ) {
+//			Logger.getGlobal().log(Level.CONFIG, IGNORE_EXECUTION.value(command.toString()));
+//		}
+//		synchronized (commands) {
+//			commands.offer(command);
+//		}
+		executor.submit(command);
 	}
 
 	public String getName() {
@@ -103,8 +108,9 @@ public class QueuedExecutor implements Executor {
 	}
 
 	public void stop() {
-		if (running.isRunning()) 
-			running.halt();
+		executor.shutdown();
+//		if (running.isRunning()) 
+//			running.halt();
 	}
 
 	public synchronized boolean isIgnoring() {

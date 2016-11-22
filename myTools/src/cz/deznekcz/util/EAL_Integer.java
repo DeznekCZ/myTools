@@ -98,7 +98,7 @@ public class EAL_Integer extends Number implements EqualAble {
 	 * @see #equalsTo(String)
 	 */
 	public boolean equalsTo(Integer integer) {
-		return integer.intValue() == value;
+		return integer == value;
 	}
 
 	/**
