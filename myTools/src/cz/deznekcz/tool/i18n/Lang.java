@@ -336,5 +336,9 @@ public class Lang {
 	public static boolean LANGexists(ILangKey iLangKey) {
 		return instance.SYMBOLS.containsKey(iLangKey.symbol());
 	}
+
+	public static boolean LANGloaded() {
+		return instance != null;
+	}
 }
 

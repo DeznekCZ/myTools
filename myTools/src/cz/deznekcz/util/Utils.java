@@ -174,6 +174,7 @@ public class Utils {
 				private HashMap<String, Object> fields = new HashMap<>();
 				private Enumeration<String> keys;
 				{
+					// TODO
 					for (Field field : clazz.getDeclaredFields()) {
 						boolean accesible = field.isAccessible();
 						field.setAccessible(true);

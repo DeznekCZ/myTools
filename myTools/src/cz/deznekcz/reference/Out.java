@@ -1,35 +1,20 @@
 package cz.deznekcz.reference;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.locks.Condition;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-import cz.deznekcz.reference.OutInteger;
-import cz.deznekcz.reference.OutNumber;
-import cz.deznekcz.reference.OutLong;
-import cz.deznekcz.reference.OutShort;
-import cz.deznekcz.reference.OutString;
-import cz.deznekcz.tool.i18n.ILangKey;
-import cz.deznekcz.reference.OutDouble;
-import cz.deznekcz.reference.OutFloat;
-import cz.deznekcz.reference.OutException;
 import cz.deznekcz.util.EqualAble;
-import cz.deznekcz.util.ForEach;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.scene.Node;
-import javafx.scene.layout.BorderPane;
-import sun.reflect.CallerSensitive;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import sun.security.jca.GetInstance.Instance;
 
 /**
  *     Instance of class {@link Out} represent a returnable parameter
@@ -102,6 +87,8 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	/** Referenced instance of {@link C} */
 	private C value;
 
+	private Function<C, String> toStringConfiguration;
+	
 	/**
 	 * Constructor references an external instance
 	 * @param defaultValue instance of {@link C}
@@ -285,10 +272,12 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 */
 	@Override
 	public String toString() {
-		return String.format(TO_STRING_FORMAT, hashCode(), 
-				value != null ? value.toString() : "null",
-				invalList != null ? invalList.toString() : "none",
-				changeList != null ? changeList.toString() : "none");
+		return toStringConfiguration != null 
+				? toStringConfiguration.apply(get()) 
+				: String.format(TO_STRING_FORMAT, hashCode(), 
+						value != null ? value.toString() : "null",
+								invalList != null ? invalList.toString() : "none",
+								changeList != null ? changeList.toString() : "none");
 	}
 	
 	/**
@@ -587,6 +576,14 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		this.addListener(listener);
 		ref.setBean(this, listener);
 		return ref;
+	}
+	
+	public void setToString(Function<C, String> toStringConfiguration) {
+		this.toStringConfiguration = toStringConfiguration;
+	}
+	
+	public Function<C, String> getToString() {
+		return toStringConfiguration;
 	}
 	
 	/* BLOCK*********************************** *

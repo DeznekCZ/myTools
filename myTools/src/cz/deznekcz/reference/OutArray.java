@@ -10,14 +10,12 @@ import cz.deznekcz.util.Builder;
 import cz.deznekcz.util.ForEach;
 
 public class OutArray<C> extends Out<C[]> implements Iterable<C> {
-
-	private Function<C[], String> toStringConfiguration;
 	
-	public final Function<C[], String> DEFAULT_TO_STRING = (ref) -> String.format(TO_STRING_FORMAT, Arrays.toString(ref));
+	public static final Function<Object[], String> DEFAULT_ARRAY_TO_STRING = (ref) -> String.format(TO_STRING_FORMAT, Arrays.toString(ref));
 
 	private OutArray(C[] defaultValue) {
 		super(defaultValue);
-		toStringConfiguration = DEFAULT_TO_STRING;
+		setToString((value) -> DEFAULT_ARRAY_TO_STRING.apply(value));
 	}
 
 	@SafeVarargs
@@ -94,27 +92,6 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 		}
 	}
 	
-	/**
-	 * In defalut implements {@link Arrays#toString(Object[])}
-	 */
-	@Override
-	public String toString() {
-		return toStringConfiguration.apply(get());
-	}
-	
-	public Function<C[], String> getToStringConfiguration() {
-		return toStringConfiguration;
-	}
-	
-	/**
-	 * 
-	 * @param toStringConfiguration
-	 * @see ToString
-	 */
-	public void setToStringConfiguration(Function<C[], String> toStringConfiguration) {
-		this.toStringConfiguration = toStringConfiguration;
-	}
-	
 	public static class ToString {
 		public static <S> Function<S[],String> create(String start, String join, String end) {
 			return (outArray) -> {
@@ -130,6 +107,10 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 						.build()
 					.get();
 			};
+		}
+
+		public static Function<String[], String> create(String join) {
+			return create("", join, "");
 		}
 	}
 	
@@ -255,7 +236,6 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 	}
 	
 	@SuppressWarnings("unchecked")
-	@Override
 	public void set(C... newValue) {
 		super.set(newValue);
 	}
