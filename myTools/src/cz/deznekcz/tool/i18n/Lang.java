@@ -8,25 +8,17 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.Collator;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.FormatFlagsConversionMismatchException;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.Properties;
-import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
 import cz.deznekcz.reference.OutArray;
 import cz.deznekcz.reference.OutString;
 import cz.deznekcz.util.ForEach;
-import javafx.beans.property.ObjectProperty;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableSet;
-import javafx.css.PseudoClass;
-import javafx.scene.control.Control;
-import javafx.scene.control.Skin;
 
 /**
  * Lanuguage configuration class<br><br>
@@ -96,9 +88,10 @@ public class Lang {
 	
 
 
-	public static void LANGload(Locale locale) {
+	public static void LANGload(Locale locale, ILangKey[]...defaultValues) {
 		Locale.setDefault(locale);
 		LANGload(locale.toString());
+		LANGdefaults(defaultValues);
 	}
 
 	/**
@@ -274,6 +267,10 @@ public class Lang {
 		instance.SYMBOLS.setProperty(symbol, value);
 	}
 
+	public static void LANGset(ILangKey langKey) {
+		instance.SYMBOLS.setProperty(langKey.symbol(), langKey.defaultValue());
+	}
+
 	/**
 	 * Method returns an instance {@link LangItem} by specific symbol.
 	 * <br><font color="red">WARNING!</font>
@@ -339,6 +336,15 @@ public class Lang {
 
 	public static boolean LANGloaded() {
 		return instance != null;
+	}
+
+	public static void LANGdefaults(ILangKey[]...enums) {
+		for (int i = 0; i < enums.length; i++) {
+			for (int j = 0; j < enums[i].length; j++) {
+				if(!LANGexists(enums[i][j]))
+					LANGset(enums[i][j]);
+			}
+		}
 	}
 }
 

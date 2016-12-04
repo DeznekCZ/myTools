@@ -220,6 +220,25 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 			};
 		}
 	}
+	
+	public static class Collect {
+		public Boolean booleanAnd(Boolean[] values) {
+			boolean result = true;
+			for (Boolean bool : values) {
+				result &= bool;
+				if (!bool) break;
+			}
+			return result;
+		}
+		public Boolean booleanOr(Boolean[] values) {
+			boolean result = false;
+			for (Boolean bool : values) {
+				result &= bool;
+				if (bool) break;
+			}
+			return result;
+		}
+	}
 
 	/**
 	 * @see ToString

@@ -551,11 +551,6 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		unbind();
 		super.finalize();
 	}
-
-	public Out<C> onChange(Consumer<C> setter) {
-		addListener((o,l,n) -> setter.accept(n));
-		return this;
-	}
 	
 	public <O extends Out<N>, N> O bindTransform(Function<N, O> constructor, Function<C, N> tranformer) {
 		O output = constructor.apply(tranformer.apply(get()));
@@ -563,6 +558,13 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		this.addListener(beanListener);
 		output.setBean(this, beanListener);
 		return output;
+	}
+
+	public synchronized void fireChange() {
+		if (isObservable()) {
+			invalList.forEach((aList) -> aList.invalidated(this));
+			changeList.forEach((aList) -> aList.changed(this,get(),get()));
+		}
 	}
 
 	public Out<C> fxThread() {
@@ -603,5 +605,54 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		public void set(C value) { this.value = value; };
 		public static <C> Raw<C> init() { return new Raw<>(); };
 		public static <C> Raw<C> init(C initial) { Raw<C> raw = new Raw<>(); raw.value = initial; return raw; };
+	}
+
+	public class Change implements ChangeListener<C> {
+		private C lastValue;
+		private C newValue;
+		private Out<C> reference;
+		private Consumer<Out<C>.Change> action;
+
+		private Change(Consumer<Out<C>.Change> action) {
+			this.action = action;
+		}
+		
+		public Change(Out<C> observable, C oldValue, C newValue) {
+			this.lastValue = oldValue;
+			this.newValue = newValue;
+			this.reference = observable;
+		}
+
+		public C getNewValue() {
+			return newValue;
+		}
+		
+		public C getLastValue() {
+			return lastValue;
+		}
+		
+		public boolean isFired() {
+			return lastValue == newValue;
+		}
+		
+		public Out<C> getReference() {
+			return reference;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public void changed(ObservableValue<? extends C> observable, C oldValue, C newValue) {
+			this.action.accept(new Change((Out<C>) observable, oldValue, newValue));
+		}
+	}
+
+	public Out<C> onChange(Consumer<C> setter) {
+		addListener((o,l,n) -> setter.accept(n));
+		return this;
+	}
+	
+	public Out<C> onChangeComplex(Consumer<Change> applyFunction) {
+		this.addListener(new Change(applyFunction));
+		return this;
 	}
 }

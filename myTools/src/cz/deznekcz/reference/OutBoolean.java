@@ -328,7 +328,7 @@ public class OutBoolean extends Out<Boolean> {
 	}
 	
 	public static abstract class ALinkable extends OutBoolean implements ChangeListener<Boolean> {
-		
+
 		protected ALinkable() {
 			super(false);
 		}

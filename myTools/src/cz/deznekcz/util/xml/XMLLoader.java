@@ -30,10 +30,10 @@ import javafx.scene.control.Alert.AlertType;
  */
 public class XMLLoader {
 
-	private static final Alert xmlError;
-	static {
-		xmlError = new Alert(AlertType.ERROR);
-	}
+//	private static final Alert xmlError;
+//	static {
+//		xmlError = new Alert(AlertType.ERROR);
+//	}
 	
 	public static Node load(File xmlFile) throws Exception {
 		Out<Exception> eOut = Out.init();
@@ -56,8 +56,9 @@ public class XMLLoader {
 	}
 
 	public static void showError(Exception e) {
-		xmlError.setContentText(e.getMessage());
-		xmlError.showAndWait();
+		e.printStackTrace();
+//		xmlError.setContentText(e.getMessage());
+//		xmlError.showAndWait();
 	}
 	
 	public static boolean save(File xml, Node rootNode) {

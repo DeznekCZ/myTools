@@ -1,5 +1,9 @@
 package cz.deznekcz.util;
 
+import javax.xml.xpath.XPathExpression;
+
+import cz.deznekcz.reference.Out;
+
 /**
  *     Instances or lambda functions of {@link ITryDo} is usable to remove a 
  * <br>&nbsp;<code>try {var = sometingWhatCauseException();} catch({@link Exception} e) {e.printStackTrace();}</code>
@@ -82,5 +86,20 @@ public interface ITryDo {
 				castAction.get();
 			}
 		}.doAction();
+	}
+	/**
+	 * Method returns null if any exception was excepted
+	 * @param setAction supplier of new value
+	 * @return new value
+	 */
+	static <A> A setValue(CheckActionReturnable<A> setAction) {
+		Out<A> value = Out.init();
+		new ITryDo() {
+			@Override
+			public void defineAction() throws Exception {
+				value.set(setAction.get());
+			}
+		}.doAction();
+		return value.get();
 	}
 }

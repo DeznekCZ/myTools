@@ -1,5 +1,6 @@
 package cz.deznekcz.tool.i18n;
 
+import java.util.HashMap;
 import java.util.IllegalFormatException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,6 +24,8 @@ import javafx.beans.value.ObservableValue;
  */
 
 public interface ILangKey {
+
+	HashMap<String, String> DEFAULTS = new HashMap<>();
 
 	/**
 	 * Returns a name of <code>enum</code> constant or user defined
@@ -73,7 +76,12 @@ public interface ILangKey {
 	 * @return default string value
 	 */
 	public default String defaultValue() {
-		return LangItem.compile(symbol(), getClass().getAnnotation(Arguments.class).types()).getValue();
+		String last = DEFAULTS.get(this.symbol());
+		if (last == null) {
+			last = LangItem.compile(symbol(), getClass().getAnnotation(Arguments.class).types()).getValue();
+			DEFAULTS.put(this.symbol(), last);
+		}
+		return last;
 	}
 
 	/**
@@ -102,6 +110,9 @@ public interface ILangKey {
 	 */
 	public static ILangKey simple(String symbol, String defaultValue) {
 		return new ILangKey() {
+			{
+				initDefault(defaultValue);
+			}
 			@Override
 			public String symbol() {
 				return symbol;
@@ -193,7 +204,7 @@ public interface ILangKey {
 	}
 	
 	public default ILangKey initDefault(String defaultValue) {
-		Lang.LANGset(this.symbol(), defaultValue);
+		DEFAULTS.put(this.symbol(), defaultValue);
 		return this;
 	}
 }
