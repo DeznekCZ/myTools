@@ -11,6 +11,11 @@ import javafx.beans.value.ChangeListener;
  * @see #mul(Number)
  */
 public abstract class OutNumber<I extends Number> extends Out<I> {
+	
+	static {
+		NULL.put(OutNumber.class, 0);
+	}
+	
 	public OutNumber(I n) {
 		super(n);
 	}

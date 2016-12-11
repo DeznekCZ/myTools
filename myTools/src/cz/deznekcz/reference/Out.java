@@ -1,6 +1,10 @@
 package cz.deznekcz.reference;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.locks.Condition;
@@ -9,7 +13,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import javax.jws.Oneway;
+
+import com.sun.javafx.application.LauncherImpl;
+
 import cz.deznekcz.util.EqualAble;
+import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
@@ -84,6 +93,9 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	
 	/** ToString formating */
 	protected static final String TO_STRING_FORMAT = "Reference@%x: <%s> Invalidation Listeners: %s, Change Listeners: %s";
+	
+	protected static final HashMap<Class<?>, Object> NULL = new HashMap<>();
+	
 	/** Referenced instance of {@link C} */
 	private C value;
 
@@ -96,7 +108,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 * @see Out#init(Object) 
 	 */
 	protected Out(C defaultValue) {
-		value = defaultValue;
+		this.set(defaultValue);
 	}
 	
 	/**
@@ -245,7 +257,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 */
 	@Override
 	public Out<C> clone() {
-		Out<C> clone = new Out<C>(value);
+		Out<C> clone = init(get());
 		if( this.isObservable() ) {
 			this.changeList.forEach((obs) -> clone.addListener(obs));
 			this.invalList.forEach((obs) -> clone.addListener(obs));
@@ -360,6 +372,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 * Initializer for simple reference by type.
 	 * <br>Default value is null.
 	 * @param <C> Class of stored instance
+	 * @param <R> Final reference implementation !WARNING: Unchecked cast
 	 * @return new instance of {@link Out}
 	 */
 	public static <C> Out<C> init() {
@@ -369,6 +382,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	/**
 	 * Initializer for simple reference by type.
 	 * @param <C> Class of stored instance
+	 * @param <R> Final reference implementation !WARNING: Unchecked cast
 	 * @param defaultValue new stored instance
 	 * @return new instance of {@link Out}
 	 */
@@ -379,7 +393,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	/* BLOCK*********************************** *
 	 * Beans implementation
 	 * **************************************** */
-	
+
 	/**
 	 * Initializer for complicated references like filled arrays.
 	 * @since 3.0
@@ -454,12 +468,14 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		changeList.forEach((listener) -> listener.changed(this, lastValue, newValue));
 	}
 	
+	@Deprecated
 	public Out<C> listened(ChangeListener<? super C> listener) {
 		Objects.requireNonNull(listener);
 		this.addListener(listener);
 		return this;
 	}
 	
+	@Deprecated
 	public Out<C> listened(InvalidationListener listener) {
 		Objects.requireNonNull(listener);
 		this.addListener(listener);

@@ -21,10 +21,15 @@ import javafx.beans.value.ObservableValue;
  * @see Out
  */
 public class OutString extends Out<String> implements CharSequence, Appendable {
+	
+	static {
+		NULL.put(OutString.class, "");
+	}
+	
 	private OutString(String string) {
 		super(string == null ? "" : string);
 	}
-
+	
 	/**
 	 * Value is set to empty string
 	 * @see Out#set()
@@ -105,6 +110,7 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 	/**
 	 * Returns an empty reference.
 	 * @return new instance of {@link OutString} with value ""
+	 * @deprecated replaced with {@link Out#init()}
 	 */
 	public static OutString empty() {
 		return new OutString("");
@@ -114,6 +120,7 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 	 * Copies value from {@link String} value.
 	 * @param string instance of {@link String}
 	 * @return new instance of {@link OutString}
+	 * @deprecated replaced with {@link #init(String)}
 	 */
 	public static OutString from(String string) {
 		return new OutString(string);
@@ -123,6 +130,7 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 	 * Copies value of another reference.
 	 * @param stringOut another instance of {@link OutString}
 	 * @return new instance of {@link OutString}
+	 * @deprecated replaced with {@link #init(OutString)}
 	 */
 	public static OutString copy(OutString stringOut) {
 		return new OutString(stringOut.get());
@@ -133,7 +141,48 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 	 * @param stringOut another instance of {@link OutString}
 	 * @return new instance of {@link OutString}
 	 */
+	public static OutString init(OutString stringOut) {
+		return new OutString(stringOut.get());
+	}
+
+	/**
+	 * Copies value of another reference.
+	 * @param string new value of string
+	 * @return new instance of {@link OutString}
+	 */
+	public static OutString init(String string) {
+		return new OutString(string);
+	}
+
+	/**
+	 * Copies value of another reference.
+	 * @param string new value of string
+	 * @return new instance of {@link OutString}
+	 */
+	@SuppressWarnings("unchecked")
+	public static OutString init() {
+		return new OutString("");
+	}
+
+	/**
+	 * Copies value of another reference.
+	 * @param stringOut another instance of {@link OutString}
+	 * @return new instance of {@link OutString}
+	 * @deprecated replaced with {@link #init(Out) init(Out}&lt;{@link String}&gt)
+	 */
 	public static OutString cast(Out<String> stringOut) {
+		return Builder.create(new OutString(""))
+				.setIf(	v -> stringOut != null, // Predicate
+						v -> v.set(stringOut.get()))
+				.build();
+	}
+
+	/**
+	 * Copies value of another reference.
+	 * @param stringOut another instance of {@link Out}&lt;{@link String}&gt;
+	 * @return new instance of {@link OutString}
+	 */
+	public static OutString init(Out<String> stringOut) {
 		return Builder.create(new OutString(""))
 				.setIf(	v -> stringOut != null, // Predicate
 						v -> v.set(stringOut.get()))
@@ -285,8 +334,20 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 	 * @param noActualMessages
 	 * @param args arguments of key
 	 * @return new instance of {@link OutString}
+	 * @deprecated replaced with {@link #init(ILangKey, Object...)}
 	 */
+	@Deprecated
 	public static OutString from(ILangKey noActualMessages, Object... args) {
+		return new OutString(noActualMessages.value(args));
+	}
+
+	/**
+	 * Return reference started with value of lang key
+	 * @param noActualMessages
+	 * @param args arguments of key
+	 * @return new instance of {@link OutString}
+	 */
+	public static OutString init(ILangKey noActualMessages, Object... args) {
 		return new OutString(noActualMessages.value(args));
 	}
 }

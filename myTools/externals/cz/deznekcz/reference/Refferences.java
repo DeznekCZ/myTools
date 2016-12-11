@@ -37,7 +37,7 @@ public class Refferences {
 		System.out.println("Answer: " + answer);
 		
 		/* Global using */
-		callByOnSetAction(Out.<Double>init().listened((obs,lastVal,newVal) -> globalDouble = newVal));
+		callByOnSetAction(Out.<Double>init().onChange((newVal) -> globalDouble = newVal));
 		/* globalDouble can be a property of instance or class */
 		System.out.println(globalDouble);
 		

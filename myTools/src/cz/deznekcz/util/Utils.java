@@ -5,28 +5,26 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.text.Collator;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,6 +35,17 @@ import cz.deznekcz.reference.OutString;
 import cz.deznekcz.tool.QueuedExecutor;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Group;
+import javafx.scene.control.TableCell;
+import javafx.scene.control.TableColumn;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
+import javafx.util.Callback;
+import javafx.util.Pair;
 import sun.reflect.CallerSensitive;
 
 public class Utils {
@@ -52,6 +61,7 @@ public class Utils {
 	 * @param action instance of lambda of action apply-able to not null value
 	 * @param values rejected values for this action (array, none (meaning: not null) or more values)
 	 */
+	@SafeVarargs
 	@CallerSensitive
 	public static <T> void initAfterNotValue(@NotNull ObservableValue<T> observable, Runnable action, T...values) {
 		ChangeListener<T> change = null;
@@ -127,7 +137,7 @@ public class Utils {
 
 			@Override
 			public Enumeration<String> getKeys() {
-				List<String> keyList = new ArrayList<>();
+				java.util.List<String> keyList = new ArrayList<>();
 				for (ResourceBundle resourceBundle : bundles) {
 					keyList.addAll(
 							Utils.iterableToList(
@@ -160,7 +170,7 @@ public class Utils {
 	
 	
 
-	public static <E> List<E> iterableToList(Iterable<E> iterable) {
+	public static <E> java.util.List<E> iterableToList(Iterable<E> iterable) {
 		ArrayList<E> list = new ArrayList<>();
 		for (E e : iterable) {
 			list.add(e);
@@ -180,7 +190,7 @@ public class Utils {
 						field.setAccessible(true);
 						Object obj = field.get(instance);
 						if (obj instanceof String)
-							fields.put(field.toString(), normalized((String) obj));
+							fields.put(field.toString(), Utils.normalizedString((String) obj));
 						else 
 							fields.put(field.toString(), field.get(instance));
 						field.setAccessible(accesible);
@@ -198,12 +208,6 @@ public class Utils {
 				protected Object handleGetObject(String key) {
 					return fields.get(key);
 				}
-				
-				private String normalized(String str) {
-				    String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD); 
-				    Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-				    return pattern.matcher(nfdNormalizedString).replaceAll("");
-				}
 			};
 		} catch (IllegalAccessException e) {
 			// TODO Auto-generated catch block
@@ -212,6 +216,12 @@ public class Utils {
 		return null;
 	}
 
+	public static String normalizedString(String str) {
+	    String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD); 
+	    Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+	    return pattern.matcher(nfdNormalizedString).replaceAll("");
+	}
+	
 	public static <C> ResourceBundle classFieldValues(C instance, Class<C> clazz) {
 		return classFieldValues(instance, clazz, false);
 	}
@@ -307,6 +317,16 @@ public class Utils {
 	}
 	
 	public static void externalExecution(String execution, OutBoolean anyError, OutString errorValue, String... commands) throws IOException, InterruptedException {
+		try {
+			externalExecution(execution, anyError, errorValue, null, commands);
+		} catch (TimeoutException e) {
+			errorValue.set(e.getLocalizedMessage());
+			anyError.set(true);
+		}
+	}
+
+	public static void externalExecution(String execution, OutBoolean anyError, OutString errorValue,
+			Pair<TimeUnit, Long> timeout, String... commands) throws IOException, InterruptedException, TimeoutException {
 		String s;
 		System.out.println(execution);
 		Matcher m = Pattern.compile("\\.exe").matcher(execution);
@@ -314,7 +334,24 @@ public class Utils {
 		String appname = execution.substring(0, m.end());
 
     	System.out.println("External execution "+appname+"\n"+execution);
-    	Process p = Runtime.getRuntime().exec(execution); //"cmd.exe"
+    	Process p = Runtime.getRuntime().exec(execution); //"cmd.exe")
+    
+    	if (timeout != null) {
+    		Worker worker = new Worker(p);
+        	worker.start();
+        	try {
+        		worker.join(timeout.getKey().toMillis(timeout.getValue()));
+        		if (worker.exit == null)
+        			throw new TimeoutException();
+        	} catch(InterruptedException ex) {
+        		worker.interrupt();
+        		Thread.currentThread().interrupt();
+        		throw ex;
+        	} finally {
+        		p.destroy();
+        	}
+    	}
+
     	
     	OutputStream ps = p.getOutputStream();
 //    	ps.println(execution);
@@ -351,6 +388,21 @@ public class Utils {
     		errorValue.append(s).append("\n");
     	}
 	}
+	
+	private static class Worker extends Thread {
+		  private final Process process;
+		  private Integer exit;
+		  private Worker(Process process) {
+		    this.process = process;
+		  }
+		  public void run() {
+		    try { 
+		      exit = process.waitFor();
+		    } catch (InterruptedException ignore) {
+		      return;
+		    }
+		  }  
+		}
 
 	public static String[] readLines(URI uri, Predicate<String> filter, String encoding) throws MalformedURLException, IOException {
 		Scanner sc = new Scanner(uri.toURL().openStream(), encoding);
@@ -425,5 +477,95 @@ public class Utils {
 				stream.accept(newValue);
 			}
 		};
+	}
+	
+	public static class FX {
+		public static class Callbacks {
+
+
+			public static <T,V> Callback<TableColumn<T, V>, TableCell<T, V>> tableDefaultCell(boolean wraptext,
+					Pos alignment, Insets padding, Function<V,String[]> converter, String styleSheet, String[]...styles) {
+				return (tbl) -> new TableCell<T, V>() {
+					protected void updateItem(V item, boolean empty) {
+						if (empty) {
+							setGraphic(null);
+						} else {
+							VBox box = new VBox();
+							box.getStylesheets().add(styleSheet);
+							box.setPadding(padding);
+							box.setSpacing(padding.getBottom());
+							box.setAlignment(alignment);
+							String[] texts = converter.apply(item);
+							if (texts == null) return;
+							for (int i = 0 ; i < texts.length ; i++) {
+								Text text = new Text(texts[i]);
+								text.getStyleClass().addAll(styles[i]);
+								text.wrappingWidthProperty().bind(widthProperty().subtract(padding.getLeft() + padding.getRight()));
+								box.getChildren().add(text);
+							}
+							setGraphic(box);
+							setAlignment(alignment);
+//							getTableRow().setMinHeight(text.getLayoutBounds().getHeight());
+						}
+						
+						super.updateItem(item, empty);
+					};
+				};
+			}
+			
+		}
+	}
+	
+	public static class Functions {
+		public static <T> Function<T,T> same() {
+			return (a) -> a;
+		}
+
+		public static <T> Function<T,T[]> toArray(IntFunction<T[]> toArray) {
+			return (a) -> {
+				T[] arr = toArray.apply(1);
+				arr[0] = a;
+				return arr;
+			};
+		}
+
+		public static <T> Function<T,String[]> toStringArray() {
+			return (a) -> {
+				if (a instanceof String) {
+					return new String[] {(String) a};
+				} else if (a != null) {
+					return new String[] {a.toString()};
+				} else {
+					return new String[] {null};
+				}
+			};
+		}
+	}
+	
+	public static class List {
+
+		public static <P,O extends P,R> Consumer<P> applyIfNot(Predicate<O> predicate, Function<O,R> action) {
+			return new Consumer<P>() {
+				@SuppressWarnings("unchecked")
+				@Override
+				public void accept(P t) {
+					if (!predicate.test((O) t)) action.apply((O) t);
+				}
+			};
+		}
+
+		public static <P,O extends P,R> Consumer<P> applyIf(Predicate<O> predicate, Function<O,R> action) {
+			return new Consumer<P>() {
+				@SuppressWarnings("unchecked")
+				@Override
+				public void accept(P t) {
+					if (predicate.test((O) t)) action.apply((O) t);
+				}
+			};
+		}
+	}
+
+	public static Pair<TimeUnit,Long> timeout(TimeUnit unit, long value) {
+		return new Pair<>(unit,value);
 	}
 }

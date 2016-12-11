@@ -78,7 +78,8 @@ public interface ILangKey {
 	public default String defaultValue() {
 		String last = DEFAULTS.get(this.symbol());
 		if (last == null) {
-			last = LangItem.compile(symbol(), getClass().getAnnotation(Arguments.class).types()).getValue();
+			Arguments anno = getClass().getAnnotation(Arguments.class);
+			last = LangItem.compile(symbol(), anno == null ? null : anno.types()).getValue();
 			DEFAULTS.put(this.symbol(), last);
 		}
 		return last;

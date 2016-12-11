@@ -90,7 +90,7 @@ public class LangItem implements Comparable<LangItem>/*, EqualAble*/{
 	public static LangItem compile(String symbol, Class<?>[] args) {
 		String classes = "<" + symbol;
 		
-		for (int i = 0; i < args.length; i++) {
+		if (args != null) for (int i = 0; i < args.length; i++) {
 			classes += "," + args[i].getName();
 		}
 		classes += ">";

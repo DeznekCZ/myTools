@@ -98,11 +98,15 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 				Iterator<S> it = ForEach.array(outArray).iterator();
 				return Builder
 						.create(OutString.from(start))
-						.setIf((string) -> it.hasNext(), (string) -> string.append(it.next().toString()))
+						.setIf((string) -> it.hasNext(), (string) -> {
+							S next = it.next();
+							string.append(next == null ? "null" : next.toString());
+						})
 						.setWhile((string) -> it.hasNext(), 
-								(string) -> string.append(join),
-								(string) -> string.append(it.next().toString())
-								)
+								(string) -> string.append(join), (string) -> {
+									S next = it.next();
+									string.append(next == null ? "null" : next.toString());
+								})
 						.set((string) -> string.append(end == null ? "" : end))
 						.build()
 					.get();

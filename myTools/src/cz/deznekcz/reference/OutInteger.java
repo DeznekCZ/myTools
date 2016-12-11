@@ -30,9 +30,38 @@ import javafx.beans.value.ObservableValue;
  * @see #binaryXOR(int)
  */
 public class OutInteger extends OutNumber<Integer> {
+	
 	/**
 	 * Creates new reference to {@link Integer} with initial value <b>0</b>
 	 * @return new instance of {@link OutInteger}
+	 */
+	@SuppressWarnings("unchecked")
+	public static OutInteger init() {
+		return new OutInteger(0);
+	}
+	
+	/**
+	 * Creates new reference to {@link Integer} with <b>initial</b> value
+	 * @param initial integer value
+	 * @return new instance of {@link OutInteger}
+	 */
+	public static OutInteger init(int initial) {
+		return new OutInteger(initial);
+	}
+	
+	/**
+	 * Creates new reference to {@link Integer} with <b>initial</b> value
+	 * @param initial integer value
+	 * @return new instance of {@link OutInteger}
+	 */
+	public static OutInteger init(Integer initial) {
+		return new OutInteger(initial);
+	}
+	
+	/**
+	 * Creates new reference to {@link Integer} with initial value <b>0</b>
+	 * @return new instance of {@link OutInteger}
+	 * @deprecated replaced by {@link #init()}
 	 */
 	public static OutInteger create() {
 		return new OutInteger(0);
@@ -42,6 +71,7 @@ public class OutInteger extends OutNumber<Integer> {
 	 * Creates new reference to {@link Integer} with <b>initial</b> value
 	 * @param initial integer value
 	 * @return new instance of {@link OutInteger}
+	 * @deprecated replaced by {@link #init(int)}
 	 */
 	public static OutInteger create(int initial) {
 		return new OutInteger(initial);

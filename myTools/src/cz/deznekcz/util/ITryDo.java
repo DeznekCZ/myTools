@@ -94,12 +94,13 @@ public interface ITryDo {
 	 */
 	static <A> A setValue(CheckActionReturnable<A> setAction) {
 		Out<A> value = Out.init();
-		new ITryDo() {
+		Exception e = new ITryDo() {
 			@Override
 			public void defineAction() throws Exception {
 				value.set(setAction.get());
 			}
 		}.doAction();
+		if (e != null) e.printStackTrace();
 		return value.get();
 	}
 }
