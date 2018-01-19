@@ -36,16 +36,31 @@ public class OutDouble extends OutNumber<Double> {
 		return this;
 	}
 
+	@Deprecated
 	public static OutDouble create() {
 		return new OutDouble(0);
 	}
 
+	@Deprecated
 	public static OutDouble create(double i) {
 		return new OutDouble(i);
 	}
 
+	@SuppressWarnings("unchecked")
+	public static OutDouble init() {
+		return new OutDouble(0);
+	}
+
+	public static OutDouble init(double i) {
+		return new OutDouble(i);
+	}
+
 	public synchronized boolean isEqual(Double value) {
-		return value == get();
+		return value.doubleValue() == get().doubleValue();
+	}
+
+	public synchronized boolean isNotEqual(Double value) {
+		return value.doubleValue() != get().doubleValue();
 	}
 
 	public synchronized boolean isLess(Double value) {

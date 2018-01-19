@@ -30,6 +30,18 @@ import javafx.scene.control.Alert.AlertType;
  */
 public class XMLLoader {
 
+	private static final DocumentBuilder parser;
+	static {
+		Out<DocumentBuilder> odc = Out.init();
+		try {
+			odc.set(DocumentBuilderFactory.newInstance().newDocumentBuilder());
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		parser = odc.get();
+	}
+
 //	private static final Alert xmlError;
 //	static {
 //		xmlError = new Alert(AlertType.ERROR);
@@ -46,10 +58,9 @@ public class XMLLoader {
 	
 	public static Node load(File xmlFile, Out<Exception> exception) {
 		try {
-			DocumentBuilder parser = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 			Document document = parser.parse(xmlFile);
 			return document.getDocumentElement();	
-		} catch (IOException | SAXException | IllegalArgumentException | ParserConfigurationException e) {
+		} catch (IOException | SAXException | IllegalArgumentException e) {
 			exception.set(e);
 			return null;
 		}

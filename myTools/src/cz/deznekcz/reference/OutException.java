@@ -34,4 +34,15 @@ public class OutException extends Out<Exception> {
 	public void callListenersIfNotExcepded() {
 		if (!isExcepted()) invokeChange(get(), get());
 	}
+	
+	@SuppressWarnings("unchecked")
+	public static OutException init() {
+		return new OutException();
+	}
+	
+	public static OutException init(Exception e) {
+		OutException oe = new OutException();
+		oe.set(e);
+		return oe;
+	}
 }

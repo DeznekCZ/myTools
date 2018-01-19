@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.FormatFlagsConversionMismatchException;
@@ -18,7 +19,10 @@ import java.util.ResourceBundle;
 
 import cz.deznekcz.reference.OutArray;
 import cz.deznekcz.reference.OutString;
+import cz.deznekcz.tool.i18n.ILangKey.LangChangeListener;
 import cz.deznekcz.util.ForEach;
+import javafx.beans.InvalidationListener;
+import javafx.beans.value.ChangeListener;
 
 /**
  * Lanuguage configuration class<br><br>
@@ -265,10 +269,11 @@ public class Lang {
 	 */
 	public static void LANGset(String symbol, String value) {
 		instance.SYMBOLS.setProperty(symbol, value);
+		
 	}
 
 	public static void LANGset(ILangKey langKey) {
-		instance.SYMBOLS.setProperty(langKey.symbol(), langKey.defaultValue());
+		LANGset(langKey.symbol(), langKey.value());
 	}
 
 	/**
@@ -321,6 +326,9 @@ public class Lang {
 		@Override @Deprecated
 		public Enumeration<String> getKeys() { return null;	}
 	};
+
+	public static List<LangChangeListener> reloadRequestsChange = new ArrayList<> ();
+	public static List<LangChangeListener> reloadRequestsInvalidate = new ArrayList<> ();
 
 	/**
 	 * Returns instance of resource bundle

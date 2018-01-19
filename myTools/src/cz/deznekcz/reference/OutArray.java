@@ -97,7 +97,7 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 			return (outArray) -> {
 				Iterator<S> it = ForEach.array(outArray).iterator();
 				return Builder
-						.create(OutString.from(start))
+						.create(OutString.init(start))
 						.setIf((string) -> it.hasNext(), (string) -> {
 							S next = it.next();
 							string.append(next == null ? "null" : next.toString());
@@ -261,5 +261,9 @@ public class OutArray<C> extends Out<C[]> implements Iterable<C> {
 	@SuppressWarnings("unchecked")
 	public void set(C... newValue) {
 		super.set(newValue);
+	}
+
+	public C getLast() {
+		return get()[get().length-1];
 	}
 }

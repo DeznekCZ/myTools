@@ -143,7 +143,11 @@ public class OutInteger extends OutNumber<Integer> {
 	}
 
 	public synchronized boolean isEqual(Integer value) {
-		return value == get();
+		return value.intValue() == get().intValue();
+	}
+
+	public synchronized boolean isNotEqual(Integer value) {
+		return value.intValue() != get().intValue();
 	}
 
 	public synchronized boolean isLess(Integer value) {
@@ -222,6 +226,15 @@ public class OutInteger extends OutNumber<Integer> {
 	public synchronized OutInteger binary(Function<Integer, Integer> applyFunction) {
 		set(applyFunction.apply(get()));
 		return this;
+	}
+
+	public OutByteArray toBytes() {
+		int val = this.get();
+		return OutByteArray.initRight(4, 
+				(byte) ((val & 0xff000000) >> 24), 
+				(byte) ((val & 0x00ff0000) >> 16), 
+				(byte) ((val & 0xff000000) >> 8 ), 
+				(byte) ( val & 0xff000000       ));
 	}
 }
 

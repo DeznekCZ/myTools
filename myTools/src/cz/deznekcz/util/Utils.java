@@ -540,6 +540,18 @@ public class Utils {
 				}
 			};
 		}
+
+		public static <T,S> Consumer<T> consumeConvert(Consumer<S> cons, Function<T,S> conv) {
+			return (t) -> cons.accept(conv.apply(t));
+		}
+
+		public static <T,S> Predicate<T> predictConvert(Predicate<S> cons, Function<T,S> conv) {
+			return (t) -> cons.test(conv.apply(t));
+		}
+
+		public static <T,S,R> Function<T,R> functionConvert(Function<S,R> cons, Function<T,S> conv) {
+			return (t) -> cons.apply(conv.apply(t));
+		}
 	}
 	
 	public static class List {
