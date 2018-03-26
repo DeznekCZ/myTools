@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
@@ -291,6 +292,28 @@ public class ForEach {
 					@Override
 					public Node next() {
 						return el.item(index++);
+					}
+					
+				};
+			}
+		};
+	}
+	
+	public static Iterable<Node> DOMNodeIterable(NamedNodeMap attributes) {
+		return new Iterable<Node>() {
+			
+			@Override
+			public Iterator<Node> iterator() {
+				return new Iterator<Node>() {
+					private int index = 0;
+					@Override
+					public boolean hasNext() {
+						return index < attributes.getLength();
+					}
+
+					@Override
+					public Node next() {
+						return attributes.item(index++);
 					}
 					
 				};
