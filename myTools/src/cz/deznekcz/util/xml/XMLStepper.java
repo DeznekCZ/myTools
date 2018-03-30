@@ -2,6 +2,8 @@ package cz.deznekcz.util.xml;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -9,6 +11,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import cz.deznekcz.reference.OutBoolean;
+import cz.deznekcz.reference.OutString;
 import cz.deznekcz.util.ForEach;
 
 
@@ -21,9 +25,12 @@ public class XMLStepper {
 		private List<Node> list;
 		
 
-		public StepList(NodeList childNodes, Step parent) {
+		public StepList(String listValueName, NodeList childNodes, Step parent) {
 			this.list = new ArrayList<Node>();
-			ForEach.DOMNodeIterable(childNodes).forEach(list::add);
+			for (Node node : ForEach.DOMNodeIterable(childNodes)) {
+				if (node.getNodeName().equals(listValueName))
+					list.add(node);
+			}
 			this.parent = parent;
 		}
 
@@ -48,7 +55,7 @@ public class XMLStepper {
 
 		@Override
 		public Step getNode(String path) throws XMLStepperException {
-			StepList step = new StepList();
+			StepList step = new StepList(); // TODO
 			step.list = new ArrayList<>(list);
 //			this.list.forEach((Node listNode) -> {
 //				ForEach.DOMNodeIterable(listNode.getChildNodes()).forEach((node) -> {
@@ -59,13 +66,28 @@ public class XMLStepper {
 		}
 		
 		@Override
-		public Step getList(String path) throws XMLStepperException {
+		public StepList getList(String path) throws XMLStepperException {
 			return this;
 		}
 		
 		@Override
 		public void collectText(List<String> collector) {
 			
+		}
+
+		public void foreach(Predicate<Step> filtered, Consumer<Step> object) {
+			Step step;
+			for (Node node : list) {
+				step = new StepNode(node, node.getLocalName(), this);
+				if (filtered.test(step))
+					object.accept(step);
+			}
+		}
+
+		public void foreach(Consumer<Step> object) {
+			for (Node node : list) {
+				object.accept(new StepNode(node, node.getLocalName(), this));
+			}
 		} 
 	}
 
@@ -89,7 +111,7 @@ public class XMLStepper {
 	}
 
 	@SuppressWarnings("serial")
-	public static class XMLStepperException extends Exception {
+	public static class XMLStepperException extends RuntimeException {
 		public static final String ELEMENT = "Element not exists: \"";
 		public XMLStepperException(String message) {
 			super(message);
@@ -132,15 +154,7 @@ public class XMLStepper {
 
 		public StepDocument(Document document) {
 			this.document = document;
-		}
-
-		@Override
-		public Step getNode(String path) throws XMLStepperException {
-			if (path == null || path.length() == 0)
-				return new StepNONE();
-			String[] pathArray = path.split("/",2);
-			setXmlNode(document.getElementById(pathArray[0]));
-			return new StepNode(getXmlNode(), pathArray[1], this);
+			this.rootNode = document;
 		}
 
 		@Override
@@ -157,6 +171,10 @@ public class XMLStepper {
 		public void setXmlNode(Node node) {
 			rootNode = node;
 		}
+		
+		public Document getXMLDocument() {
+			return document;
+		}
 	}
 
 	public static interface Step {
@@ -164,7 +182,7 @@ public class XMLStepper {
 			String[] pathArray = path.split("/",2);
 			for (Node node : ForEach.DOMNodeIterable(getXmlNode().getChildNodes())) {
 				if (node.getNodeName().equals(pathArray[0]))
-					return new StepNode(node, pathArray[1], this);
+					return new StepNode(node, pathArray[0], this);
 			}
 			throw XMLStepperException.notExists(XMLStepperException.ELEMENT,pathArray[0]);
 		}
@@ -172,17 +190,53 @@ public class XMLStepper {
 		public void setXmlNode(Node node);
 		public Node getXmlNode();
 		public Step getParent();
-		public default Step getList(String path) throws XMLStepperException {
+		public default String attribute(String name) {
+			OutString result = OutString.init();
+			ForEach.start(ForEach.DOMNodeIterable(getXmlNode().getAttributes()), (node) -> {
+				if (node.getNodeName().startsWith(name))
+				{
+					result.set(node.getNodeValue());
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			});
+			return result.get();
+		}
+		
+		public default StepList getList(String path) throws XMLStepperException {
 			String[] pathArray = path.split("/",2);
 			if (pathArray.length > 1)
 				return getNode(pathArray[0]).getList(pathArray[1]);
 			else {
-				return new StepList(getXmlNode().getChildNodes(), this);
+				return new StepList(pathArray[0], getXmlNode().getChildNodes(), this);
 			}
 		}
 
 		default void collectText(List<String> collector) {
 			collector.add(getXmlNode().getTextContent());
+		}
+
+		default boolean hasElement(String name)
+		{
+			if (this.getXmlNode().hasChildNodes())
+				for (Node node : ForEach.DOMNodeIterable(getXmlNode().getChildNodes()))
+					if (node.getNodeName().equals(name))
+						return true;
+				
+			return false;
+		}
+
+		default boolean hasAttribute(String name)
+		{
+			if (this.getXmlNode().hasAttributes())
+				for (Node node : ForEach.DOMNodeIterable(getXmlNode().getAttributes()))
+					if (node.getNodeName().startsWith(name))
+						return true;
+				
+			return false;
 		}
 	}
 	
@@ -190,4 +244,9 @@ public class XMLStepper {
 		return new StepDocument(document);
 	}
 
+	
+	public static boolean hasAttribute(Step step)
+	{
+		return step.getXmlNode() != null && step.getXmlNode().hasAttributes();
+	}
 }
