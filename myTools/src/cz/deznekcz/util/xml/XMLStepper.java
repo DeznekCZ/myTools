@@ -192,7 +192,7 @@ public class XMLStepper {
 		public Step getParent();
 		public default String attribute(String name) {
 			OutString result = OutString.init();
-			ForEach.start(ForEach.DOMNodeIterable(getXmlNode().getAttributes()), (node) -> {
+			ForEach.start(ForEach.DOMNodeIterableMap(getXmlNode().getAttributes()), (node) -> {
 				if (node.getNodeName().startsWith(name))
 				{
 					result.set(node.getNodeValue());
@@ -232,7 +232,7 @@ public class XMLStepper {
 		default boolean hasAttribute(String name)
 		{
 			if (this.getXmlNode().hasAttributes())
-				for (Node node : ForEach.DOMNodeIterable(getXmlNode().getAttributes()))
+				for (Node node : ForEach.DOMNodeIterableMap(getXmlNode().getAttributes()))
 					if (node.getNodeName().startsWith(name))
 						return true;
 				
