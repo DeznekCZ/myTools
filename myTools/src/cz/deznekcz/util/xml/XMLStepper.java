@@ -3,6 +3,7 @@ package cz.deznekcz.util.xml;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
@@ -13,6 +14,7 @@ import org.w3c.dom.NodeList;
 
 import cz.deznekcz.reference.OutBoolean;
 import cz.deznekcz.reference.OutString;
+import cz.deznekcz.util.Builder;
 import cz.deznekcz.util.ForEach;
 
 
@@ -23,13 +25,18 @@ public class XMLStepper {
 
 		private Step parent;
 		private List<Node> list;
+		private List<Step> stepList;
 		
 
 		public StepList(String listValueName, NodeList childNodes, Step parent) {
-			this.list = new ArrayList<Node>();
+			this.list = new ArrayList<>();
+			this.stepList = new ArrayList<>();
 			for (Node node : ForEach.DOMNodeIterable(childNodes)) {
 				if (node.getNodeName().equals(listValueName))
+				{
 					list.add(node);
+					stepList.add(new StepNode(node, listValueName, this));
+				}
 			}
 			this.parent = parent;
 		}
@@ -76,21 +83,25 @@ public class XMLStepper {
 		}
 
 		public void foreach(Predicate<Step> filtered, Consumer<Step> object) {
-			Step step;
-			for (Node node : list) {
-				step = new StepNode(node, node.getLocalName(), this);
+			for (Step step : stepList) {
 				if (filtered.test(step))
 					object.accept(step);
 			}
 		}
 
 		public void foreach(Consumer<Step> object) {
-			for (Node node : list) {
-				object.accept(new StepNode(node, node.getLocalName(), this));
-			}
+			foreach((v)->true, object);
+		}
+
+		public List<Node> asNodeList() {
+			return list;
+		}
+
+		public List<Step> asStepList() {
+			return stepList;
 		} 
 	}
-
+	
 	public static class StepNONE implements Step {
 
 		@Override
@@ -125,10 +136,12 @@ public class XMLStepper {
 
 		private Node node;
 		private Step parent;
+		private String path;
 
 		public StepNode(Node current, String path, Step parent) throws XMLStepperException {
 			this.parent = parent;
 			this.node = current;
+			this.path = path;
 		}
 
 		@Override
@@ -204,6 +217,21 @@ public class XMLStepper {
 				}
 			});
 			return result.get();
+		}
+		public default <R> R attribute(String name, Function<String, R> converter) {
+			OutString result = OutString.init();
+			ForEach.start(ForEach.DOMNodeIterableMap(getXmlNode().getAttributes()), (node) -> {
+				if (node.getNodeName().startsWith(name))
+				{
+					result.set(node.getNodeValue());
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			});
+			return converter.apply(result.get());
 		}
 		
 		public default StepList getList(String path) throws XMLStepperException {
