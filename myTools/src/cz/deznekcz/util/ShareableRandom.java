@@ -11,8 +11,6 @@ public class ShareableRandom extends Random {
 	private long restore;
 	
 	public ShareableRandom(String stringSeed, long longSeed, long restore) {
-		if (longSeed == 0L)
-			throw new IllegalArgumentException("long seed can not be 0L (may be bad string null or empty seed)");
 		this.longSeed = longSeed;
 		if (restore == 0L)
 			this.restore = longSeed;
@@ -72,37 +70,37 @@ public class ShareableRandom extends Random {
 	}
 
 	@Override
-	public int nextInt() {
+	public synchronized int nextInt() {
 		recalculate();
 		return super.nextInt();
 	}
 
 	@Override
-	public int nextInt(int bound) {
+	public synchronized int nextInt(int bound) {
 		recalculate();
 		return super.nextInt(bound);
 	}
 	
 	@Override
-	public boolean nextBoolean() {
+	public synchronized boolean nextBoolean() {
 		recalculate();
 		return super.nextBoolean();
 	}
 	
 	@Override
-	public double nextDouble() {
+	public synchronized double nextDouble() {
 		recalculate();
 		return super.nextDouble();
 	}
 	
 	@Override
-	public long nextLong() {
+	public synchronized long nextLong() {
 		recalculate();
 		return super.nextLong();
 	}
 	
 	private synchronized void recalculate() {
-		restore = Long.rotateRight(restore, 5);
+		restore = (Long.rotateRight(restore, 1) ^ restore) + 3;
 		super.setSeed(restore);
 	}
 	
