@@ -272,7 +272,7 @@ public class ForEach {
 	 * @param <T> Class of element object
 	 */
 	public static <T> int count(Iterable<T> iterable) {
-		OutInteger counter = OutInteger.create();
+		OutInteger counter = OutInteger.init();
 		ForEach.start(iterable, (v) -> {counter.increment();});
 		return counter.get();
 	}

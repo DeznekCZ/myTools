@@ -3,9 +3,8 @@ package cz.deznekcz.util.xml;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -22,11 +21,19 @@ public class XMLStepper {
 
 		private Step parent;
 		private List<Node> list;
+		private List<Step> stepList;
 		
 
-		public StepList(NodeList childNodes, Step parent) {
-			this.list = new ArrayList<Node>();
-			ForEach.DOMNodeIterable(childNodes).forEach(list::add);
+		public StepList(String listValueName, NodeList childNodes, Step parent) {
+			this.list = new ArrayList<>();
+			this.stepList = new ArrayList<>();
+			for (Node node : ForEach.DOMNodeIterable(childNodes)) {
+				if (node.getNodeName().equals(listValueName))
+				{
+					list.add(node);
+					stepList.add(new StepNode(node, listValueName, this));
+				}
+			}
 			this.parent = parent;
 		}
 
@@ -51,7 +58,7 @@ public class XMLStepper {
 
 		@Override
 		public Step getNode(String path) throws XMLStepperException {
-			StepList step = new StepList();
+			StepList step = new StepList(); // TODO
 			step.list = new ArrayList<>(list);
 //			this.list.forEach((Node listNode) -> {
 //				ForEach.DOMNodeIterable(listNode.getChildNodes()).forEach((node) -> {
@@ -72,21 +79,25 @@ public class XMLStepper {
 		}
 
 		public void foreach(Predicate<Step> filtered, Consumer<Step> object) {
-			Step step;
-			for (Node node : list) {
-				step = new StepNode(node, node.getLocalName(), this);
+			for (Step step : stepList) {
 				if (filtered.test(step))
 					object.accept(step);
 			}
 		}
 
 		public void foreach(Consumer<Step> object) {
-			for (Node node : list) {
-				object.accept(new StepNode(node, node.getLocalName(), this));
-			}
+			foreach((v)->true, object);
+		}
+
+		public List<Node> asNodeList() {
+			return list;
+		}
+
+		public List<Step> asStepList() {
+			return stepList;
 		} 
 	}
-
+	
 	public static class StepNONE implements Step {
 
 		@Override
@@ -121,10 +132,12 @@ public class XMLStepper {
 
 		private Node node;
 		private Step parent;
+		private String path;
 
 		public StepNode(Node current, String path, Step parent) throws XMLStepperException {
 			this.parent = parent;
 			this.node = current;
+			this.path = path;
 		}
 
 		@Override
@@ -189,7 +202,7 @@ public class XMLStepper {
 		public default String attribute(String name) {
 			OutString result = OutString.init();
 			ForEach.start(ForEach.DOMNodeIterable(getXmlNode().getAttributes()), (node) -> {
-				if (node.getNodeName().equals(name))
+				if (node.getNodeName().startsWith(name))
 				{
 					result.set(node.getNodeValue());
 					return false;
@@ -201,18 +214,53 @@ public class XMLStepper {
 			});
 			return result.get();
 		}
+		public default <R> R attribute(String name, Function<String, R> converter) {
+			OutString result = OutString.init();
+			ForEach.start(ForEach.DOMNodeIterable(getXmlNode().getAttributes()), (node) -> {
+				if (node.getNodeName().startsWith(name))
+				{
+					result.set(node.getNodeValue());
+					return false;
+				}
+				else
+				{
+					return true;
+				}
+			});
+			return converter.apply(result.get());
+		}
 		
 		public default StepList getList(String path) throws XMLStepperException {
 			String[] pathArray = path.split("/",2);
 			if (pathArray.length > 1)
 				return getNode(pathArray[0]).getList(pathArray[1]);
 			else {
-				return new StepList(getXmlNode().getChildNodes(), this);
+				return new StepList(pathArray[0], getXmlNode().getChildNodes(), this);
 			}
 		}
 
 		default void collectText(List<String> collector) {
 			collector.add(getXmlNode().getTextContent());
+		}
+
+		default boolean hasElement(String name)
+		{
+			if (this.getXmlNode().hasChildNodes())
+				for (Node node : ForEach.DOMNodeIterable(getXmlNode().getChildNodes()))
+					if (node.getNodeName().equals(name))
+						return true;
+				
+			return false;
+		}
+
+		default boolean hasAttribute(String name)
+		{
+			if (this.getXmlNode().hasAttributes())
+				for (Node node : ForEach.DOMNodeIterable(getXmlNode().getAttributes()))
+					if (node.getNodeName().startsWith(name))
+						return true;
+				
+			return false;
 		}
 	}
 	
