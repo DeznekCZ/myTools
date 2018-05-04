@@ -1,5 +1,6 @@
 package cz.deznekcz.util.xml;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -16,6 +17,7 @@ import cz.deznekcz.reference.OutBoolean;
 import cz.deznekcz.reference.OutString;
 import cz.deznekcz.util.Builder;
 import cz.deznekcz.util.ForEach;
+import cz.deznekcz.util.xml.XMLStepper.StepDocument;
 
 
 
@@ -97,7 +99,7 @@ public class XMLStepper {
 			return list;
 		}
 
-		public List<Step> asStepList() {
+		public List<Step> asList() {
 			return stepList;
 		} 
 	}
@@ -276,5 +278,10 @@ public class XMLStepper {
 	public static boolean hasAttribute(Step step)
 	{
 		return step.getXmlNode() != null && step.getXmlNode().hasAttributes();
+	}
+
+
+	public static StepDocument fromFile(String fileName) throws Exception {
+		return from(XMLLoader.load(new File(fileName)).getOwnerDocument());
 	}
 }
