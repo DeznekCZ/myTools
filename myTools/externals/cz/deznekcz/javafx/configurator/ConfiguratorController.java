@@ -12,11 +12,15 @@ import java.util.ResourceBundle;
 import java.util.Scanner;
 
 import cz.deznekcz.javafx.components.Dialog;
+import cz.deznekcz.javafx.configurator.data.LiveStorage;
+import cz.deznekcz.javafx.configurator.errhdl.CFGLoadException;
 import cz.deznekcz.tool.i18n.ILangKey;
+import cz.deznekcz.tool.i18n.Lang;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.ButtonType;
@@ -44,32 +48,11 @@ public class ConfiguratorController implements Initializable {
 	@FXML private MenuItem CFG_menu_file_close;
 	
 	@FXML private Menu     CFG_menu_settings;
-	@FXML private MenuItem CFG_menu_settings_unnecesary;
+	@FXML private MenuItem CFG_menu_settings_unnecessary;
 	
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		CFG_menu_file_close.setOnAction(this::exit);
-		
-		bindTranslate(CFG_tab_configs, CFG_tab_commands,
-				CFG_menu_file,
-				CFG_menu_file_open, CFG_menu_file_close,
-				CFG_menu_settings,
-				CFG_menu_settings_unnecesary);
-	}
-
-	private void bindTranslate(Object...nodes) {
-		for (Object object : nodes) {
-			if (object instanceof Labeled) {
-				Labeled cast = ((Labeled) object);
-				cast.textProperty().bind(ILangKey.simple(cast.getId(), cast.getText()));
-			} else if (object instanceof MenuItem) {
-				MenuItem cast = ((MenuItem) object);
-				cast.textProperty().bind(ILangKey.simple(cast.getId(), cast.getText()));
-			} else if (object instanceof Tab) {
-				Tab cast = ((Tab) object);
-				cast.textProperty().bind(ILangKey.simple(cast.getId(), cast.getText()));
-			}
-		}
 	}
 
 	public void exit(Event event) {
@@ -80,23 +63,35 @@ public class ConfiguratorController implements Initializable {
 	private boolean notFirstLoad = true;
 	private PrintStream loadStream;
 	
-	public void loadConfig(File string) {
+	public void loadConfig(File cfg) {
 		try {
 			if (notFirstLoad) {
 				notFirstLoad = false;
+				LAST_STORED.getParentFile().mkdirs();
 				loadStream = new PrintStream(LAST_STORED);
 			}
-		} catch (IOException e) {
-			Dialog.EXCEPTION.show(e);
+			boolean loaded = true;
+			
+			FXMLLoader loader = new FXMLLoader(cfg.toURI().toURL(), Lang.asResourceBundle());
+			Tab tab = loader.load();
+			LiveStorage storage = new LiveStorage(cfg);
+			tab.textProperty().bind(storage.nameProperty());
+			
+			if (loaded == true)
+				loadStream.println(cfg);
+		} catch (Exception e) {
+			Dialog.EXCEPTION.show(new CFGLoadException(e));
 		}
 	}
 
 	public void loadLast(String[] defaults) {
+		List<File> defaultFiles = new ArrayList<>();
+		for (String path : defaults) {
+			defaultFiles.add(new File(path));
+		}
+		
 		if (LAST_STORED.exists()) {
-			List<File> defaultFiles = new ArrayList<>();
-			for (String path : defaults) {
-				defaultFiles.add(new File(path));
-			}
+			
 			List<File> list = new ArrayList<>();
 			try {
 				Scanner file = new Scanner(LAST_STORED);
@@ -120,6 +115,10 @@ public class ConfiguratorController implements Initializable {
 			}
 			
 			for (File file : list) {
+				loadConfig(file);
+			}
+		} else {
+			for (File file : defaultFiles) {
 				loadConfig(file);
 			}
 		}

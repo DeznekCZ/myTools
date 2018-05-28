@@ -246,7 +246,7 @@ public class XMLStepper {
 		}
 
 		default void collectText(List<String> collector) {
-			collector.add(getXmlNode().getTextContent());
+			collector.add(text());
 		}
 
 		default boolean hasElement(String name)
@@ -268,6 +268,8 @@ public class XMLStepper {
 				
 			return false;
 		}
+
+		public default String text() { return getXmlNode().getTextContent(); }
 	}
 	
 	public static StepDocument from(Document document) {

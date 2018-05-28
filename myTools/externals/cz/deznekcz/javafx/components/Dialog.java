@@ -14,7 +14,8 @@ import javafx.scene.control.TextArea;
 public abstract class Dialog extends Alert {
 	
 	final static ILangKey ILK_EXCEPTION       = ILangKey.simple("Dialog.Exception.");
-	final static ILangKey ILK_EXCEPTION_TITLE = ILK_EXCEPTION.extended("Title");
+	final static ILangKey ILK_EXCEPTION_TITLE = ILK_EXCEPTION.extended("Title")
+													.initDefault("Error cached");
 	final static @Arguments(types = {String.class}, hints = {"exception name"}) 
 				 ILangKey ILK_EXCEPTION_NAME  = ILK_EXCEPTION.extended("Name[%s]");
 	

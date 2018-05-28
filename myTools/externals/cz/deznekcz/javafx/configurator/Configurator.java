@@ -23,7 +23,7 @@ public class Configurator extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		FXMLLoader loader = new FXMLLoader(Configurator.class.getResource("Configurator.fxml"));
+		FXMLLoader loader = new FXMLLoader(Configurator.class.getResource("Configurator.fxml"), Lang.asResourceBundle());
 		BorderPane root = loader.load();
 		root.getStylesheets().add("Configurator.css");
 		ConfiguratorController ctrl = loader.<ConfiguratorController>getController();
