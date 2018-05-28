@@ -6,8 +6,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import cz.deznekcz.tool.langEditor.LangKey;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
 /**
@@ -23,7 +25,7 @@ import javafx.beans.value.ObservableValue;
  * @see Arguments
  */
 
-public interface ILangKey {
+public interface ILangKey extends ObservableValue<String> {
 
 	HashMap<String, String> DEFAULTS = new HashMap<>();
 
@@ -83,6 +85,31 @@ public interface ILangKey {
 			DEFAULTS.put(this.symbol(), last);
 		}
 		return last;
+	}
+	
+	@Override
+	default void addListener(InvalidationListener listener) {
+		Lang.LANGaddOnChange(symbol(), listener);
+	}
+	
+	@Override
+	default void removeListener(InvalidationListener listener) {
+		Lang.LANGremoveOnChange(symbol(), listener);
+	}
+	
+	@Override
+	default void addListener(ChangeListener<? super String> listener) {
+		Lang.LANGaddOnChange(symbol(), listener);
+	};
+	
+	@Override
+	default void removeListener(ChangeListener<? super String> listener) {
+		Lang.LANGremoveOnChange(symbol(), listener);
+	};
+	
+	@Override
+	default String getValue() {
+		return value();
 	}
 
 	/**
@@ -208,4 +235,5 @@ public interface ILangKey {
 		DEFAULTS.put(this.symbol(), defaultValue);
 		return this;
 	}
+	
 }

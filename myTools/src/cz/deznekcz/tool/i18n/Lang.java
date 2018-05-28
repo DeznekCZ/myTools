@@ -7,9 +7,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.FormatFlagsConversionMismatchException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -19,6 +21,8 @@ import java.util.ResourceBundle;
 import cz.deznekcz.reference.OutArray;
 import cz.deznekcz.reference.OutString;
 import cz.deznekcz.util.ForEach;
+import javafx.beans.InvalidationListener;
+import javafx.beans.value.ChangeListener;
 
 /**
  * Lanuguage configuration class<br><br>
@@ -203,8 +207,8 @@ public class Lang {
 		if (args == null || args.length == 0) {
 			return newOrExistingKey(symbol.symbol());
 		} else {
-			OutString finalValue = OutString.empty();
-			OutString mistake = OutString.empty();
+			OutString finalValue = OutString.init();
+			OutString mistake = OutString.init();
 			
 			if (symbol.getClass().isAnnotationPresent(Arguments.class)) {
 				if (!ArgumentsTest.test(
@@ -264,11 +268,23 @@ public class Lang {
 	 * @see #LANG(String, Object...)
 	 */
 	public static void LANGset(String symbol, String value) {
-		instance.SYMBOLS.setProperty(symbol, value);
+		Object last = instance.SYMBOLS.setProperty(symbol, value);
+		if (changeListeners.containsKey(symbol))
+		{
+			if (last == null) last = "";
+			for (ChangeListener<? super String> changeL : changeListeners.get(symbol)) {
+				changeL.changed(ILangKey.simple(symbol), (String) last, value);
+			}
+		}
+		if (invalidationListeners.containsKey(symbol)) {
+			invalidationListeners.get(symbol).forEach(
+				(l) -> l.invalidated(ILangKey.simple(symbol))
+			);
+		}
 	}
 
 	public static void LANGset(ILangKey langKey) {
-		instance.SYMBOLS.setProperty(langKey.symbol(), langKey.defaultValue());
+		LANGset(langKey.symbol(), langKey.defaultValue());
 	}
 
 	/**
@@ -344,6 +360,38 @@ public class Lang {
 				if(!LANGexists(enums[i][j]))
 					LANGset(enums[i][j]);
 			}
+		}
+	}
+	
+	private static HashMap<String, List<ChangeListener<? super String>>> changeListeners
+				= new HashMap<>();
+	
+	private static HashMap<String, List<InvalidationListener>> invalidationListeners
+				= new HashMap<>();
+
+	public static void LANGaddOnChange(String symbol, ChangeListener<? super String> listener) {
+		List<ChangeListener<? super String>> list = changeListeners.getOrDefault(symbol, new ArrayList<>());
+		list.add(listener);
+		changeListeners.put(symbol, list);
+	}
+
+	public static void LANGremoveOnChange(String symbol, ChangeListener<? super String> listener) {
+		if (changeListeners.containsKey(symbol)) {
+			List<ChangeListener<? super String>> list = changeListeners.get(symbol);
+			if (list.contains(listener)) list.remove(listener);
+		}
+	}
+
+	public static void LANGaddOnChange(String symbol, InvalidationListener listener) {
+		List<InvalidationListener> list = invalidationListeners.getOrDefault(symbol, new ArrayList<>());
+		list.add(listener);
+		invalidationListeners.put(symbol, list);
+	}
+
+	public static void LANGremoveOnChange(String symbol, InvalidationListener listener) {
+		if (invalidationListeners.containsKey(symbol)) {
+			List<InvalidationListener> list = invalidationListeners.get(symbol);
+			if (list.contains(listener)) list.remove(listener);
 		}
 	}
 }
