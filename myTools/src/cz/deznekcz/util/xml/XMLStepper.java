@@ -194,17 +194,23 @@ public class XMLStepper {
 
 	public static interface Step {
 		public default Step getNode(String path) throws XMLStepperException {
-			String[] pathArray = path.split("/",2);
-			for (Node node : ForEach.DOMNodeIterable(getXmlNode().getChildNodes())) {
-				if (node.getNodeName().equals(pathArray[0]))
-					return new StepNode(node, pathArray[0], this);
+			if (path.contains("/")) {
+				String rootPath = path.substring(0, path.lastIndexOf('/'));
+				String rootEnclosing = path.substring(path.lastIndexOf('/') + 1, path.length());
+				return getNode(rootPath).getNode(rootEnclosing);
+			} else {
+				for (Node node : ForEach.DOMNodeIterable(getXmlNode().getChildNodes())) {
+					if (node.getNodeName().equals(path))
+						return new StepNode(node, path, this);
+				}
 			}
-			throw XMLStepperException.notExists(XMLStepperException.ELEMENT,pathArray[0]);
+			throw XMLStepperException.notExists(XMLStepperException.ELEMENT,path);
 		}
 		
 		public void setXmlNode(Node node);
 		public Node getXmlNode();
 		public Step getParent();
+		
 		public default String attribute(String name) {
 			OutString result = OutString.init();
 			ForEach.start(ForEach.DOMNodeIterableMap(getXmlNode().getAttributes()), (node) -> {
@@ -237,11 +243,12 @@ public class XMLStepper {
 		}
 		
 		public default StepList getList(String path) throws XMLStepperException {
-			String[] pathArray = path.split("/",2);
-			if (pathArray.length > 1)
-				return getNode(pathArray[0]).getList(pathArray[1]);
-			else {
-				return new StepList(pathArray[0], getXmlNode().getChildNodes(), this);
+			if (path.contains("/")) {
+				String rootPath = path.substring(0, path.lastIndexOf('/'));
+				String rootEnclosing = path.substring(path.lastIndexOf('/') + 1, path.length());
+				return getNode(rootPath).getList(rootEnclosing);
+			} else {
+				return new StepList(path, getXmlNode().getChildNodes(), this);
 			}
 		}
 

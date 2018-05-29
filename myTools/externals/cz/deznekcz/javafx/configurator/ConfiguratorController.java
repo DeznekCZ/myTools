@@ -23,18 +23,21 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
+import javafx.scene.layout.BorderPane;
 import javafx.stage.WindowEvent;
 
 public class ConfiguratorController implements Initializable {
 
 	private static final File LAST_STORED = new File(
-				System.getenv("APPDATA").concat("\\passxde\\lastOpened.cfg")
+//				System.getenv("APPDATA").concat("\\passxde\\lastOpened.cfg")
+				"C:\\passxde\\lastOpened.cfg"
 			);
 	
 	@FXML private TabPane CFG_tabs;
@@ -70,15 +73,8 @@ public class ConfiguratorController implements Initializable {
 				LAST_STORED.getParentFile().mkdirs();
 				loadStream = new PrintStream(LAST_STORED);
 			}
-			boolean loaded = true;
-			
-			FXMLLoader loader = new FXMLLoader(cfg.toURI().toURL(), Lang.asResourceBundle());
-			Tab tab = loader.load();
-			LiveStorage storage = new LiveStorage(cfg);
-			tab.textProperty().bind(storage.nameProperty());
-			
-			if (loaded == true)
-				loadStream.println(cfg);
+			CFG_tabs.getTabs().add(new LiveStorage(cfg).getTab());
+			loadStream.println(cfg);
 		} catch (Exception e) {
 			Dialog.EXCEPTION.show(new CFGLoadException(e));
 		}

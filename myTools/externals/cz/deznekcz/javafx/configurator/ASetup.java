@@ -7,13 +7,15 @@ public abstract class ASetup {
 	
 	protected LiveStorage storage;
 	
-	public ASetup(LiveStorage storage) {
-		this.storage = storage;
+	public ASetup() {
+		
 	}
 	
 	public LiveStorage getStorage() {
 		return storage;
 	}
 	
-	public abstract Tab component();
+	public void setStorage(LiveStorage storage) {
+		this.storage = storage;
+	}
 }
