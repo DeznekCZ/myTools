@@ -67,6 +67,7 @@ public class ConfiguratorController implements Initializable {
 		CFG_menu_file_close.setOnAction(this::exit);
 		
 		fixedMenus = FXCollections.observableArrayList(CFG_menu_bar.getMenus());
+		configMenus = new HashMap<>();
 	}
 
 	public void exit(Event event) {

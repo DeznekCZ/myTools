@@ -10,7 +10,7 @@ import javafx.scene.layout.BorderPane;
 public abstract class ASetup {
 
 	@FXML
-	private MenuBar extendedMenus;
+	private MenuBar menus;
 
 	@FXML
 	private BorderPane root;
@@ -30,8 +30,8 @@ public abstract class ASetup {
 		this.storage = storage;
 		this.tab = tab;
 		
-		if (extendedMenus != null) {
-			ctrl.registerExtendedMenus(tab, extendedMenus.getMenus());
+		if (menus != null) {
+			ctrl.registerExtendedMenus(tab, menus.getMenus());
 			root.setTop(null);
 		}
 	}

@@ -1,7 +1,5 @@
 package cz.deznekcz.javafx.configurator.components;
 
-import cz.deznekcz.reference.OutString;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -30,13 +28,13 @@ public class TextEntry extends Control {
 		private Pane fill;
 
 		private StringProperty pattern;
-		private StringProperty tooltip;
 		private BooleanProperty limited;
 		private BooleanProperty mismach;
 		
 		public TextEntrySkin(TextEntry text) {
 			this.text = text;
 			text.getStyleClass().add("text-entry");
+			text.setTooltip(new Tooltip(""));
 			
 			box = new HBox();
 			label = new Label();
@@ -158,6 +156,30 @@ public class TextEntry extends Control {
 	
 	public Boolean isMismach() {
 		return mismachProperty().get();
+	}
+	
+	public StringProperty promptPropterty() {
+		return ((TextEntrySkin) getSkin()).value.promptTextProperty();
+	}
+	
+	public void setPrompt(String prompt) {
+		promptPropterty().set(prompt);
+	}
+	
+	public String getPrompt() {
+		return promptPropterty().get();
+	}
+	
+	public StringProperty helpPropterty() {
+		return getTooltip().textProperty();
+	}
+	
+	public void setHelp(String prompt) {
+		helpPropterty().set(prompt);
+	}
+	
+	public String getHelp() {
+		return helpPropterty().get();
 	}
 	
 	public TextEntry() {
