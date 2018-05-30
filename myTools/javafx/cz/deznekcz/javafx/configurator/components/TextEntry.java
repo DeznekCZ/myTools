@@ -17,7 +17,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 
-public class TextEntry extends Control {
+public class TextEntry extends Control implements Value {
 
 	private static class TextEntrySkin implements Skin<TextEntry> {
 		
@@ -28,6 +28,7 @@ public class TextEntry extends Control {
 		private Pane fill;
 
 		private StringProperty pattern;
+		private StringProperty valueString;
 		private BooleanProperty limited;
 		private BooleanProperty mismach;
 		
@@ -77,13 +78,21 @@ public class TextEntry extends Control {
 //			System.out.println(label.getText());
 			label.tooltipProperty().bind(text.tooltipProperty());
 			value.tooltipProperty().bind(text.tooltipProperty());
+			
+			valueString = new SimpleStringProperty("");
+			valueString.addListener((o,l,n) -> {
+				value.setText(n);
+			});
 		}
 		
 		private void refresh() {
 			limited.set(!pattern.get().equals("*"));
-			boolean active = limited.get() && !value.getText().matches(pattern.get());
+			boolean active = limited.get() 
+					&& (value.getText() == null || !value.getText().matches(pattern.get()));
 			value.pseudoClassStateChanged(PseudoClass.getPseudoClass("mismach"), active);
 			mismach.set(active);
+			
+			if (!limited.get() || !active) valueString.set(value.getText());
 		}
 
 		@Override
@@ -115,7 +124,7 @@ public class TextEntry extends Control {
 	}
 	
 	public StringProperty valueProperty() {
-		return ((TextEntrySkin) getSkin()).value.textProperty();
+		return ((TextEntrySkin) getSkin()).valueString;
 	}
 	
 	public String getValue() {

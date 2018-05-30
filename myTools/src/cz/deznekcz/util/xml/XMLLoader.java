@@ -2,6 +2,7 @@ package cz.deznekcz.util.xml;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.function.Consumer;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -93,6 +94,12 @@ public class XMLLoader {
 			exception.set(e);
 			return false;
 		}
+	}
+	
+	public static void save(File xml, String xmlAsText) throws Exception {
+		PrintStream ps = new PrintStream(xml);
+		ps.println(xmlAsText);
+		ps.close();
 	}
 	
 	public static void newXml(File xml, String rootNodeName) throws Exception {

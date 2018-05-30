@@ -1,5 +1,6 @@
 package cz.deznekcz.javafx.configurator;
 
+import cz.deznekcz.javafx.configurator.components.Value;
 import cz.deznekcz.javafx.configurator.data.LiveStorage;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
@@ -20,6 +21,8 @@ public abstract class ASetup {
 	private ConfiguratorController ctrl;
 
 	private Tab tab;
+
+	private Value[] values;
 	
 	public ASetup() {
 		
@@ -34,6 +37,11 @@ public abstract class ASetup {
 			ctrl.registerExtendedMenus(tab, menus.getMenus());
 			root.setTop(null);
 		}
+		
+		for (Value value : values) {
+			value.valueProperty().setValue(storage.getValue(value.getId()));
+			value.valueProperty().addListener((o,l,n) -> storage.setValue(value.getId(), n));
+		}
 	}
 	
 	public LiveStorage getStorage() {
@@ -46,5 +54,9 @@ public abstract class ASetup {
 	
 	public ConfiguratorController getCtrl() {
 		return ctrl;
+	}
+
+	protected void storedValues(Value...values) {
+		this.values = values;
 	}
 }

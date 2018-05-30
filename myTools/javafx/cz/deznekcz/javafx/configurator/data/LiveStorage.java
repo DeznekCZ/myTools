@@ -13,10 +13,13 @@ import java.util.ResourceBundle;
 
 import com.sun.javafx.collections.ObservableMapWrapper;
 
+import cz.deznekcz.javafx.components.Dialog;
 import cz.deznekcz.javafx.configurator.ASetup;
 import cz.deznekcz.javafx.configurator.ConfiguratorController;
+import cz.deznekcz.reference.OutString;
 import cz.deznekcz.tool.i18n.Lang;
 import cz.deznekcz.util.Utils;
+import cz.deznekcz.util.xml.XML;
 import cz.deznekcz.util.xml.XMLLoader;
 import cz.deznekcz.util.xml.XMLStepper;
 import cz.deznekcz.util.xml.XMLStepper.Step;
@@ -42,6 +45,7 @@ public class LiveStorage {
 	private URL fxmlFile;
 	private ResourceBundle bundle;
 	private Tab tab;
+	private StepList valueList;
 	
 	public LiveStorage(File cfg, ConfiguratorController ctrl) throws Exception {
 		this.cfg = cfg;
@@ -49,27 +53,27 @@ public class LiveStorage {
 		xmlRoot = XMLStepper.fromFile(cfg.getPath());
 		id = new SimpleStringProperty(xmlRoot.getNode("storage/id").text());
 		
-		TITLE = "Configurator.config." + id.get();
+		searched = new HashMap<>();
+		
+		valueList = xmlRoot.getList("storage/values/value");
+		for (Step value : valueList.asList()) {
+			searched.put(value.attribute("id"), value.text());
+		}
 		
 		URL[] urls = {new File("config\\" + id.get()).toURI().toURL()};
 		ClassLoader clLoader = new URLClassLoader(urls);
-		
-		searched = new HashMap<>();
 		
 		fxmlFile = new File("config\\" + id.get() + "\\Layout.fxml").toURI().toURL();
 		bundle = ResourceBundle.getBundle("lang", Locale.getDefault(), clLoader);
 		
 		loader = new FXMLLoader(fxmlFile, bundle);
 		component = loader.load();
+		TITLE = "Configurator.config." + id.get();
 		tab = new Tab(bundle.getString(TITLE), component);
+		tab.setClosable(true);
 		
 		setup = loader.<ASetup>getController();
 		setup.externalInitializetion(ctrl, this, tab);
-				
-		StepList valueList = xmlRoot.getList("storage/values/value");
-		for (Step value : valueList.asList()) {
-			searched.put(value.attribute("id"), value.text());
-		}
 	}
 
 	public StringProperty idProperty() {
@@ -77,7 +81,26 @@ public class LiveStorage {
 	}
 
 	public void save() {
-		XMLLoader.save(cfg, xmlRoot.getXmlNode());
+		try {
+			OutString valueEntries = OutString.init();
+			
+			valueEntries.append(XML.headUTF8()); valueEntries.append("\n");
+			valueEntries.append(XML.startTag("storage")); valueEntries.append("\n  ");
+				valueEntries.append(XML.textTag("id", id.get())); valueEntries.append("\n  ");
+				valueEntries.append(XML.startTag("values")); valueEntries.append("\n    ");
+					for (String value : searched.keySet()) {
+						valueEntries.append(XML.startTag("value", XML.attribute("id", value)));
+						valueEntries.append(XML.CDATA(searched.get(value)));
+						valueEntries.append(XML.endTag("value")); valueEntries.append("\n    ");
+					}
+				valueEntries.subSequence(0, valueEntries.length()-2)
+				            .append(XML.endTag("values")); valueEntries.append("\n");
+			valueEntries.append(XML.endTag("storage"));
+			
+			XMLLoader.save(cfg, valueEntries.get());
+		} catch (Exception e) {
+			Dialog.EXCEPTION.show(e);
+		}
 	}
 	
 	public String getId() {
@@ -90,5 +113,15 @@ public class LiveStorage {
 	
 	public Tab getTab() {
 		return tab;
+	}
+
+	public String getValue(String key) {
+		return searched.get(key);
+	}
+
+	public void setValue(String key, String value) {
+		if (!value.equals(searched.put(key, value))) {
+			save(); 
+		}
 	}
 }
