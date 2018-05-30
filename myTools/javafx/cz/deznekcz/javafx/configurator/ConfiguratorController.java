@@ -7,6 +7,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Scanner;
@@ -17,6 +18,8 @@ import cz.deznekcz.javafx.configurator.errhdl.CFGLoadException;
 import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.tool.i18n.Lang;
 import javafx.application.Platform;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.fxml.FXML;
@@ -27,7 +30,9 @@ import javafx.scene.Parent;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.Menu;
+import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.layout.BorderPane;
@@ -39,6 +44,7 @@ public class ConfiguratorController implements Initializable {
 //				System.getenv("APPDATA").concat("\\passxde\\lastOpened.cfg")
 				"C:\\passxde\\lastOpened.cfg"
 			);
+	@FXML private MenuBar CFG_menu_bar;
 	
 	@FXML private TabPane CFG_tabs;
 	@FXML private Tab     CFG_tab_configs;
@@ -52,10 +58,15 @@ public class ConfiguratorController implements Initializable {
 	
 	@FXML private Menu     CFG_menu_settings;
 	@FXML private MenuItem CFG_menu_settings_unnecessary;
+
+	private ObservableList<Menu> fixedMenus;
+	private HashMap<Tab, ObservableList<Menu>> configMenus;
 	
 	@Override
 	public void initialize(URL location, ResourceBundle resources) {
 		CFG_menu_file_close.setOnAction(this::exit);
+		
+		fixedMenus = FXCollections.observableArrayList(CFG_menu_bar.getMenus());
 	}
 
 	public void exit(Event event) {
@@ -73,7 +84,7 @@ public class ConfiguratorController implements Initializable {
 				LAST_STORED.getParentFile().mkdirs();
 				loadStream = new PrintStream(LAST_STORED);
 			}
-			CFG_tab_configs_tabs.getTabs().add(new LiveStorage(cfg).getTab());
+			CFG_tab_configs_tabs.getTabs().add(new LiveStorage(cfg, this).getTab());
 			loadStream.println(cfg);
 		} catch (Exception e) {
 			Dialog.EXCEPTION.show(new CFGLoadException(e));
@@ -118,5 +129,24 @@ public class ConfiguratorController implements Initializable {
 				loadConfig(file);
 			}
 		}
+	}
+
+	public void registerExtendedMenus(Tab tab, ObservableList<Menu> menu) {
+		ObservableList<Menu> tabMenus = FXCollections.observableArrayList(fixedMenus);
+		tabMenus.addAll(menu);
+		configMenus.put(tab, tabMenus);
+		
+		CFG_tab_configs_tabs.getSelectionModel().selectedItemProperty().addListener((o,l,n) -> {
+			if (n == tab) {
+				if (configMenus.containsKey(n)) {
+					CFG_menu_bar.getMenus().setAll(configMenus.get(tab));
+				} else {
+					CFG_menu_bar.getMenus().setAll(fixedMenus);
+				}
+			}
+		});
+		tab.onClosedProperty().addListener((o,l,n) -> {
+			if (configMenus.containsKey(tab)) configMenus.remove(tab);
+		});
 	}
 }

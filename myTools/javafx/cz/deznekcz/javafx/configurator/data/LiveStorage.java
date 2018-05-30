@@ -14,6 +14,7 @@ import java.util.ResourceBundle;
 import com.sun.javafx.collections.ObservableMapWrapper;
 
 import cz.deznekcz.javafx.configurator.ASetup;
+import cz.deznekcz.javafx.configurator.ConfiguratorController;
 import cz.deznekcz.tool.i18n.Lang;
 import cz.deznekcz.util.Utils;
 import cz.deznekcz.util.xml.XMLLoader;
@@ -40,9 +41,11 @@ public class LiveStorage {
 	private HashMap<String, String> searched;
 	private URL fxmlFile;
 	private ResourceBundle bundle;
+	private Tab tab;
 	
-	public LiveStorage(File cfg) throws Exception {
+	public LiveStorage(File cfg, ConfiguratorController ctrl) throws Exception {
 		this.cfg = cfg;
+		
 		xmlRoot = XMLStepper.fromFile(cfg.getPath());
 		id = new SimpleStringProperty(xmlRoot.getNode("storage/id").text());
 		
@@ -58,8 +61,10 @@ public class LiveStorage {
 		
 		loader = new FXMLLoader(fxmlFile, bundle);
 		component = loader.load();
+		tab = new Tab(bundle.getString(TITLE), component);
+		
 		setup = loader.<ASetup>getController();
-		setup.setStorage(this);
+		setup.externalInitializetion(ctrl, this, tab);
 				
 		StepList valueList = xmlRoot.getList("storage/values/value");
 		for (Step value : valueList.asList()) {
@@ -84,6 +89,6 @@ public class LiveStorage {
 	}
 	
 	public Tab getTab() {
-		return new Tab(bundle.getString(TITLE), component);
+		return tab;
 	}
 }

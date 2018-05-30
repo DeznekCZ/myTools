@@ -1,16 +1,19 @@
 package cz.deznekcz.javafx.configurator.components;
 
+import cz.deznekcz.reference.OutString;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.css.PseudoClass;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
@@ -25,13 +28,15 @@ public class TextEntry extends Control {
 		private Label label;
 		private TextField value;
 		private Pane fill;
-		
+
 		private StringProperty pattern;
-		private ReadOnlyBooleanProperty limited;
-		private ReadOnlyBooleanProperty mismached;
+		private StringProperty tooltip;
+		private BooleanProperty limited;
+		private BooleanProperty mismach;
 		
 		public TextEntrySkin(TextEntry text) {
 			this.text = text;
+			text.getStyleClass().add("text-entry");
 			
 			box = new HBox();
 			label = new Label();
@@ -41,6 +46,7 @@ public class TextEntry extends Control {
 			label.getStyleClass().add("text-entry-label");	
 			fill .getStyleClass().add("text-entry-fill");	
 			value.getStyleClass().add("text-entry-value");
+			value.getStylesheets().add(getClass().getPackage().getName().replace('.', '/').concat("/TextEntry.css"));
 
 			label.idProperty().bind(text.idProperty().concat("_label"));
 			fill .idProperty().bind(text.idProperty().concat("_fill" ));
@@ -59,22 +65,29 @@ public class TextEntry extends Control {
 			box.getChildren().setAll(label, fill, value);
 			
 			pattern = new SimpleStringProperty("*");
-			limited = new SimpleBooleanProperty();
-			((BooleanProperty) limited).bind(pattern.isNotEqualTo("*"));
+			limited = new SimpleBooleanProperty(false);
 			
-			mismached = new SimpleBooleanProperty(false);
-			((BooleanProperty) mismached).bind(new BooleanBinding() {
-				{
-					bind(value.textProperty(), pattern);
-				}
-				@Override
-				protected boolean computeValue() {
-					return pattern.get().charAt(0) == '*' 
-							|| value.getText().matches(pattern.get());
-				}
+			mismach = new SimpleBooleanProperty(false);
+			
+			pattern.addListener((o,l,n) -> {
+				refresh();
 			});
+			value.textProperty().addListener((o,l,n) -> {
+				refresh();
+			});
+
+//			System.out.println(label.getText());
+			label.tooltipProperty().bind(text.tooltipProperty());
+			value.tooltipProperty().bind(text.tooltipProperty());
 		}
 		
+		private void refresh() {
+			limited.set(!pattern.get().equals("*"));
+			boolean active = limited.get() && !value.getText().matches(pattern.get());
+			value.pseudoClassStateChanged(PseudoClass.getPseudoClass("mismach"), active);
+			mismach.set(active);
+		}
+
 		@Override
 		public TextEntry getSkinnable() {
 			return text;
@@ -139,12 +152,12 @@ public class TextEntry extends Control {
 		return !isLimited();
 	}
 	
-	public ReadOnlyBooleanProperty mismachedProperty() {
-		return ((TextEntrySkin) getSkin()).mismached;
+	public ReadOnlyBooleanProperty mismachProperty() {
+		return ((TextEntrySkin) getSkin()).mismach;
 	}
 	
-	public Boolean isMismached() {
-		return mismachedProperty().get();
+	public Boolean isMismach() {
+		return mismachProperty().get();
 	}
 	
 	public TextEntry() {

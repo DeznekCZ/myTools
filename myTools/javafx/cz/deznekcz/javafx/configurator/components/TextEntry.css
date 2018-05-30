@@ -1,0 +1,4 @@
+.text-field:mismach {
+   -fx-control-inner-background: lightcoral;
+   -fx-text-fill: red;
+}

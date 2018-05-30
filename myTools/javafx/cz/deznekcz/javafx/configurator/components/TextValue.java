@@ -20,6 +20,7 @@ public class TextValue extends Control {
 		
 		public TextValueSkin(TextValue text) {
 			this.text = text;
+			text.getStyleClass().add("text-value");
 			
 			box = new HBox();
 			label = new Label();
