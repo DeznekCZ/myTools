@@ -73,7 +73,7 @@ public class ConfiguratorController implements Initializable {
 				LAST_STORED.getParentFile().mkdirs();
 				loadStream = new PrintStream(LAST_STORED);
 			}
-			CFG_tabs.getTabs().add(new LiveStorage(cfg).getTab());
+			CFG_tab_configs_tabs.getTabs().add(new LiveStorage(cfg).getTab());
 			loadStream.println(cfg);
 		} catch (Exception e) {
 			Dialog.EXCEPTION.show(new CFGLoadException(e));

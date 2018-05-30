@@ -84,6 +84,6 @@ public class LiveStorage {
 	}
 	
 	public Tab getTab() {
-		return new Tab(searched.get(TITLE), component);
+		return new Tab(bundle.getString(TITLE), component);
 	}
 }
