@@ -28,6 +28,7 @@ public class TextEntry extends Control {
 		
 		private StringProperty pattern;
 		private ReadOnlyBooleanProperty limited;
+		private ReadOnlyBooleanProperty mismached;
 		
 		public TextEntrySkin(TextEntry text) {
 			this.text = text;
@@ -61,7 +62,17 @@ public class TextEntry extends Control {
 			limited = new SimpleBooleanProperty();
 			((BooleanProperty) limited).bind(pattern.isNotEqualTo("*"));
 			
-//			mismaches = value.textProperty().
+			mismached = new SimpleBooleanProperty(false);
+			((BooleanProperty) mismached).bind(new BooleanBinding() {
+				{
+					bind(value.textProperty(), pattern);
+				}
+				@Override
+				protected boolean computeValue() {
+					return pattern.get().charAt(0) == '*' 
+							|| value.getText().matches(pattern.get());
+				}
+			});
 		}
 		
 		@Override
@@ -107,14 +118,6 @@ public class TextEntry extends Control {
 	public StringProperty patternProperty() {
 		return ((TextEntrySkin) getSkin()).pattern;
 	}
-	
-	public boolean hasPattern() {
-		return !getParent().equals("*");
-	}
-	
-	public ReadOnlyBooleanProperty limitedProperty() {
-		return ((TextEntrySkin) getSkin()).limited;
-	}
 
 	public String getPattern() {
 		return patternProperty().get();
@@ -122,6 +125,26 @@ public class TextEntry extends Control {
 	
 	public void setPattern(String text) {
 		this.patternProperty().set(text);
+	}
+	
+	public ReadOnlyBooleanProperty limitedProperty() {
+		return ((TextEntrySkin) getSkin()).limited;
+	}
+	
+	public boolean isLimited() {
+		return limitedProperty().get();
+	}
+	
+	public boolean hasPattern() {
+		return !isLimited();
+	}
+	
+	public ReadOnlyBooleanProperty mismachedProperty() {
+		return ((TextEntrySkin) getSkin()).mismached;
+	}
+	
+	public Boolean isMismached() {
+		return mismachedProperty().get();
 	}
 	
 	public TextEntry() {
