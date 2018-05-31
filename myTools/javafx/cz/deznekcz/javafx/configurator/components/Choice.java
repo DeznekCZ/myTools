@@ -36,6 +36,7 @@ public class Choice extends Control implements Value {
 			label = new Label();
 			fill = new Pane();
 			value = new ChoiceBox<>();
+			box.disableProperty().bind(text.disableProperty());
 
 			label.getStyleClass().add("text-value-label");	
 			fill .getStyleClass().add("text-value-fill");	

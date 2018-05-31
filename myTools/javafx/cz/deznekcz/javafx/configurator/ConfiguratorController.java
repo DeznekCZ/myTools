@@ -28,6 +28,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.Labeled;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
@@ -57,7 +58,7 @@ public class ConfiguratorController implements Initializable {
 	@FXML private MenuItem CFG_menu_file_close;
 	
 	@FXML private Menu     CFG_menu_settings;
-	@FXML private MenuItem CFG_menu_settings_unnecessary;
+	@FXML private CheckMenuItem CFG_menu_settings_unnecessary;
 
 	private ObservableList<Menu> fixedMenus;
 	private HashMap<Tab, ObservableList<Menu>> configMenus;
@@ -68,6 +69,8 @@ public class ConfiguratorController implements Initializable {
 		
 		fixedMenus = FXCollections.observableArrayList(CFG_menu_bar.getMenus());
 		configMenus = new HashMap<>();
+		
+		Unnecesary.hiddenProperty().bind(CFG_menu_settings_unnecessary.selectedProperty());
 	}
 
 	public void exit(Event event) {

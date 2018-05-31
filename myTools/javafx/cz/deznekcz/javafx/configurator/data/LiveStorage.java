@@ -73,7 +73,7 @@ public class LiveStorage {
 		tab.setClosable(true);
 		
 		setup = loader.<ASetup>getController();
-		setup.externalInitializetion(ctrl, this, tab);
+		setup.externalInitialization(ctrl, this, tab);
 	}
 
 	public StringProperty idProperty() {

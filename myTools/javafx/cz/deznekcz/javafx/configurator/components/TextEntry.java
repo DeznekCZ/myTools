@@ -1,11 +1,13 @@
 package cz.deznekcz.javafx.configurator.components;
 
+import cz.deznekcz.reference.OutBoolean;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
@@ -13,19 +15,20 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.stage.Window;
 
 public class TextEntry extends Control implements Value {
 
 	private static class TextEntrySkin implements Skin<TextEntry> {
 		
 		private TextEntry text;
-		private HBox box;
+		private BorderPane box;
 		private Label label;
 		private TextField value;
-		private Pane fill;
 
 		private StringProperty pattern;
 		private StringProperty valueString;
@@ -37,31 +40,28 @@ public class TextEntry extends Control implements Value {
 			text.getStyleClass().add("text-entry");
 			text.setTooltip(new Tooltip(""));
 			
-			box = new HBox();
+			box = new BorderPane();
 			label = new Label();
-			fill = new Pane();
 			value = new TextField();
+			box.disableProperty().bind(text.disableProperty());
 
 			label.getStyleClass().add("text-entry-label");	
-			fill .getStyleClass().add("text-entry-fill");	
 			value.getStyleClass().add("text-entry-value");
 			value.getStylesheets().add(getClass().getPackage().getName().replace('.', '/').concat("/TextEntry.css"));
 
 			label.idProperty().bind(text.idProperty().concat("_label"));
-			fill .idProperty().bind(text.idProperty().concat("_fill" ));
 			value.idProperty().bind(text.idProperty().concat("_value"));
 
 			value.maxWidthProperty().bind(text.widthProperty().divide(2));
 			value.prefWidthProperty().bind(text.widthProperty().divide(2));
-
-			HBox.setHgrow(fill, Priority.ALWAYS);
 			
 			label.setOnMouseClicked((e) -> {
 				if (e.getButton() == MouseButton.PRIMARY) value.requestFocus();
 			});
-			fill.setOnMouseClicked(label.getOnMouseClicked());
 			
-			box.getChildren().setAll(label, fill, value);
+			BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+			box.setLeft(label);
+			box.setRight(value);
 			
 			pattern = new SimpleStringProperty("*");
 			limited = new SimpleBooleanProperty(false);
@@ -72,6 +72,9 @@ public class TextEntry extends Control implements Value {
 				refresh();
 			});
 			value.textProperty().addListener((o,l,n) -> {
+				refresh();
+			});
+			value.disabledProperty().addListener((o,l,n) -> {
 				refresh();
 			});
 
@@ -87,7 +90,7 @@ public class TextEntry extends Control implements Value {
 		
 		private void refresh() {
 			limited.set(!pattern.get().equals("*"));
-			boolean active = limited.get() 
+			boolean active = limited.get() && !value.isDisabled()
 					&& (value.getText() == null || !value.getText().matches(pattern.get()));
 			value.pseudoClassStateChanged(PseudoClass.getPseudoClass("mismach"), active);
 			mismach.set(active);

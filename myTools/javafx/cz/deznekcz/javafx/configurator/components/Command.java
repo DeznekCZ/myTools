@@ -1,51 +1,67 @@
 package cz.deznekcz.javafx.configurator.components;
 
+import cz.deznekcz.javafx.configurator.Unnecesary;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
+import javafx.scene.control.Menu;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 
-public class TextValue extends Control implements Value {
+public class Command extends Control {
 	
-	private static class TextValueSkin implements Skin<TextValue> {
+	private static class CommandSkin implements Skin<Command> {
 
-		private TextValue text;
-		private HBox box;
+		private Command text;
+		private BorderPane box;
 		private Label label;
 		private Label value;
+		private Button button;
 		private Pane fill;
+		private Menu menu;
 		
-		public TextValueSkin(TextValue text) {
+		private BooleanProperty unnecesary;
+		
+		public CommandSkin(Command text) {
 			this.text = text;
-			text.getStyleClass().add("text-value");
+			text.getStyleClass().add("command");
 			text.setTooltip(new Tooltip());
 			
-			box = new HBox();
+			box = new BorderPane();
 			label = new Label();
 			fill = new Pane();
 			value = new Label();
 			box.disableProperty().bind(text.disableProperty());
 
-			label.getStyleClass().add("text-value-label");	
-			fill .getStyleClass().add("text-value-fill");	
-			value.getStyleClass().add("text-value-value");
+			label.getStyleClass().add("command-label");
+			value.getStyleClass().add("command-dir");
+			value.getStyleClass().add("command-cmd");
 
 			label.idProperty().bind(text.idProperty().concat("_label"));
-			fill .idProperty().bind(text.idProperty().concat("_fill" ));
 			value.idProperty().bind(text.idProperty().concat("_value"));
 
 			HBox.setHgrow(fill, Priority.ALWAYS);
 			
-			box.getChildren().addAll(label, fill, value);
+			unnecesary = new SimpleBooleanProperty(true);
+			unnecesary.bind(Unnecesary.hiddenProperty());
+			unnecesary.addListener((o,l,n) -> {
+				
+			});
+			
+			box.setLeft(label);
+			box.setRight(button);
 		}
 
 		@Override
-		public TextValue getSkinnable() {
+		public Command getSkinnable() {
 			return text;
 		}
 
@@ -62,7 +78,7 @@ public class TextValue extends Control implements Value {
 	}
 	
 	public StringProperty textProperty() {
-		return ((TextValueSkin) getSkin()).label.textProperty();
+		return ((CommandSkin) getSkin()).label.textProperty();
 	}
 	
 	public String getText() {
@@ -71,18 +87,6 @@ public class TextValue extends Control implements Value {
 	
 	public void setText(String text) {
 		this.textProperty().set(text);
-	}
-	
-	public StringProperty valueProperty() {
-		return ((TextValueSkin) getSkin()).value.textProperty();
-	}
-	
-	public String getValue() {
-		return valueProperty().get();
-	}
-	
-	public void setValue(String value) {
-		this.valueProperty().set(value);
 	}
 	
 	public StringProperty helpPropterty() {
@@ -97,7 +101,15 @@ public class TextValue extends Control implements Value {
 		return helpPropterty().get();
 	}
 	
-	public TextValue() {
-		setSkin(new TextValueSkin(this));
+	public void setButtonText(String text) {
+		((CommandSkin) getSkin()).button.setText(text);
+	}
+	
+	public Command() {
+		setSkin(new CommandSkin(this));
+	}
+
+	public void setCommandsMenu(Menu menu) {
+		((CommandSkin) getSkin()).menu = menu;
 	}
 }
