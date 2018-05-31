@@ -70,7 +70,7 @@ public class ConfiguratorController implements Initializable {
 		fixedMenus = FXCollections.observableArrayList(CFG_menu_bar.getMenus());
 		configMenus = new HashMap<>();
 		
-		Unnecesary.hiddenProperty().bind(CFG_menu_settings_unnecessary.selectedProperty());
+		CFG_menu_settings_unnecessary.selectedProperty().bindBidirectional(Unnecesary.hiddenProperty());
 	}
 
 	public void exit(Event event) {
