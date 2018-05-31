@@ -17,7 +17,8 @@ public abstract class Dialog extends Alert {
 	final static ILangKey ILK_EXCEPTION_TITLE = ILK_EXCEPTION.extended("Title")
 													.initDefault("Error cached");
 	final static @Arguments(types = {String.class}, hints = {"exception name"}) 
-				 ILangKey ILK_EXCEPTION_NAME  = ILK_EXCEPTION.extended("Name[%s]");
+				 ILangKey ILK_EXCEPTION_NAME  = ILK_EXCEPTION.extended("Name")
+				 									.initDefault("Exception: %s");
 	
 	@Arguments(types={Exception.class}, hints={"Exception to throw"})
 	public static final Dialog EXCEPTION = new Dialog(AlertType.ERROR) {
@@ -29,21 +30,22 @@ public abstract class Dialog extends Alert {
 			textArea.setMaxWidth(200);
 		}
 		@Override
-		public Optional<ButtonType> show(Object...message) {
+		public ButtonType show(Object...message) {
 			Exception e = (Exception) message[0];
+			
+			setTitle(ILK_EXCEPTION_TITLE.value());
 			
 			StringWriter writer = new StringWriter();
 			e.printStackTrace(new PrintWriter(writer));
 			
 			setContentText(
 					ILK_EXCEPTION_NAME
-					.format(e.getClass().getName())
-					.value(e.getMessage()));
+					.value(e.getLocalizedMessage()));
 
 			textArea.setText(writer.toString());
 			getDialogPane().setExpandableContent(textArea);
 			
-			return showAndWait();
+			return showAndWait().get();
 		}
 		
 	};
@@ -52,7 +54,7 @@ public abstract class Dialog extends Alert {
 	public static final Dialog ASK = new Dialog(AlertType.CONFIRMATION) {
 		
 		@Override
-		public Optional<ButtonType> show(Object... message) {
+		public ButtonType show(Object... message) {
 			getButtonTypes().setAll((ButtonType[]) message[2]);
 			
 			Button yesButton = (Button) getDialogPane().lookupButton( (ButtonType) message[1] );
@@ -60,7 +62,7 @@ public abstract class Dialog extends Alert {
 		    
 		    setHeaderText((String) message[0]);
 		    
-		    return showAndWait();
+		    return showAndWait().get();
 		}
 	};
 	
@@ -68,6 +70,6 @@ public abstract class Dialog extends Alert {
 		super(type);
 	}
 	
-	public abstract Optional<ButtonType> show(Object...message);
+	public abstract ButtonType show(Object...message);
 
 }

@@ -4,7 +4,7 @@ import java.text.Collator;
 
 import cz.deznekcz.javafx.configurator.components.Command;
 import cz.deznekcz.javafx.configurator.components.Value;
-import cz.deznekcz.javafx.configurator.data.LiveStorage;
+import cz.deznekcz.util.LiveStorage;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Menu;

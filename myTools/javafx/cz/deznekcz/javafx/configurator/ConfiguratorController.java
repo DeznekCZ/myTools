@@ -5,19 +5,23 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 
 import cz.deznekcz.javafx.components.Dialog;
-import cz.deznekcz.javafx.configurator.data.LiveStorage;
 import cz.deznekcz.javafx.configurator.errhdl.CFGLoadException;
 import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.tool.i18n.Lang;
+import cz.deznekcz.util.LiveStorage;
+import cz.deznekcz.util.Utils;
 import javafx.application.Platform;
+import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -71,6 +75,21 @@ public class ConfiguratorController implements Initializable {
 		configMenus = new HashMap<>();
 		
 		CFG_menu_settings_unnecessary.selectedProperty().bindBidirectional(Unnecesary.hiddenProperty());
+		
+		CFG_tab_configs_tabs.getTabs().addListener((Observable o) -> {
+			
+			LAST_STORED.getParentFile().mkdirs();
+			try {
+				loadStream = new PrintStream(LAST_STORED);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			for (Tab tab : CFG_tab_configs_tabs.getTabs()) {
+				String tabLocation = (String) tab.getProperties().get("path");
+				loadStream.println(tabLocation);
+			}
+		});
 	}
 
 	public void exit(Event event) {
@@ -78,18 +97,29 @@ public class ConfiguratorController implements Initializable {
 		Platform.exit();
 	}
 
-	private boolean notFirstLoad = true;
 	private PrintStream loadStream;
 	
 	public void loadConfig(File cfg) {
 		try {
-			if (notFirstLoad) {
-				notFirstLoad = false;
-				LAST_STORED.getParentFile().mkdirs();
-				loadStream = new PrintStream(LAST_STORED);
-			}
-			CFG_tab_configs_tabs.getTabs().add(new LiveStorage(cfg, this).getTab());
-			loadStream.println(cfg);
+			LiveStorage storage = new LiveStorage(cfg);
+			
+			URL[] urls = {new File("config\\" + storage.getId()).toURI().toURL()};
+			ClassLoader clLoader = new URLClassLoader(urls);
+			
+			URL fxmlFile = new File("config\\" + storage.getId() + "\\Layout.fxml").toURI().toURL();
+			ResourceBundle bundle = ResourceBundle.getBundle("lang", Locale.getDefault(), clLoader);
+			
+			FXMLLoader loader = new FXMLLoader(fxmlFile, bundle);
+			BorderPane component = loader.load();
+			String TITLE = "Configurator.config." + storage.getId();
+			Tab tab = new Tab(bundle.getString(TITLE), component);
+			tab.setClosable(true);
+			
+			ASetup setup = loader.<ASetup>getController();
+			setup.externalInitialization(this, storage, tab);
+			
+			tab.getProperties().put("path", cfg.getPath());
+			CFG_tab_configs_tabs.getTabs().add(tab);
 		} catch (Exception e) {
 			Dialog.EXCEPTION.show(new CFGLoadException(e));
 		}
@@ -118,20 +148,37 @@ public class ConfiguratorController implements Initializable {
 							.value(),
 					ButtonType.YES, 
 					new ButtonType[]{ ButtonType.YES, ButtonType.NO }
-				).get() == ButtonType.YES)
+				) == ButtonType.YES)
 			{
-				for (File file : defaultFiles) {
-					loadConfig(file);
-				}
+				loadDefault(defaultFiles);
+			} else {
+				list.removeAll(defaultFiles);
+				loadDefault(defaultFiles);
 			}
 			
 			for (File file : list) {
 				loadConfig(file);
 			}
 		} else {
-			for (File file : defaultFiles) {
-				loadConfig(file);
-			}
+			loadDefault(defaultFiles);
+		}
+	}
+	
+	private void loadDefault(List<File> defaultFiles) {
+		for (File file : defaultFiles) {
+			loadConfig(file);
+		}
+		
+		for (Tab tab : CFG_tab_configs_tabs.getTabs()) {
+			tab.setOnCloseRequest((e) -> {
+				if (Dialog.ASK.show(
+							Configurator.tab.CLOSE_DEFAULT.value(tab.getText()), 
+							ButtonType.YES, 
+							Utils.array(ButtonType.YES, ButtonType.NO)) != ButtonType.YES	
+					) {
+					e.consume();
+				}
+			});
 		}
 	}
 
@@ -152,5 +199,9 @@ public class ConfiguratorController implements Initializable {
 		tab.onClosedProperty().addListener((o,l,n) -> {
 			if (configMenus.containsKey(tab)) configMenus.remove(tab);
 		});
+	}
+
+	public void openCommand(Tab tab) {
+		CFG_tab_commands_tabs.getTabs().add(tab);
 	}
 }

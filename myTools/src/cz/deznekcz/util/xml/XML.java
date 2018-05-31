@@ -4,43 +4,59 @@ import cz.deznekcz.reference.OutString;
 
 public class XML {
 
-	public static String singleTag(String name, String...attributes) {
-		OutString out = OutString.init("<%s");
-		out.format(name);
-		for (String string : attributes) {
-			out.append(" ").append(string);
+	public static enum Type {
+		UTF8("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+		
+		String value;
+		private Type(String value) {
+			this.value = value;
 		}
-		return out.append("/>").get();
 	}
 
-	public static String startTag(String name, String...attributes) {
-		OutString out = OutString.init("<%s");
-		out.format(name);
-		for (String string : attributes) {
-			out.append(" ").append(string);
-		}
-		return out.append(">").get();
+	private String head;
+	private String comment;
+	private XMLroot root;
+
+	public static XML init(String root) {
+		return new XML(root, Type.UTF8, "");
 	}
 
-	public static String endTag(String name) {
-		String ret = String.format("</%s>", name);
-		return ret;
+	public static XML init(String root, Type head) {
+		return new XML(root, head, "");
 	}
 
-	public static String textTag(String name, String value) {
-		return String.format("<%s>%s</%s>", name, value, name);
+	public static XML init(String root, Type head, String comment) {
+		return new XML(root, head, comment);
 	}
 
-	public static String attribute(String name, String value) {
-		return String.format("%s=\"%s\"", name, value);
+	private XML(String root, Type head, String comment) {
+		this.head = head.value;
+		this.comment = String.format("<!-- %s -->", comment);
+		this.root = new XMLroot(root, this);
+	}
+	
+	public XMLroot root() {
+		return this.root;
 	}
 
 	public static String CDATA(String text) {
 		return String.format("<![CDATA[%s]]>", text);
 	}
 
-	public static String headUTF8() {
-		return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+	@Override
+	public String toString() {
+		return "XML: " + root.toString();
 	}
 
+	public String write() {
+		OutString builder = OutString.init();
+		
+		builder.appendLn  (head);
+		builder.appendLn  ("");
+		builder.appendLnIf((t) -> t != null && t.length() > 0, comment);
+		builder.append    (root.toString(0, root.expanded))
+		;
+		
+		return builder.get();
+	}
 }

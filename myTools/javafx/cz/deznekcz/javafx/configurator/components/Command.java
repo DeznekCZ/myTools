@@ -5,7 +5,9 @@ import cz.deznekcz.reference.OutString;
 import cz.deznekcz.tool.i18n.ILangKey;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
@@ -47,6 +49,7 @@ public class Command extends Control {
 		private StringProperty dirText;
 		private StringProperty cmdText;
 		private ObservableList<CommandInstance> runningCommands;
+		private BooleanProperty runnable;
 		
 		public CommandSkin(Command text) {
 			this.text = text;
@@ -59,9 +62,9 @@ public class Command extends Control {
 			
 			box = new BorderPane();
 			label = new Label();
-			args = new Label(); args.textProperty().bind(Bindings.concat(ARGS, argsText));
-			dir  = new Label();  dir.textProperty().bind(Bindings.concat(DIR, dirText));
-			cmd  = new Label();  cmd.textProperty().bind(Bindings.concat(CMD, cmdText));
+			args = new Label(); 
+			dir  = new Label();  
+			cmd  = new Label();  
 			button = new Button(EXECUTE.value());
 			box.disableProperty().bind(text.disableProperty());
 			
@@ -89,6 +92,10 @@ public class Command extends Control {
 				}
 			});
 
+			args.textProperty().bind(Bindings.concat(ARGS, argsText));
+			dir.textProperty().bind(Bindings.concat(DIR, dirText));
+			cmd.textProperty().bind(Bindings.concat(CMD, cmdText));
+			
 			label.getStyleClass().add("command-label");
 			args .getStyleClass().add("command-args");
 			dir  .getStyleClass().add("command-dir");
@@ -113,6 +120,8 @@ public class Command extends Control {
 			
 			runningCommands = FXCollections.observableArrayList();
 			button.setOnAction(text::runCommand);
+			runnable = new SimpleBooleanProperty(false);
+			button.disableProperty().bind(runnable.not());
 		}
 
 		@Override
@@ -120,8 +129,14 @@ public class Command extends Control {
 			return text;
 		}
 
+		private boolean notPrepared = true;
+		
 		@Override
 		public Node getNode() {
+			if (notPrepared) {
+				runnable.bind(CommandInstance.runnability(text));
+				notPrepared = false;
+			}
 			return box;
 		}
 
@@ -169,7 +184,7 @@ public class Command extends Control {
 	}
 	
 	public void setCmd(String cmd) {
-		this.cmdProperty().set(cmd);
+		cmdProperty().set(cmd);
 	}
 	
 	public StringProperty dirProperty() {
@@ -177,11 +192,11 @@ public class Command extends Control {
 	}
 	
 	public String getDir() {
-		return cmdProperty().get();
+		return dirProperty().get();
 	}
 	
 	public void setDir(String cmd) {
-		this.cmdProperty().set(cmd);
+		dirProperty().set(cmd);
 	}
 	
 	public StringProperty argsProperty() {
@@ -194,6 +209,14 @@ public class Command extends Control {
 	
 	public void setArgs(String args) {
 		argsProperty().set(args);
+	}
+	
+	public ReadOnlyBooleanProperty runnableProperty() {
+		return ((CommandSkin) getSkin()).runnable;
+	}
+	
+	public boolean isRunnable() {
+		return runnableProperty().get();
 	}
 	
 	public Command() {
@@ -209,6 +232,6 @@ public class Command extends Control {
 	}
 	
 	public void runCommand(ActionEvent event) {
-//		getRunningCommands().add(e)
+		getRunningCommands().add(new CommandInstance(this));
 	}
 }
