@@ -49,15 +49,16 @@ public class XMLTest {
 				.setComment("random comment")
 			.close()
 			.newPairTag("textB", false)
-				.setTextCDATA("value");
+				.setTextCDATA("value")
+				.appendText(" and value");
 		
 		System.out.println(xml.write());
 		
 		assertEquals("value of textA via getText()", "value", 
 				xml.root().getPairTag("textA").get(0).getText());
-		assertEquals("value of textB via getText()", "<![CDATA[value]]>", 
+		assertEquals("value of textB via getText()", "<![CDATA[value]]> and value", 
 				xml.root().getPairTag("textB").get(0).getText());
-		assertEquals("value of textB via getTextCDATA()", "value", 
+		assertEquals("value of textB via getTextCDATA()", "value and value", 
 				xml.root().getPairTag("textB").get(0).getTextCDATA());
 		assertEquals("comment of textB via getComment()", "random comment", 
 				xml.root().getPairTag("textA").get(0).getComment());
