@@ -57,8 +57,7 @@ public class LiveStorage {
 			for (String value : searched.keySet()) {
 				values.newPairTag("value", false)
 						.addAttribute("id", value)
-						.setTextCDATA(searched.get(value))
-					.close();
+						.setTextCDATA(searched.get(value));
 			}
 			
 			XMLLoader.save(cfg, xml.write());
