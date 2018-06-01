@@ -1,7 +1,9 @@
 package cz.deznekcz.util.xml;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import cz.deznekcz.reference.OutString;
 import javafx.util.Pair;
@@ -28,11 +30,15 @@ public abstract class XMLElement<PARENT, THIS extends XMLElement<PARENT, THIS>> 
 	protected boolean expanded;
 
 	protected List<Pair<String, String>> attributes;
-	protected List<XMLElement<?,?>> children;
+	protected Map<String,List<XMLElement<?,?>>> children;
 	
 	protected XMLElement(String name, PARENT parent, boolean expanded) {
-		if (parent instanceof XMLPairTagBase)
-			((XMLPairTagBase<?>) parent).children.add(this);
+		if (parent instanceof XMLPairTagBase) {
+			XMLPairTagBase<?> cast = (XMLPairTagBase<?>) parent;
+			if (!cast.children.containsKey(name)) 
+				cast.children.put(name, new LinkedList<>());
+			cast.children.get(name).add(this);
+		}
 		
 		this.parent = parent;
 		this.name = name;
@@ -40,7 +46,7 @@ public abstract class XMLElement<PARENT, THIS extends XMLElement<PARENT, THIS>> 
 		this.comment = "";
 		this.expanded = expanded;
 		
-		this.children = new LinkedList<>();
+		this.children = new HashMap<>();
 		this.attributes = new LinkedList<>();
 	}
 
@@ -67,6 +73,14 @@ public abstract class XMLElement<PARENT, THIS extends XMLElement<PARENT, THIS>> 
 	public abstract THIS setComment(String comment);
 	
 	/**
+	 * Returns value of comment
+	 * @return comment value
+	 */
+	public String getComment() {
+		return comment.substring(4, comment.length() - 3).trim();
+	}
+	
+	/**
 	 * 
 	 * @param indent
 	 * @param parentExpanded
@@ -84,10 +98,13 @@ public abstract class XMLElement<PARENT, THIS extends XMLElement<PARENT, THIS>> 
 			}
 			builder.append(String.format("<%s%s >", name, attributes(indent + 2)));
 			if (parentExpanded && expanded) builder.append('\n');
-			for (XMLElement<?,?> xmlelem : children) {
-				builder.append(xmlelem.write(indent + 1, parentExpanded && expanded));
-				if (parentExpanded && expanded) builder.append('\n');
+			for (List<XMLElement<?, ?>> elementList : children.values()) {
+				for (XMLElement<?,?> xmlelem : elementList) {
+					builder.append(xmlelem.write(indent + 1, parentExpanded && expanded));
+					if (parentExpanded && expanded) builder.append('\n');
+				}
 			}
+			
 			if (builder.get().endsWith("\n\n")) builder.subSequence(0, builder.length() - 1);
 			if (parentExpanded && expanded) builder.append(indent(indent));
 			builder.append(text);

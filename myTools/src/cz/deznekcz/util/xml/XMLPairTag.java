@@ -1,5 +1,6 @@
 package cz.deznekcz.util.xml;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javafx.util.Pair;
@@ -40,6 +41,36 @@ public class XMLPairTag<PARENT> extends XMLPairTagBase<PARENT> {
 	public XMLPairTag<PARENT> setText(String text) {
 		super.text = text;
 		return this;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<XMLSingleTag<XMLPairTag<PARENT>>> getSingleTag(String name) {
+		List<XMLSingleTag<XMLPairTag<PARENT>>> list = new ArrayList<>(children.size());
+		if (children.containsKey(name)) for (XMLElement<?, ?> e : children.get(name)) {
+			if (e.name.equals(name) && e instanceof XMLSingleTag) list.add((XMLSingleTag<XMLPairTag<PARENT>>) e);
+		}
+		return list;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<XMLPairTag<XMLPairTag<PARENT>>> getPairTag(String name) {
+		List<XMLPairTag<XMLPairTag<PARENT>>> list = new ArrayList<>(children.size());
+		if (children.containsKey(name)) for (XMLElement<?, ?> e : children.get(name)) {
+			if (e.name.equals(name) && e instanceof XMLPairTag) list.add((XMLPairTag<XMLPairTag<PARENT>>) e);
+		}
+		return list;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<XMLElement<XMLPairTag<PARENT>, ?>> getBoothTag(String name) {
+		List<XMLElement<XMLPairTag<PARENT>, ?>> list = new ArrayList<>(children.size());
+		if (children.containsKey(name)) for (XMLElement<?, ?> e : children.get(name)) {
+			if (e.name.equals(name)) list.add((XMLElement<XMLPairTag<PARENT>, ?>) e);
+		}
+		return list;
 	}
 
 	@Override
