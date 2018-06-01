@@ -10,9 +10,12 @@ import cz.deznekcz.reference.Out;
 import cz.deznekcz.reference.OutString;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.scene.control.Menu;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tab;
 
-public class CommandInstance extends Thread {
+public class CommandInstance implements Runnable {
 	
 	private static int index = 0;
 	
@@ -25,6 +28,9 @@ public class CommandInstance extends Thread {
 	private boolean invalid;
 	private Tab tab;
 	private Out<Configurator.command> state;
+	private MenuItem item;
+	private Menu menu;
+	private Thread thread;
 
 	public CommandInstance(Command command) {
 		this.command = command;
@@ -34,16 +40,42 @@ public class CommandInstance extends Thread {
 			
 			tab = new Tab();
 			tab.textProperty().bind(Bindings.concat(
-					index++ + ": ", command.textProperty(), 
+					index + ": ", command.textProperty(), 
 					" ", OutString.bindFormat(
 							Configurator.command.STATE, 
 							(Out<?>) state.bindTransform(OutString::init, (cmd) -> cmd.value())
 						)
 					));
+			tab.setOnClosed((e) -> {
+				if (menu != null) menu.getItems().remove(item);
+				command.getRunningCommands().remove(this);
+			});
 			
 			Configurator.getCtrl().openCommand(tab);
 			
-			start();
+			if (command.getCommandsMenu() != null) {
+				menu = command.getCommandsMenu();
+				
+				if (menu.getItems().size() == 1) {
+					menu.getItems().add(new SeparatorMenuItem());
+				}
+				
+				item = new MenuItem();
+				item.textProperty().bind(
+						Bindings.concat(
+								tab.textProperty(), 
+								" ", 
+								Configurator.command.ARGS, 
+								command.getArgs()
+								)
+						);
+				menu.getItems().add(item);
+			}
+			
+			thread = new Thread(this, command.getText() + ":" + index);
+			thread.start();
+			
+			index++;
 		} else {
 			Dialog.EXCEPTION.show(new IllegalAccessError(Configurator.command.NOT_RUNABLE.value(command.getText())));
 			invalid = true;

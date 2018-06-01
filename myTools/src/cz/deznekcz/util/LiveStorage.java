@@ -87,4 +87,13 @@ public class LiveStorage {
 			save(); 
 		}
 	}
+
+	public static boolean isStorage(java.io.File cfg) {
+		try {
+			new LiveStorage(cfg);
+			return true;
+		} catch (Exception e) {
+			return false;
+		}
+	}
 }

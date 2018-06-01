@@ -19,11 +19,16 @@ public class Configurator extends Application {
 		STATE_RUN, STATE_STOPPED, STATE_COMPLETE, STATE_ERROR,
 		STATE, 
 		@Arguments(hints="command name", types=String.class)
-		NOT_RUNABLE
+		NOT_RUNABLE,
+		EXECUTE, INSTANCES, ARGS, DIR, CMD
 	}
 	/** Class keys for {@link Tab} */
 	public static enum tab implements IKeysClassLangKey {
 		CLOSE_DEFAULT
+	}
+	/** Class keys for {@link Path} */
+	public static enum path implements IKeysClassLangKey {
+		OPEN, SELECT, FILTER_CONFIG, ALL_FILES
 	}
 	
 	public static String lang = "en_US";

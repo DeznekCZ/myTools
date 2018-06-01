@@ -45,7 +45,7 @@ public abstract class Dialog extends Alert {
 			textArea.setText(writer.toString());
 			getDialogPane().setExpandableContent(textArea);
 			
-			return showAndWait().get();
+			return handle();
 		}
 		
 	};
@@ -62,7 +62,7 @@ public abstract class Dialog extends Alert {
 		    
 		    setHeaderText((String) message[0]);
 		    
-		    return showAndWait().get();
+		    return handle();
 		}
 	};
 	
@@ -72,4 +72,8 @@ public abstract class Dialog extends Alert {
 	
 	public abstract ButtonType show(Object...message);
 
+	protected ButtonType handle() {
+		Optional<ButtonType> result = showAndWait();
+		return result.isPresent() ? result.get() : ButtonType.CANCEL;
+	}
 }

@@ -1,17 +1,16 @@
 package cz.deznekcz.javafx.configurator.components;
 
+import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Unnecesary;
-import cz.deznekcz.reference.OutString;
-import cz.deznekcz.tool.i18n.ILangKey;
-import javafx.beans.Observable;
+import cz.deznekcz.reference.OutBoolean;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
@@ -25,12 +24,6 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
 public class Command extends Control {
-
-	private static ILangKey EXECUTE = ILangKey.simple("Configurator.command.button.execute");
-	private static ILangKey INSTANCES = ILangKey.simple("Configurator.command.button.instances");
-	private static ILangKey ARGS = ILangKey.simple("Configurator.command.args");
-	private static ILangKey DIR = ILangKey.simple("Configurator.command.dir");
-	private static ILangKey CMD = ILangKey.simple("Configurator.command.cmd");
 	
 	private static class CommandSkin implements Skin<Command> {
 
@@ -65,7 +58,7 @@ public class Command extends Control {
 			args = new Label(); 
 			dir  = new Label();  
 			cmd  = new Label();  
-			button = new Button(EXECUTE.value());
+			button = new Button();
 			box.disableProperty().bind(text.disableProperty());
 			
 			lines = new BorderPane();
@@ -92,9 +85,9 @@ public class Command extends Control {
 				}
 			});
 
-			args.textProperty().bind(Bindings.concat(ARGS, argsText));
-			dir.textProperty().bind(Bindings.concat(DIR, dirText));
-			cmd.textProperty().bind(Bindings.concat(CMD, cmdText));
+			args.textProperty().bind(Bindings.concat(Configurator.command.ARGS, argsText));
+			dir.textProperty().bind(Bindings.concat(Configurator.command.DIR, dirText));
+			cmd.textProperty().bind(Bindings.concat(Configurator.command.CMD, cmdText));
 			
 			label.getStyleClass().add("command-label");
 			args .getStyleClass().add("command-args");
@@ -118,10 +111,28 @@ public class Command extends Control {
 			box.setLeft(label);
 			box.setRight(button);
 			
-			runningCommands = FXCollections.observableArrayList();
-			button.setOnAction(text::runCommand);
 			runnable = new SimpleBooleanProperty(false);
+			runningCommands = FXCollections.observableArrayList();
+			
+			button.setText(Configurator.command.EXECUTE.value());
 			button.disableProperty().bind(runnable.not());
+			button.setOnAction(text::runCommand);
+			
+			runningCommands.addListener(new ListChangeListener<CommandInstance>() {
+				@Override
+				public void onChanged(javafx.collections.ListChangeListener.Change<? extends CommandInstance> c) {
+					c.next();
+					if (runningCommands.size() == 0) {
+						button.setText(Configurator.command.EXECUTE.value());
+						button.disableProperty().bind(runnable.not());
+						button.setOnAction(text::runCommand);
+					} else {
+						button.setText(Configurator.command.INSTANCES.value(runningCommands.size()));
+						button.disableProperty().bind(OutBoolean.FALSE());
+						button.setOnAction(text::showInstances);
+					}
+				}
+			});
 		}
 
 		@Override
@@ -227,11 +238,19 @@ public class Command extends Control {
 		((CommandSkin) getSkin()).menu = menu;
 	}
 	
+	public Menu getCommandsMenu() {
+		return ((CommandSkin) getSkin()).menu;
+	}
+	
 	public ObservableList<CommandInstance> getRunningCommands() {
 		return ((CommandSkin) getSkin()).runningCommands;
 	}
 	
 	public void runCommand(ActionEvent event) {
 		getRunningCommands().add(new CommandInstance(this));
+	}
+	
+	public void showInstances(ActionEvent event) {
+		
 	}
 }
