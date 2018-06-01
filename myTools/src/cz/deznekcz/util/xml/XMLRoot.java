@@ -75,6 +75,18 @@ public class XMLRoot extends XMLPairTagBase<XML> {
 		}
 		return list;
 	}
+
+	@Override
+	public XMLRoot appendText(String text) {
+		super.text += text;
+		return this;
+	}
+
+	@Override
+	public XMLRoot appendTextCDATA(String text) {
+		super.text += String.format("<![CDATA[%s]]>", text);
+		return this;
+	}
 	
 	@Override
 	public XMLRoot setTextCDATA(String text) {

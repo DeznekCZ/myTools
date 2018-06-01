@@ -83,6 +83,20 @@ public abstract class XMLPairTagBase<PARENT> extends XMLElement<PARENT, XMLPairT
 	public abstract XMLPairTagBase<PARENT> setTextCDATA(String text);
 	
 	/**
+	 * Appends text content of XML element
+	 * @param text text value
+	 * @return this instance of {@link XMLPairTagBase}
+	 */
+	public abstract XMLPairTagBase<PARENT> appendText(String text);
+	
+	/**
+	 * Appends text content of XML element packed in &lt;![CDATA[text]]>
+	 * @param text text value
+	 * @return this instance of {@link XMLPairTagBase}
+	 */
+	public abstract XMLPairTagBase<PARENT> appendTextCDATA(String text);
+	
+	/**
 	 * Returns text value of element
 	 * @return text value
 	 */

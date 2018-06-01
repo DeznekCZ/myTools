@@ -37,12 +37,6 @@ public class XMLPairTag<PARENT> extends XMLPairTagBase<PARENT> {
 		return new XMLPairTag<XMLPairTag<PARENT>>(name, this, expanded);
 	}
 
-	@Override
-	public XMLPairTag<PARENT> setText(String text) {
-		super.text = text;
-		return this;
-	}
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<XMLSingleTag<XMLPairTag<PARENT>>> getSingleTag(String name) {
@@ -71,6 +65,24 @@ public class XMLPairTag<PARENT> extends XMLPairTagBase<PARENT> {
 			if (e.name.equals(name)) list.add((XMLElement<XMLPairTag<PARENT>, ?>) e);
 		}
 		return list;
+	}
+
+	@Override
+	public XMLPairTag<PARENT> appendText(String text) {
+		super.text += text;
+		return this;
+	}
+
+	@Override
+	public XMLPairTag<PARENT> appendTextCDATA(String text) {
+		super.text += String.format("<![CDATA[%s]]>", text);
+		return this;
+	}
+
+	@Override
+	public XMLPairTag<PARENT> setText(String text) {
+		super.text = text;
+		return this;
 	}
 
 	@Override
