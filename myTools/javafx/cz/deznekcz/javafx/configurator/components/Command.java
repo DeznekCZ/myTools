@@ -15,13 +15,20 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Menu;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 
 public class Command extends Control {
 	
@@ -36,6 +43,10 @@ public class Command extends Control {
 		private Label args;
 		private Label dir;
 		private Label cmd;
+		private Stage instancesStage;
+		private VBox instancesRoot;
+		private VBox instancesValues;
+		private Button instancesExecute;
 		
 		private BooleanProperty unnecesary;
 		private StringProperty argsText;
@@ -118,6 +129,24 @@ public class Command extends Control {
 			button.disableProperty().bind(runnable.not());
 			button.setOnAction(text::runCommand);
 			
+			instancesStage = new Stage(StageStyle.UTILITY);
+			instancesStage.setWidth(200);
+			instancesStage.setHeight(400);
+			instancesStage.titleProperty().bind(label.textProperty());
+
+			instancesRoot = new VBox();
+			instancesRoot.getStylesheets().add("Configurator.css");
+			instancesValues = new VBox();
+			VBox.setVgrow(instancesValues, Priority.ALWAYS);
+			instancesStage.setScene(new Scene(instancesRoot));
+			instancesExecute = new Button();
+			instancesExecute.setText(Configurator.command.EXECUTE.value());
+			instancesExecute.disableProperty().bind(runnable.not());
+			instancesExecute.prefWidthProperty().bind(instancesRoot.widthProperty());
+			instancesExecute.setOnAction(text::runCommand);
+			
+			instancesRoot.getChildren().addAll(new ScrollPane(instancesValues), new Separator(), instancesExecute);
+			
 			runningCommands.addListener(new ListChangeListener<CommandInstance>() {
 				@Override
 				public void onChanged(javafx.collections.ListChangeListener.Change<? extends CommandInstance> c) {
@@ -130,6 +159,11 @@ public class Command extends Control {
 						button.setText(Configurator.command.INSTANCES.value(runningCommands.size()));
 						button.disableProperty().bind(OutBoolean.FALSE());
 						button.setOnAction(text::showInstances);
+					}
+					if (c.wasAdded()) {
+						for (CommandInstance commandInstance : c.getAddedSubList()) {
+							instancesValues.getChildren().add(commandInstance.getNode());
+						}
 					}
 				}
 			});
@@ -251,6 +285,8 @@ public class Command extends Control {
 	}
 	
 	public void showInstances(ActionEvent event) {
-		
+		Stage stage = ((CommandSkin) getSkin()).instancesStage;
+		if (stage.isShowing()) stage.requestFocus();
+		else                   stage.show();
 	}
 }

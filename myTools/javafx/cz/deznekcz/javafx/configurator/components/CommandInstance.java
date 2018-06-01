@@ -10,12 +10,14 @@ import cz.deznekcz.reference.Out;
 import cz.deznekcz.reference.OutString;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
+import javafx.scene.Node;
+import javafx.scene.control.Control;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tab;
 
-public class CommandInstance implements Runnable {
+public class CommandInstance extends Thread {
 	
 	private static int index = 0;
 	
@@ -30,10 +32,15 @@ public class CommandInstance implements Runnable {
 	private Out<Configurator.command> state;
 	private MenuItem item;
 	private Menu menu;
-	private Thread thread;
+	private String cmd;
+	private String args;
+	private Node node;
 
 	public CommandInstance(Command command) {
+		super(command.getText() + ":" + index);
 		this.command = command;
+		this.cmd = command.getCmd();
+		this.args = command.getArgs();
 		
 		if (command.isRunnable()) {
 			state = Out.init(Configurator.command.STATE_RUN).fxThread();
@@ -66,16 +73,14 @@ public class CommandInstance implements Runnable {
 								tab.textProperty(), 
 								" ", 
 								Configurator.command.ARGS, 
-								command.getArgs()
+								args
 								)
 						);
 				menu.getItems().add(item);
 			}
 			
-			thread = new Thread(this, command.getText() + ":" + index);
-			thread.start();
-			
 			index++;
+			start();
 		} else {
 			Dialog.EXCEPTION.show(new IllegalAccessError(Configurator.command.NOT_RUNABLE.value(command.getText())));
 			invalid = true;
@@ -155,5 +160,20 @@ public class CommandInstance implements Runnable {
 		default:
 			break;
 		}
+	}
+	
+	public String getCmd() {
+		return cmd;
+	}
+	
+	public String getArgs() {
+		return args;
+	}
+
+	public Node getNode() {
+		if (node == null) {
+			
+		}
+		return node;
 	}
 }
