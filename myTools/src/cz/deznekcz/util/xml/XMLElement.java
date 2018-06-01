@@ -6,20 +6,33 @@ import java.util.List;
 import cz.deznekcz.reference.OutString;
 import javafx.util.Pair;
 
-public abstract class XMLelem<ROOT, T> {
+/**
+ * 
+ * @author Zdenek Novotny (DeznekCZ)
+ *
+ * Represent base of all XML tags
+ *
+ * @param <PARENT> Class type of parent implementation (parent in parent child instances relation)
+ * @param <THIS> Class type of final implementation
+ * 
+ * @see XMLSingleTag
+ * @see XMLPairTag
+ * @see XMLRoot
+ */
+public abstract class XMLElement<PARENT, THIS extends XMLElement<PARENT, THIS>> {
 
-	protected ROOT parent;
+	protected PARENT parent;
 	protected String name;
 	protected String text;
 	protected String comment;
 	protected boolean expanded;
 
 	protected List<Pair<String, String>> attributes;
-	protected List<XMLelem<?,?>> children;
+	protected List<XMLElement<?,?>> children;
 	
-	public XMLelem(String name, ROOT parent, boolean expanded) {
-		if (parent instanceof XMLelem)
-			((XMLelem<?,?>) parent).children.add(this);
+	protected XMLElement(String name, PARENT parent, boolean expanded) {
+		if (parent instanceof XMLPairTagBase)
+			((XMLPairTagBase<?>) parent).children.add(this);
 		
 		this.parent = parent;
 		this.name = name;
@@ -31,16 +44,35 @@ public abstract class XMLelem<ROOT, T> {
 		this.attributes = new LinkedList<>();
 	}
 
-	public ROOT close() {
+	/**
+	 * Returns parent instance
+	 * @return instance of {@link XMLElement#PARENT}
+	 */
+	public PARENT close() {
 		return parent;
 	}
 
-	public abstract <THIS extends XMLelem<ROOT, T>> THIS attribute(String name, String value);
-	public abstract <THIS extends XMLelem<ROOT, T>> THIS comment(String comment);
-
-	protected abstract <THIS extends XMLelem<ROOT, T>> THIS getThis();
+	/**
+	 * Adds an attribute to XML element
+	 * @param name name of attribute
+	 * @param value value of attribute
+	 * @return this instance of {@link XMLElement#THIS} (for builder initialization see {@link XML})
+	 */
+	public abstract THIS addAttribute(String name, String value);
+	/**
+	 * Sets comment for XML element
+	 * @param comment comment value
+	 * @return this instance of {@link XMLElement#THIS} (for builder initialization see {@link XML})
+	 */
+	public abstract THIS setComment(String comment);
 	
-	public String toString(int indent, boolean parentExpanded) {
+	/**
+	 * 
+	 * @param indent
+	 * @param parentExpanded
+	 * @return
+	 */
+	public String write(int indent, boolean parentExpanded) {
 		if (this instanceof XMLSingleTag) {
 			return String.format("%s<%s%s />", parentExpanded ? indent(indent) : "", name, attributes(indent+2));
 		} else {
@@ -52,8 +84,8 @@ public abstract class XMLelem<ROOT, T> {
 			}
 			builder.append(String.format("<%s%s >", name, attributes(indent + 2)));
 			if (parentExpanded && expanded) builder.append('\n');
-			for (XMLelem<?,?> xmlelem : children) {
-				builder.append(xmlelem.toString(indent + 1, parentExpanded && expanded));
+			for (XMLElement<?,?> xmlelem : children) {
+				builder.append(xmlelem.write(indent + 1, parentExpanded && expanded));
 				if (parentExpanded && expanded) builder.append('\n');
 			}
 			if (builder.get().endsWith("\n\n")) builder.subSequence(0, builder.length() - 1);

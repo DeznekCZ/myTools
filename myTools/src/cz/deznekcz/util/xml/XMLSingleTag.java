@@ -2,28 +2,30 @@ package cz.deznekcz.util.xml;
 
 import javafx.util.Pair;
 
-public class XMLSingleTag<ROOT> extends XMLelem<ROOT, XMLSingleTag<ROOT>> {
+/**
+ * Represents single tag elements
+ * 
+ * @author Zdenek Novotny (DeznekCZ)
+ *
+ * @param <PARENT> Class type of parent implementation (parent in parent child instances relation)
+ * 
+ * @see XMLRoot XMLRoot is top PARENT
+ * @see XMLPairTag XMLPairTag is closses PARENT
+ */
+public class XMLSingleTag<PARENT> extends XMLElement<PARENT, XMLSingleTag<PARENT>> {
 
-	public XMLSingleTag(String name, ROOT root) {
+	protected XMLSingleTag(String name, PARENT root) {
 		super(name, root, true);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public XMLSingleTag<ROOT> getThis() {
-		return this;
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public XMLSingleTag<ROOT> attribute(String name, String value) {
+	public XMLSingleTag<PARENT> addAttribute(String name, String value) {
 		attributes.add(new Pair<String, String>(name, value));
 		return this;
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
-	public XMLSingleTag<ROOT> comment(String comment) {
+	public XMLSingleTag<PARENT> setComment(String comment) {
 		super.comment = String.format("<!-- %s -->", comment);
 		return this;
 	}

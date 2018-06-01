@@ -16,7 +16,7 @@ public class XMLTest {
 		searched.put("c", "a");
 		searched.put("d", "a");
 		
-		XMLPairTag<XMLroot> values = XML.init("storage")
+		XMLPairTag<XMLRoot> values = XML.init("storage")
 			.root()
 				.newPairTag("id", false)
 					.setTextCDATA(id)
@@ -25,12 +25,14 @@ public class XMLTest {
 		
 		for (String value : searched.keySet()) {
 			values = values.newPairTag("value", false)
-						.attribute("id", value)
+						.addAttribute("id", value)
 						.setTextCDATA(searched.get(value))
 					.close();
 		}
 		
 		XML xml = values.close().close();
+		xml.root();
+		
 		System.out.println(xml.write());
 	}
 }
