@@ -6,8 +6,6 @@ import java.util.function.Predicate;
 import cz.deznekcz.javafx.components.Dialog;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Unnecesary;
-import cz.deznekcz.reference.Out;
-import cz.deznekcz.reference.OutBoolean;
 import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.util.LiveStorage;
 import cz.deznekcz.util.Utils;
