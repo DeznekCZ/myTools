@@ -90,6 +90,10 @@ public class ConfiguratorController implements Initializable {
 				loadStream.println(tabLocation);
 			}
 		});
+
+		CFG_tabs.tabMinWidthProperty().bind(CFG_tabs.widthProperty().subtract(80).divide(2));
+		CFG_tab_configs_tabs.tabMinWidthProperty().bind(CFG_tab_configs_tabs.widthProperty().subtract(80).divide(5));
+		CFG_tab_commands_tabs.tabMinWidthProperty().bind(CFG_tab_commands_tabs.widthProperty().subtract(80).divide(5));
 	}
 
 	public void exit(Event event) {
