@@ -233,8 +233,8 @@ public class OutInteger extends OutNumber<Integer> {
 		return OutByteArray.initRight(4, 
 				(byte) ((val & 0xff000000) >> 24), 
 				(byte) ((val & 0x00ff0000) >> 16), 
-				(byte) ((val & 0xff000000) >> 8 ), 
-				(byte) ( val & 0xff000000       ));
+				(byte) ((val & 0x0000ff00) >> 8 ), 
+				(byte) ( val & 0x000000ff       ));
 	}
 }
 

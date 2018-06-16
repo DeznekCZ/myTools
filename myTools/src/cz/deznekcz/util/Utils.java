@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -579,5 +580,20 @@ public class Utils {
 
 	public static Pair<TimeUnit,Long> timeout(TimeUnit unit, long value) {
 		return new Pair<>(unit,value);
+	}
+
+	public static String concat(String...array) {
+		return concat("", array);
+	}
+
+	public static String concat(String binder, String...array) {
+		Objects.requireNonNull(binder);
+		Objects.requireNonNull(array);
+		OutString string = OutString.init(array[0]);
+		for (int i = 1; i < array.length; i++) {
+			string.append(binder);
+			string.append(array[i]);
+		}
+		return string.get();
 	}
 }

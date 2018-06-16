@@ -2,7 +2,6 @@ package cz.deznekcz.tool.i18n;
 
 import java.util.HashMap;
 import java.util.IllegalFormatException;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

@@ -66,6 +66,47 @@ public class OutString extends Out<String> implements CharSequence, Appendable {
 		return this;
 	}
 
+	/**
+	 * Appends sequence given by <code>csq</code>
+	 * @param csq instance of {@link OutString} for appending value or another implementation of {@link CharSequence}
+	 * @param accepted 
+	 * @return this instance of {@link OutString}
+	 */
+	public synchronized boolean appendLnIf(Predicate<CharSequence> accepted, CharSequence csq) {
+		if (accepted.test(csq) && csq != null) {
+			set(get() 
+				+ (	csq instanceof OutString 
+					? ((OutString) csq).get()
+							// safer because it could be not null
+					: csq.toString()
+			  ) +	'\n');
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Appends sequence given by <code>csq</code>
+	 * @param csq instance of {@link OutString} for appending value or another implementation of {@link CharSequence}
+	 * @return this instance of {@link OutString}
+	 */
+	public synchronized OutString appendLn(CharSequence csq) {
+		if (csq != null)
+			set(get() 
+				+ (	csq instanceof OutString 
+					? ((OutString) csq).get()
+							// safer because it could be not null
+					: csq.toString()
+			  ) +	'\n');
+		return this;
+	}
+
+	/**
+	 * @see #appendLn
+	 * @param csq instance of {@link OutString} for appending value or another implementation of {@link CharSequence}
+	 * @return this instance of {@link OutString}
+	 */
 	@Override
 	public synchronized OutString append(CharSequence csq) {
 		if (csq != null)

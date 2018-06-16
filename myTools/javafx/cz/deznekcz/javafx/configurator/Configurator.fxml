@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.input.*?>
+<?import java.lang.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.BorderPane?>
+
+
+<BorderPane fx:controller="cz.deznekcz.javafx.configurator.ConfiguratorController"
+	minHeight="800.0" minWidth="1000.0" xmlns:fx="http://javafx.com/fxml/1"
+	xmlns="http://javafx.com/javafx/8">
+	<top>
+		<MenuBar BorderPane.alignment="CENTER" fx:id="CFG_menu_bar" >
+			<menus>
+				<Menu fx:id="CFG_menu_file" mnemonicParsing="false"
+					text="%Configurator.menu.file">
+					<items>
+						<MenuItem fx:id="CFG_menu_file_open" mnemonicParsing="false"
+							text="%Configurator.menu.file.open">
+							<accelerator>
+								<KeyCodeCombination alt="UP" code="O"
+									control="DOWN" meta="UP" shift="UP" shortcut="UP" />
+							</accelerator>
+						</MenuItem>
+						<SeparatorMenuItem mnemonicParsing="false" />
+						<MenuItem fx:id="CFG_menu_file_close" mnemonicParsing="false"
+							text="%Configurator.menu.file.close" />
+					</items>
+				</Menu>
+				<Menu mnemonicParsing="false" text="%Configurator.menu.settings"
+					fx:id="CFG_menu_settings">
+					<items>
+						<CheckMenuItem mnemonicParsing="false"
+							text="%Configurator.menu.settings.unnecessary" fx:id="CFG_menu_settings_unnecessary" />
+					</items>
+				</Menu>
+				<!-- <Menu mnemonicParsing="false" text="%Configurator.menu.help"> <items> 
+					<MenuItem mnemonicParsing="false" text="%Configurator.menu.help.about" /> 
+					</items> </Menu> -->
+			</menus>
+		</MenuBar>
+	</top>
+	<center>
+		<TabPane fx:id="CFG_tabs" tabClosingPolicy="UNAVAILABLE"
+			BorderPane.alignment="CENTER">
+			<tabs>
+				<Tab fx:id="CFG_tab_configs" closable="false"
+					text="%Configurator.tabs.configurations">
+					<content>
+						<AnchorPane >
+							<children>
+								<TabPane fx:id="CFG_tab_configs_tabs" 
+									AnchorPane.bottomAnchor="0.0"
+									AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+									AnchorPane.topAnchor="0.0" />
+							</children>
+						</AnchorPane>
+					</content>
+				</Tab>
+				<Tab fx:id="CFG_tab_commands" closable="false"
+					text="%Configurator.tabs.commands">
+					<content>
+						<AnchorPane >
+							<children>
+								<TabPane fx:id="CFG_tab_commands_tabs" 
+									tabClosingPolicy="ALL_TABS" AnchorPane.bottomAnchor="0.0"
+									AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+									AnchorPane.topAnchor="0.0" />
+							</children>
+						</AnchorPane>
+					</content>
+				</Tab>
+			</tabs>
+		</TabPane>
+	</center>
+</BorderPane>
