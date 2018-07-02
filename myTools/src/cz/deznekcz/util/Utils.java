@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
@@ -30,12 +32,18 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.sun.istack.internal.NotNull;
+import com.sun.javafx.collections.ObservableMapWrapper;
 
 import cz.deznekcz.reference.OutBoolean;
 import cz.deznekcz.reference.OutString;
 import cz.deznekcz.tool.QueuedExecutor;
+import javafx.beans.InvalidationListener;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.FXCollections;
+import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableMap;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -540,18 +548,6 @@ public class Utils {
 					return new String[] {null};
 				}
 			};
-		}
-
-		public static <T,S> Consumer<T> consumeConvert(Consumer<S> cons, Function<T,S> conv) {
-			return (t) -> cons.accept(conv.apply(t));
-		}
-
-		public static <T,S> Predicate<T> predictConvert(Predicate<S> cons, Function<T,S> conv) {
-			return (t) -> cons.test(conv.apply(t));
-		}
-
-		public static <T,S,R> Function<T,R> functionConvert(Function<S,R> cons, Function<T,S> conv) {
-			return (t) -> cons.apply(conv.apply(t));
 		}
 	}
 	

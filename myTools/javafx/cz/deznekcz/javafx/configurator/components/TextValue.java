@@ -1,8 +1,7 @@
 package cz.deznekcz.javafx.configurator.components;
-
+import cz.deznekcz.javafx.configurator.components.support.AValue;
 import javafx.beans.property.StringProperty;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
@@ -10,7 +9,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 
-public class TextValue extends Control implements Value {
+public class TextValue extends AValue {
 	
 	private static class TextValueSkin implements Skin<TextValue> {
 
@@ -77,14 +76,6 @@ public class TextValue extends Control implements Value {
 		return ((TextValueSkin) getSkin()).value.textProperty();
 	}
 	
-	public String getValue() {
-		return valueProperty().get();
-	}
-	
-	public void setValue(String value) {
-		this.valueProperty().set(value);
-	}
-	
 	public StringProperty helpPropterty() {
 		return getTooltip().textProperty();
 	}
@@ -99,5 +90,20 @@ public class TextValue extends Control implements Value {
 	
 	public TextValue() {
 		setSkin(new TextValueSkin(this));
+	}
+
+	@Override
+	public void setValue(String value) {
+		valueProperty().setValue(value);
+	}
+
+	@Override
+	public String getValue() {
+		return valueProperty().getValue();
+	}
+	
+	@Override
+	public void refresh() {
+		
 	}
 }

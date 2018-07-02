@@ -58,14 +58,5 @@ public class OutLong extends OutNumber<Long> {
 	public static OutLong from(long longValue) {
 		return new OutLong(longValue);
 	}
-
-	@SuppressWarnings("unchecked")
-	public static OutLong init() {
-		return init(0L);
-	}
-
-	public static OutLong init(long longValue) {
-		return new OutLong(longValue);
-	}
 }
 

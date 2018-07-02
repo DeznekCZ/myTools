@@ -20,7 +20,6 @@ import java.util.ResourceBundle;
 
 import cz.deznekcz.reference.OutArray;
 import cz.deznekcz.reference.OutString;
-import cz.deznekcz.tool.i18n.ILangKey.LangChangeListener;
 import cz.deznekcz.util.ForEach;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
@@ -55,8 +54,19 @@ public class Lang {
 	public static final String LANG_SHORT_NAME = "_lang_short";
 	public static final String DEFAULT_SHORT_NAME = "en_US";
 
+	
+	private static HashMap<String, List<ChangeListener<? super String>>> changeListeners
+				= new HashMap<>();
+	
+	private static HashMap<String, List<InvalidationListener>> invalidationListeners
+				= new HashMap<>();
+	
 	/** Singleton instance */
 	private static Lang instance;
+	static {
+		LANGload(DEFAULT_SHORT_NAME);
+	}
+	
 	
 	/** List of used symbols */
 	//private final static List<LangItem> SYMBOLS;
@@ -80,6 +90,7 @@ public class Lang {
 	 * @param langName
 	 * @throws IOException
 	 */
+	@Deprecated
 	public static void LANGconvert(String langName) throws IOException {
 		File lng = new File("./lang/"+langName+".lng");
 		File xlng = new File("./lang/"+langName+".xlng");
@@ -125,13 +136,13 @@ public class Lang {
 			
 		} catch (IOException | MissingResourceException e) {
 			System.err.println(e.getLocalizedMessage());
-			if (!loaded)
+			if (!loaded && instance != null && instance.SYMBOLS != null)
 				LANGgererate(langName);
 		}
 	}
 
 	private static void loadBundle(String langName) throws IOException, MissingResourceException {
-		Locale.setDefault((OutArray.from(langName.split("_")).to((value) -> new Locale(value[0], value[1]))));
+		Locale.setDefault(new Locale(langName));
 		
 		URL[] urls = {new File("lang").toURI().toURL()};
 		ClassLoader loader = new URLClassLoader(urls);
@@ -269,8 +280,6 @@ public class Lang {
 	 * @see #LANG(String, Object...)
 	 */
 	public static void LANGset(String symbol, String value) {
-		instance.SYMBOLS.setProperty(symbol, value);
-	
 		Object last = instance.SYMBOLS.setProperty(symbol, value);
 		if (changeListeners.containsKey(symbol))
 		{
@@ -341,9 +350,6 @@ public class Lang {
 		public Enumeration<String> getKeys() { return null;	}
 	};
 
-	public static List<LangChangeListener> reloadRequestsChange = new ArrayList<> ();
-	public static List<LangChangeListener> reloadRequestsInvalidate = new ArrayList<> ();
-
 	/**
 	 * Returns instance of resource bundle
 	 * @return instance of {@link ResourceBundle}
@@ -368,12 +374,6 @@ public class Lang {
 			}
 		}
 	}
-	
-	private static HashMap<String, List<ChangeListener<? super String>>> changeListeners
-				= new HashMap<>();
-	
-	private static HashMap<String, List<InvalidationListener>> invalidationListeners
-				= new HashMap<>();
 
 	public static void LANGaddOnChange(String symbol, ChangeListener<? super String> listener) {
 		List<ChangeListener<? super String>> list = changeListeners.getOrDefault(symbol, new ArrayList<>());

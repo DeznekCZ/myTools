@@ -272,7 +272,7 @@ public class ForEach {
 	 * @param <T> Class of element object
 	 */
 	public static <T> int count(Iterable<T> iterable) {
-		OutInteger counter = OutInteger.init();
+		OutInteger counter = OutInteger.create();
 		ForEach.start(iterable, (v) -> {counter.increment();});
 		return counter.get();
 	}
@@ -298,8 +298,7 @@ public class ForEach {
 			}
 		};
 	}
-	
-	public static Iterable<Node> DOMNodeIterable(NamedNodeMap attributes) {
+	public static Iterable<Node> DOMNodeIterableMap(NamedNodeMap el) {
 		return new Iterable<Node>() {
 			
 			@Override
@@ -308,12 +307,12 @@ public class ForEach {
 					private int index = 0;
 					@Override
 					public boolean hasNext() {
-						return index < attributes.getLength();
+						return index < el.getLength();
 					}
 
 					@Override
 					public Node next() {
-						return attributes.item(index++);
+						return el.item(index++);
 					}
 					
 				};

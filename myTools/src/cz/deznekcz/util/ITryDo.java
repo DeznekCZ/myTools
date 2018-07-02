@@ -100,7 +100,7 @@ public interface ITryDo {
 				value.set(setAction.get());
 			}
 		}.doAction();
-		if (e != null) throw new RuntimeException(e);
+		if (e != null) e.printStackTrace();
 		return value.get();
 	}
 }

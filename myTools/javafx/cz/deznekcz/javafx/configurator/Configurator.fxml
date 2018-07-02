@@ -8,7 +8,7 @@
 
 
 <BorderPane fx:controller="cz.deznekcz.javafx.configurator.ConfiguratorController"
-	minHeight="800.0" minWidth="1000.0" xmlns:fx="http://javafx.com/fxml/1"
+	prefHeight="800.0" prefWidth="1000.0" xmlns:fx="http://javafx.com/fxml/1"
 	xmlns="http://javafx.com/javafx/8">
 	<top>
 		<MenuBar BorderPane.alignment="CENTER" fx:id="CFG_menu_bar" >
@@ -17,7 +17,7 @@
 					text="%Configurator.menu.file">
 					<items>
 						<MenuItem fx:id="CFG_menu_file_open" mnemonicParsing="false"
-							text="%Configurator.menu.file.open">
+							text="%Configurator.menu.file.open" onAction="#openConfiguration" >
 							<accelerator>
 								<KeyCodeCombination alt="UP" code="O"
 									control="DOWN" meta="UP" shift="UP" shortcut="UP" />

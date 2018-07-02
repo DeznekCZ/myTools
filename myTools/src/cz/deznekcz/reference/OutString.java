@@ -391,16 +391,6 @@ condition.addListenable(OutBoolean.bindNot(outStringInstance.bindCompared(outStr
 	public static OutString init(ILangKey noActualMessages, Object... args) {
 		return new OutString(noActualMessages.value(args));
 	}
-
-	/**
-	 * Method apply every character to a function
-	 * @param function function for a letter
-	 */
-	public void step(Consumer<Character> function) {
-		for (char iterable_element : this.get().toCharArray()) {
-			function.accept(iterable_element);
-		}
-	}
 }
 
 

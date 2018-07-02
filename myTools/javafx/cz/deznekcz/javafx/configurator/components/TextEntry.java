@@ -1,5 +1,6 @@
 package cz.deznekcz.javafx.configurator.components;
 
+import cz.deznekcz.javafx.configurator.components.support.AValue;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -8,7 +9,6 @@ import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
@@ -16,7 +16,7 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 
-public class TextEntry extends Control implements Value {
+public class TextEntry extends AValue {
 
 	private static class TextEntrySkin implements Skin<TextEntry> {
 		
@@ -90,7 +90,8 @@ public class TextEntry extends Control implements Value {
 			value.pseudoClassStateChanged(PseudoClass.getPseudoClass("mismach"), active);
 			mismach.set(active);
 			
-			if (!limited.get() || !active) valueString.set(value.getText());
+			if ((!limited.get() || !active) && !value.getText().equals(valueString.get())) 
+				valueString.set(value.getText());
 		}
 
 		@Override
@@ -123,14 +124,6 @@ public class TextEntry extends Control implements Value {
 	
 	public StringProperty valueProperty() {
 		return ((TextEntrySkin) getSkin()).valueString;
-	}
-	
-	public String getValue() {
-		return valueProperty().get();
-	}
-	
-	public void setValue(String value) {
-		this.valueProperty().set(value);
 	}
 	
 	public StringProperty patternProperty() {
@@ -191,5 +184,20 @@ public class TextEntry extends Control implements Value {
 	
 	public TextEntry() {
 		setSkin(new TextEntrySkin(this));
+	}
+
+	@Override
+	public void setValue(String value) {
+		valueProperty().setValue(value);
+	}
+
+	@Override
+	public String getValue() {
+		return valueProperty().getValue();
+	}
+	
+	@Override
+	public void refresh() {
+		
 	}
 }

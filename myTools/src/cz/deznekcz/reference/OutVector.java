@@ -72,7 +72,7 @@ public class OutVector extends Out<Vector> {
 		}
 
 		public boolean isBound() {
-			return origin != null && origin.hasListener(supportListener);
+			return origin != null /*&& origin.hasListener(supportListener)*/;
 		}
 
 		public static final Function<Vector,Vector> COPY = (v) -> v;
@@ -119,7 +119,7 @@ public class OutVector extends Out<Vector> {
 	private Binder Xbound = new Binder(this::setX,Binder.X_AXIS);
 	private Binder Ybound = new Binder(this::setY,Binder.Y_AXIS);
 	private Binder Zbound = new Binder(this::setZ,Binder.Z_AXIS);
-	private OutDouble size = OutDouble.init();
+	private OutDouble size = OutDouble.create();
 	
 	protected OutVector(Vector defaultValue) {
 		super(defaultValue);

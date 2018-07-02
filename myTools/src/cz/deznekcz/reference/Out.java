@@ -4,7 +4,6 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -22,7 +21,6 @@ import cz.deznekcz.util.EqualAble;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
@@ -180,7 +178,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	 * @see #get()
 	 * @see #apply(Object)
 	 */
-	public synchronized void set(C newValue) {
+	public void set(C newValue) {
 		if (observable && newValue != value) {
 			C lastValue = value;
 			value = newValue;
@@ -428,16 +426,11 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	public synchronized boolean isObservable() {
 		return observable;
 	}
-
-	public boolean isBound() {
-		return bean != null;
-	}
 	
 	@Override
 	public synchronized void addListener(InvalidationListener listener) {
 		if (!observable) allowObservable();
 		invalList.add(listener);
-		listener.invalidated(this);
 	}
 
 	@Override
@@ -453,7 +446,7 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 	public synchronized void addListener(ChangeListener<? super C> listener) {
 		if (!observable) allowObservable();
 		changeList.add(listener);
-		listener.changed(this, value, value);
+//		listener.changed(this, value, value);
 	}
 
 	@Override
@@ -465,33 +458,14 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		}
 	}
 	
-	public boolean hasListener(InvalidationListener listener) {
-		return observable && invalList.contains(listener);
-	}
-	
-	public boolean hasListener(ChangeListener<C> listener) {
-		return observable && changeList.contains(listener);
-	}
-	
 	/**
 	 * 
 	 * @param lastValue
 	 * @param newValue
 	 */
-	@SuppressWarnings("unchecked")
 	protected synchronized final void invokeChange(C lastValue, C newValue) {
-		ArrayList<?> list = new ArrayList<>(invalList);
-		for (Object invalidationListener : list) {
-			if (invalidationListener == null) continue;
-			((InvalidationListener) invalidationListener).invalidated(this);
-		}
-		list.clear();
-
-		list = new ArrayList<>(changeList);
-		for (Object changeListener : list) {
-			if (changeListener == null) continue;
-			((ChangeListener<? super C>) changeListener).changed(this, lastValue, newValue);
-		}
+		invalList.forEach((listener) -> listener.invalidated(this));
+		changeList.forEach((listener) -> listener.changed(this, lastValue, newValue));
 	}
 	
 	@Deprecated
@@ -564,18 +538,6 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		out.setBean(observable, listener);
 		return out;
 	}
-
-	/**
-	 * Simple binding from javafx.beans
-	 * @param observable
-	 * @return new instance of {@link Out}
-	 */
-	public void bindTo(ObservableValue<C> observable) {
-		set(observable.getValue());
-		ChangeListener<C> listener = (o,l,n) -> set(n);
-		observable.addListener(listener);
-		setBean(observable, listener);
-	}
 	
 	protected <O> void setBean(ObservableValue<O> bean, ChangeListener<O> beanListener) {
 		beanListener.changed(bean, bean.getValue(), bean.getValue());
@@ -585,9 +547,11 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 
 	@SuppressWarnings("unchecked")
 	public <O> void unbind() {
-		((ObservableValue<O>) bean).removeListener((ChangeListener<O>) beanListener);
-		bean = null;
-		beanListener = null;
+		if (bean != null) {
+			((ObservableValue<O>) bean).removeListener((ChangeListener<O>) beanListener);
+			bean = null;
+			beanListener = null;
+		}
 	}
 
 	public Out<Object> objectReference() {
@@ -612,12 +576,6 @@ public class Out<C> implements Comparable<Out<C>>, EqualAble, Supplier<C>, Predi
 		this.addListener(beanListener);
 		output.setBean(this, beanListener);
 		return output;
-	}
-	
-	public void bindToTransform(ObservableValue<C> reference, Function<C, C> tranformer) {
-		ChangeListener<C> beanListener = (o, l, n) -> set(tranformer.apply(n));
-		reference.addListener(beanListener);
-		setBean(this, beanListener);
 	}
 
 	public synchronized void fireChange() {

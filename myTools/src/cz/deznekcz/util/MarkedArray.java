@@ -1,11 +1,14 @@
 package cz.deznekcz.util;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.IntFunction;
+
+import cz.deznekcz.util.MarkedArray.SimpleArray;
 
 public class MarkedArray<T> implements Iterable<Elem<T>> {
 

@@ -50,14 +50,5 @@ public class OutFloat extends OutNumber<Float> {
 	public synchronized boolean isGreatherOrEqual(Float value) {
 		return value <= get();
 	}
-	
-	@SuppressWarnings("unchecked")
-	public static OutFloat init() {
-		return new OutFloat(0);
-	}
-	
-	public static OutFloat init(float f) {
-		return new OutFloat(f);
-	}
 }
 

@@ -21,47 +21,34 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import cz.deznekcz.reference.Out;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
 
 /**
  * XML loading provider
  * @author Zdenek Novotny (DeznekCZ)
- * 
+ *
  */
 public class XMLLoader {
-
-	private static final DocumentBuilder parser;
-	static {
-		Out<DocumentBuilder> odc = Out.init();
-		try {
-			odc.set(DocumentBuilderFactory.newInstance().newDocumentBuilder());
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		parser = odc.get();
-	}
 
 //	private static final Alert xmlError;
 //	static {
 //		xmlError = new Alert(AlertType.ERROR);
 //	}
-	
+
 	public static Node load(File xmlFile) throws Exception {
 		Out<Exception> eOut = Out.init();
 		Node node = load(xmlFile, eOut);
-		if (eOut.isNull()) 
+		if (eOut.isNull())
 			return node;
-		else 
+		else
 			throw eOut.get();
 	}
-	
+
 	public static Node load(File xmlFile, Out<Exception> exception) {
 		try {
+			DocumentBuilder parser = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 			Document document = parser.parse(xmlFile);
-			return document.getDocumentElement();	
-		} catch (IOException | SAXException | IllegalArgumentException e) {
+			return document.getDocumentElement();
+		} catch (IOException | SAXException | IllegalArgumentException | ParserConfigurationException e) {
 			exception.set(e);
 			return null;
 		}
@@ -72,15 +59,15 @@ public class XMLLoader {
 //		xmlError.setContentText(e.getMessage());
 //		xmlError.showAndWait();
 	}
-	
+
 	public static boolean save(File xml, Node rootNode) {
 		return save(xml, rootNode, transformer -> {}, Out.init());
 	}
-	
+
 	public static boolean save(File xml, Node rootNode, Out<TransformerException> exception) {
 		return save(xml, rootNode, transformer -> {}, exception);
 	}
-	
+
 	public static boolean save(File xml, Node rootNode, Consumer<Transformer> parameters) {
 		return save(xml, rootNode, parameters, Out.init());
 	}
@@ -106,13 +93,13 @@ public class XMLLoader {
 			return false;
 		}
 	}
-	
+
 	public static void save(File xml, String xmlAsText) throws Exception {
-		PrintStream ps = new PrintStream(xml);
+		PrintStream ps = new PrintStream(xml, "UTF8");
 		ps.println(xmlAsText);
 		ps.close();
 	}
-	
+
 	public static void newXml(File xml, String rootNodeName) throws Exception {
 		Out<Exception> exception = Out.init();
 		newXml(xml, rootNodeName, exception);
@@ -142,5 +129,5 @@ public class XMLLoader {
 			exception.set(e);
 		}
 	}
-	
+
 }

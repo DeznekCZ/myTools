@@ -1,7 +1,5 @@
 package cz.deznekcz.tool.i18n;
 
-import javafx.beans.property.Property;
-
 /**
  *     New type of searching key in lang file.
  *     Is a better form for Object oriented programing.
@@ -42,6 +40,5 @@ public interface IKeysClassLangKey extends ILangKey {
 	 * Method returns a symbol value of lang key
 	 * @return instance of {@link String}
 	 */
-	default String symbol() {return contextName() + "." + ILangKey.super.symbol();}
-	
+	public default String symbol() {return contextName() + "." + ILangKey.super.symbol();}
 }
