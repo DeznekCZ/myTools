@@ -1,6 +1,7 @@
 package cz.deznekcz.util.xml;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -26,12 +27,14 @@ import cz.deznekcz.util.ForEach;
  */
 public class XMLStepper {
 
+	private XMLStepper() {}
+
 	public static class StepList implements Step, Iterable<Step> {
 
 		private Step parent;
 		private List<Node> list;
 		private List<Step> stepList;
-		
+
 
 		public StepList(String listValueName, NodeList childNodes, Step parent) {
 			this.list = new ArrayList<>();
@@ -52,7 +55,7 @@ public class XMLStepper {
 
 		@Override
 		public void setXmlNode(Node node) {
-			
+
 		}
 
 		@Override
@@ -69,22 +72,24 @@ public class XMLStepper {
 		 * @see StepList#forEach
 		 * @see StepList#asList()
 		 * @see StepList#asNodeList()
+		 * @throws XMLStepperException
 		 */
 		@Override
 		@Deprecated
-		public Step getNode(String path) throws XMLStepperException {
+		public Step getNode(String path) {
 			return this;
 		}
-		
+
 		/**
 		 * @see StepList#forEach
+		 * @throws XMLStepperException
 		 */
 		@Override
 		@Deprecated
-		public StepList getList(String path) throws XMLStepperException {
+		public StepList getList(String path) {
 			return this;
 		}
-		
+
 		@Override
 		public void collectText(List<String> collector) {
 			forEach((step)->collector.add(step.text()));
@@ -96,7 +101,7 @@ public class XMLStepper {
 		 * @param loop instance or lambda of {@link Consumer}&lt;{@link Step}&gt;
 		 * @see Iterable#forEach(Consumer)
 		 */
-		public void foreach(Predicate<Step> filter, Consumer<Step> loop) {
+		public void forEach(Predicate<Step> filter, Consumer<Step> loop) {
 			for (Step step : stepList) {
 				if (filter.test(step))
 					loop.accept(step);
@@ -118,9 +123,9 @@ public class XMLStepper {
 		@Override
 		public Iterator<Step> iterator() {
 			return stepList.iterator();
-		} 
+		}
 	}
-	
+
 	public static class StepNONE implements Step {
 
 		@Override
@@ -135,9 +140,9 @@ public class XMLStepper {
 
 		@Override
 		public void setXmlNode(Node node) {
-			
+
 		}
-		
+
 	}
 
 	@SuppressWarnings("serial")
@@ -156,7 +161,7 @@ public class XMLStepper {
 		private Node node;
 		private Step parent;
 
-		public StepNode(Node current, Step parent) throws XMLStepperException {
+		public StepNode(Node current, Step parent) {
 			this.parent = parent;
 			this.node = current;
 		}
@@ -177,7 +182,7 @@ public class XMLStepper {
 		}
 
 	}
-	
+
 	public static class StepDocument implements Step {
 		private Document document;
 		private Node rootNode;
@@ -191,7 +196,7 @@ public class XMLStepper {
 		public Node getXmlNode() {
 			return rootNode;
 		}
-		
+
 		@Override
 		public Step getParent() {
 			return new StepNONE();
@@ -201,14 +206,20 @@ public class XMLStepper {
 		public void setXmlNode(Node node) {
 			rootNode = node;
 		}
-		
+
 		public Document getXMLDocument() {
 			return document;
 		}
 	}
 
 	public static interface Step {
-		public default Step getNode(String path) throws XMLStepperException {
+		/**
+		 *
+		 * @param path steps to tree node "elem1/elem2/finalElem"
+		 * @throws XMLStepperException
+		 * @return returns final element of path
+		 */
+		public default Step getNode(String path) {
 			if (path.contains("/")) {
 				String rootPath = path.substring(0, path.lastIndexOf('/'));
 				String rootEnclosing = path.substring(path.lastIndexOf('/') + 1, path.length());
@@ -221,11 +232,11 @@ public class XMLStepper {
 			}
 			throw XMLStepperException.notExists(XMLStepperException.ELEMENT,path);
 		}
-		
+
 		public void setXmlNode(Node node);
 		public Node getXmlNode();
 		public Step getParent();
-		
+
 		public default String attribute(String name) {
 			OutString result = OutString.init();
 			ForEach.start(ForEach.DOMNodeIterableMap(getXmlNode().getAttributes()), (node) -> {
@@ -256,7 +267,7 @@ public class XMLStepper {
 			});
 			return converter.apply(result.get());
 		}
-		
+
 		public default StepList getList(String path) throws XMLStepperException {
 			if (path.contains("/")) {
 				String rootPath = path.substring(0, path.lastIndexOf('/'));
@@ -277,7 +288,7 @@ public class XMLStepper {
 				for (Node node : ForEach.DOMNodeIterable(getXmlNode().getChildNodes()))
 					if (node.getNodeName().equals(name))
 						return true;
-				
+
 			return false;
 		}
 
@@ -287,28 +298,28 @@ public class XMLStepper {
 				for (Node node : ForEach.DOMNodeIterableMap(getXmlNode().getAttributes()))
 					if (node.getNodeName().startsWith(name))
 						return true;
-				
+
 			return false;
 		}
 
 		public default String text() { return getXmlNode().getTextContent(); }
 	}
-	
+
 	public static StepDocument from(Document document) {
 		return new StepDocument(document);
 	}
 
-	
+
 	public static boolean hasAttribute(Step step)
 	{
 		return step.getXmlNode() != null && step.getXmlNode().hasAttributes();
 	}
 
-	public static StepDocument fromFile(String xml) throws Exception {
+	public static StepDocument fromFile(String xml) throws IOException {
 		return fromFile(new File(xml));
 	}
 
-	public static StepDocument fromFile(File xml) throws Exception {
+	public static StepDocument fromFile(File xml) throws IOException {
 		return from(XMLLoader.load(xml).getOwnerDocument());
 	}
 }
