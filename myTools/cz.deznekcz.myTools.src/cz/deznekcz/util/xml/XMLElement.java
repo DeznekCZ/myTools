@@ -53,7 +53,7 @@ public abstract class XMLElement<P, T extends XMLElement<P, T>> {
 
 	/**
 	 * Returns parent instance
-	 * @return instance of {@link XMLElement#PARENT}
+	 * @return instance of {@link XMLElement#P}
 	 */
 	public P close() {
 		return parent;
@@ -63,13 +63,13 @@ public abstract class XMLElement<P, T extends XMLElement<P, T>> {
 	 * Adds an attribute to XML element
 	 * @param name name of attribute
 	 * @param value value of attribute
-	 * @return this instance of {@link XMLElement#THIS} (for builder initialization see {@link XML})
+	 * @return this instance of {@link XMLElement#T} (for builder initialization see {@link XML})
 	 */
 	public abstract T addAttribute(String name, String value);
 	/**
 	 * Sets comment for XML element
 	 * @param comment comment value
-	 * @return this instance of {@link XMLElement#THIS} (for builder initialization see {@link XML})
+	 * @return this instance of {@link XMLElement#T} (for builder initialization see {@link XML})
 	 */
 	public abstract T setComment(String comment);
 

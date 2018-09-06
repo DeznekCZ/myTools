@@ -1,35 +1,21 @@
 package cz.deznekcz.javafx.components;
 
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.ResourceBundle;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.FutureTask;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-import com.sun.org.apache.xml.internal.security.keys.content.SPKIData;
-
-import cz.deznekcz.javafx.components.Dialogs.LoginDialog.LoginInfo;
 import cz.deznekcz.javafx.configurator.components.CheckValue;
 import cz.deznekcz.javafx.configurator.components.PasswordEntry;
 import cz.deznekcz.javafx.configurator.components.TextEntry;
 import cz.deznekcz.reference.OutException;
-import cz.deznekcz.reference.OutInteger;
 import cz.deznekcz.tool.i18n.Arguments;
 import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.util.Utils;
-import cz.deznekcz.zf.passxde.ClearCase;
 import javafx.application.Platform;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -37,12 +23,10 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.control.DialogEvent;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TitledPane;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -52,7 +36,6 @@ import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 import javafx.util.Pair;
-import sun.security.util.Password;
 
 public abstract class Dialogs {
 

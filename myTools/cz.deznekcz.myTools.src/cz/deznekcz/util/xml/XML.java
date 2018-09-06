@@ -37,6 +37,7 @@ public class XML {
 	}
 
 	private Type head;
+	private String doctype;
 	private String comment;
 	private XMLRoot root;
 
@@ -125,6 +126,10 @@ public class XML {
 	public void write(Appendable stream) throws IOException {
 		stream.append(head.xmlEntry);
 		stream.append('\n');
+		if (doctype != null && doctype.length() > 0) {
+			stream.append("<!DOCTYPE " + doctype + ">");
+			stream.append('\n');
+		}
 		stream.append("");
 
 		if (comment != null && comment.length() > 0) {
@@ -151,5 +156,15 @@ public class XML {
 	 */
 	public String getCharset() {
 		return head.streamName;
+	}
+
+	/**
+	 * Adds doctype for XML header
+	 * @param comment comment value
+	 * @return returns builded {@link XML}
+	 */
+	public XML doctype(String doctype) {
+		this.doctype = doctype;
+		return this;
 	}
 }

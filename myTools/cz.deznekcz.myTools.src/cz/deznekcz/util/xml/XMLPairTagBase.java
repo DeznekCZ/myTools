@@ -7,14 +7,14 @@ import java.util.List;
  * 
  * @author Zdenek Novotny (DeznekCZ)
  *
- * @param <PARENT> Class type of parent implementation (parent in parent child instances relation)
+ * @param <P> Class type of parent implementation (parent in parent child instances relation)
  * 
- * @see XMLPairTag
- * @see XMLRoot
+ * @see XMLPairTag XMLPairTag implements this class
+ * @see XMLRoot XMLRoot implements this class
  */
-public abstract class XMLPairTagBase<PARENT> extends XMLElement<PARENT, XMLPairTagBase<PARENT>> {
+public abstract class XMLPairTagBase<P> extends XMLElement<P, XMLPairTagBase<P>> {
 
-	protected XMLPairTagBase(String name, PARENT parent, boolean expanded) {
+	protected XMLPairTagBase(String name, P parent, boolean expanded) {
 		super(name, parent, expanded);
 	}
 
@@ -23,14 +23,14 @@ public abstract class XMLPairTagBase<PARENT> extends XMLElement<PARENT, XMLPairT
 	 * @param name name of new tag element
 	 * @return new instance of {@link XMLSingleTag}
 	 */
-	public abstract XMLSingleTag<? extends XMLPairTagBase<PARENT>> newSingleTag(String name);
+	public abstract XMLSingleTag<? extends XMLPairTagBase<P>> newSingleTag(String name);
 	
 	/**
 	 * Adds new single tag element to current tag.
 	 * @param name name of new tag element
 	 * @return new instance of {@link XMLPairTag}
 	 */
-	public abstract XMLPairTag<? extends XMLPairTagBase<PARENT>> newPairTag(String name);
+	public abstract XMLPairTag<? extends XMLPairTagBase<P>> newPairTag(String name);
 	
 	/**
 	 * Adds new single tag element to current tag.
@@ -38,28 +38,28 @@ public abstract class XMLPairTagBase<PARENT> extends XMLElement<PARENT, XMLPairT
 	 * @param expanded defines that element uses more lines (default = true)
 	 * @return new instance of {@link XMLPairTag}
 	 */
-	public abstract XMLPairTag<? extends XMLPairTagBase<PARENT>> newPairTag(String name, boolean expanded);
+	public abstract XMLPairTag<? extends XMLPairTagBase<P>> newPairTag(String name, boolean expanded);
 
 	/**
 	 * Return single tag elements with name.
 	 * @param name name of tag element
 	 * @return list instances of {@link XMLSingleTag}
 	 */
-	public abstract List<? extends XMLSingleTag<? extends XMLPairTagBase<PARENT>>> getSingleTag(String name);
+	public abstract List<? extends XMLSingleTag<? extends XMLPairTagBase<P>>> getSingleTag(String name);
 	
 	/**
 	 * Return single tag elements with name.
 	 * @param name name of tag element
 	 * @return list instances of {@link XMLPairTag}
 	 */
-	public abstract List<? extends XMLPairTag<? extends XMLPairTagBase<PARENT>>> getPairTag(String name);
+	public abstract List<? extends XMLPairTag<? extends XMLPairTagBase<P>>> getPairTag(String name);
 	
 	/**
 	 * Return tag elements with name.
 	 * @param name name of tag element
 	 * @return list instances of {@link XMLSingleTag} or {@link XMLPairTag}
 	 */
-	public abstract List<? extends XMLElement<? extends XMLPairTagBase<PARENT>, ?>> getBoothTag(String name);
+	public abstract List<? extends XMLElement<? extends XMLPairTagBase<P>, ?>> getBoothTag(String name);
 	
 	/**
 	 * Remove all children
@@ -73,28 +73,28 @@ public abstract class XMLPairTagBase<PARENT> extends XMLElement<PARENT, XMLPairT
 	 * @param text text value
 	 * @return this instance of {@link XMLPairTagBase}
 	 */
-	public abstract XMLPairTagBase<PARENT> setText(String text);
+	public abstract XMLPairTagBase<P> setText(String text);
 	
 	/**
 	 * Sets text content of XML element packed in &lt;![CDATA[text]]>
 	 * @param text text value
 	 * @return this instance of {@link XMLPairTagBase}
 	 */
-	public abstract XMLPairTagBase<PARENT> setTextCDATA(String text);
+	public abstract XMLPairTagBase<P> setTextCDATA(String text);
 	
 	/**
 	 * Appends text content of XML element
 	 * @param text text value
 	 * @return this instance of {@link XMLPairTagBase}
 	 */
-	public abstract XMLPairTagBase<PARENT> appendText(String text);
+	public abstract XMLPairTagBase<P> appendText(String text);
 	
 	/**
 	 * Appends text content of XML element packed in &lt;![CDATA[text]]>
 	 * @param text text value
 	 * @return this instance of {@link XMLPairTagBase}
 	 */
-	public abstract XMLPairTagBase<PARENT> appendTextCDATA(String text);
+	public abstract XMLPairTagBase<P> appendTextCDATA(String text);
 	
 	/**
 	 * Returns text value of element

@@ -20,7 +20,7 @@ import cz.deznekcz.tool.RandomAccessList;
 import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.util.xml.XMLLoader;
 import javafx.application.Platform;
-import cz.deznekcz.javafx.components.Dialog;
+import cz.deznekcz.javafx.components.Dialogs;
 
 public enum ParameterElement implements ILangKey {
 	text       ( TextParameter    ::fromXml ),
@@ -157,7 +157,7 @@ public enum ParameterElement implements ILangKey {
 				type.getParameter(element, list);
 			}
 		} catch (Exception e) {
-			Dialog.EXCEPTION.show(e);
+			Dialogs.EXCEPTION.show(e);
 			Platform.exit();
 		}
 		return list.toArray(new AParameter<?>[list.count()]);

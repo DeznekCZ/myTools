@@ -10,95 +10,95 @@ import javafx.util.Pair;
  * 
  * @author Zdenek Novotny (DeznekCZ)
  *
- * @param <PARENT> Class type of parent implementation (parent in parent child instances relation)
+ * @param <P> Class type of parent implementation (parent in parent child instances relation)
  * 
- * @see XMLRoot XMLRoot is top PARENT
- * @see XMLPairTag XMLPairTag is closses PARENT or CHILD
- * @see XMLSingleTag XMLRoot is CHILD
+ * @see XMLRoot XMLRoot is top parent
+ * @see XMLPairTag XMLPairTag is closses parent or child
+ * @see XMLSingleTag XMLRoot is child
  */
-public class XMLPairTag<PARENT> extends XMLPairTagBase<PARENT> {
+public class XMLPairTag<P> extends XMLPairTagBase<P> {
 
-	protected XMLPairTag(String name, PARENT parent, boolean expanded) {
+	protected XMLPairTag(String name, P parent, boolean expanded) {
 		super(name, parent, expanded);
 	}
 
 	@Override
-	public XMLSingleTag<XMLPairTag<PARENT>> newSingleTag(String name) {
-		return new XMLSingleTag<XMLPairTag<PARENT>>(name, this);
+	public XMLSingleTag<XMLPairTag<P>> newSingleTag(String name) {
+		return new XMLSingleTag<XMLPairTag<P>>(name, this);
 	}
 
 	@Override
-	public XMLPairTag<XMLPairTag<PARENT>> newPairTag(String name) {
-		return new XMLPairTag<XMLPairTag<PARENT>>(name, this, true);
+	public XMLPairTag<XMLPairTag<P>> newPairTag(String name) {
+		return new XMLPairTag<XMLPairTag<P>>(name, this, true);
 	}
 
 	@Override
-	public XMLPairTag<XMLPairTag<PARENT>> newPairTag(String name, boolean expanded) {
-		return new XMLPairTag<XMLPairTag<PARENT>>(name, this, expanded);
+	public XMLPairTag<XMLPairTag<P>> newPairTag(String name, boolean expanded) {
+		return new XMLPairTag<XMLPairTag<P>>(name, this, expanded);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<XMLSingleTag<XMLPairTag<PARENT>>> getSingleTag(String name) {
-		List<XMLSingleTag<XMLPairTag<PARENT>>> list = new ArrayList<>(children.size());
+	public List<XMLSingleTag<XMLPairTag<P>>> getSingleTag(String name) {
+		List<XMLSingleTag<XMLPairTag<P>>> list = new ArrayList<>(children.size());
 		if (children.containsKey(name)) for (XMLElement<?, ?> e : children.get(name)) {
-			if (e.name.equals(name) && e instanceof XMLSingleTag) list.add((XMLSingleTag<XMLPairTag<PARENT>>) e);
+			if (e.name.equals(name) && e instanceof XMLSingleTag) list.add((XMLSingleTag<XMLPairTag<P>>) e);
 		}
 		return list;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<XMLPairTag<XMLPairTag<PARENT>>> getPairTag(String name) {
-		List<XMLPairTag<XMLPairTag<PARENT>>> list = new ArrayList<>(children.size());
+	public List<XMLPairTag<XMLPairTag<P>>> getPairTag(String name) {
+		List<XMLPairTag<XMLPairTag<P>>> list = new ArrayList<>(children.size());
 		if (children.containsKey(name)) for (XMLElement<?, ?> e : children.get(name)) {
-			if (e.name.equals(name) && e instanceof XMLPairTag) list.add((XMLPairTag<XMLPairTag<PARENT>>) e);
+			if (e.name.equals(name) && e instanceof XMLPairTag) list.add((XMLPairTag<XMLPairTag<P>>) e);
 		}
 		return list;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public List<XMLElement<XMLPairTag<PARENT>, ?>> getBoothTag(String name) {
-		List<XMLElement<XMLPairTag<PARENT>, ?>> list = new ArrayList<>(children.size());
+	public List<XMLElement<XMLPairTag<P>, ?>> getBoothTag(String name) {
+		List<XMLElement<XMLPairTag<P>, ?>> list = new ArrayList<>(children.size());
 		if (children.containsKey(name)) for (XMLElement<?, ?> e : children.get(name)) {
-			if (e.name.equals(name)) list.add((XMLElement<XMLPairTag<PARENT>, ?>) e);
+			if (e.name.equals(name)) list.add((XMLElement<XMLPairTag<P>, ?>) e);
 		}
 		return list;
 	}
 
 	@Override
-	public XMLPairTag<PARENT> appendText(String text) {
+	public XMLPairTag<P> appendText(String text) {
 		super.text += text;
 		return this;
 	}
 
 	@Override
-	public XMLPairTag<PARENT> appendTextCDATA(String text) {
+	public XMLPairTag<P> appendTextCDATA(String text) {
 		super.text += String.format("<![CDATA[%s]]>", text);
 		return this;
 	}
 
 	@Override
-	public XMLPairTag<PARENT> setText(String text) {
+	public XMLPairTag<P> setText(String text) {
 		super.text = text;
 		return this;
 	}
 
 	@Override
-	public XMLPairTag<PARENT> setTextCDATA(String text) {
+	public XMLPairTag<P> setTextCDATA(String text) {
 		super.text = String.format("<![CDATA[%s]]>", text);
 		return this;
 	}
 	
 	@Override
-	public XMLPairTag<PARENT> addAttribute(String name, String value) {
+	public XMLPairTag<P> addAttribute(String name, String value) {
 		attributes.add(new Pair<String, String>(name, value));
 		return this;
 	}
 	
 	@Override
-	public XMLPairTag<PARENT> setComment(String comment) {
+	public XMLPairTag<P> setComment(String comment) {
 		super.comment = String.format("<!-- %s -->", comment);
 		return this;
 	}

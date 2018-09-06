@@ -7,25 +7,25 @@ import javafx.util.Pair;
  * 
  * @author Zdenek Novotny (DeznekCZ)
  *
- * @param <PARENT> Class type of parent implementation (parent in parent child instances relation)
+ * @param <P> Class type of parent implementation (parent in parent child instances relation)
  * 
- * @see XMLRoot XMLRoot is top PARENT
- * @see XMLPairTag XMLPairTag is closses PARENT
+ * @see XMLRoot XMLRoot is top parent
+ * @see XMLPairTag XMLPairTag is closses parent
  */
-public class XMLSingleTag<PARENT> extends XMLElement<PARENT, XMLSingleTag<PARENT>> {
+public class XMLSingleTag<P> extends XMLElement<P, XMLSingleTag<P>> {
 
-	protected XMLSingleTag(String name, PARENT root) {
+	protected XMLSingleTag(String name, P root) {
 		super(name, root, true);
 	}
 
 	@Override
-	public XMLSingleTag<PARENT> addAttribute(String name, String value) {
+	public XMLSingleTag<P> addAttribute(String name, String value) {
 		attributes.add(new Pair<String, String>(name, value));
 		return this;
 	}
 	
 	@Override
-	public XMLSingleTag<PARENT> setComment(String comment) {
+	public XMLSingleTag<P> setComment(String comment) {
 		super.comment = String.format("<!-- %s -->", comment);
 		return this;
 	}

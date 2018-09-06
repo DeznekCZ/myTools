@@ -1,13 +1,16 @@
 package cz.deznekcz.tool.langEditor;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
 import org.w3c.dom.Node;
 
-import cz.deznekcz.reference.Out;
+import cz.deznekcz.javafx.components.Dialogs;
+import cz.deznekcz.reference.OutException;
+import cz.deznekcz.util.xml.XML;
 import cz.deznekcz.util.xml.XMLLoader;
 import javafx.application.Platform;
 import javafx.beans.binding.BooleanBinding;
@@ -68,7 +71,7 @@ public class LangCotroller implements Initializable {
 					TreeGenerator.from(opened.getName(), opened, XMLLoader.load(opened), xmlTreeView);
 					break; // Successfully loaded
 				} catch (Exception e) {
-					XMLLoader.showError(e);
+					Dialogs.EXCEPTION.show(e);
 				}
     		} else break;
     	}
@@ -187,9 +190,17 @@ public class LangCotroller implements Initializable {
     		return;
     	}
 
-    	Out<Exception> eOut = Out.init();
+    	OutException eOut = OutException.init();
     	String langName = xml.getName().split("\\.")[0];
-    	XMLLoader.newXml(xml, TreeGenerator.XML_ROOT, eOut);
+    	
+    	try {
+			XMLLoader.save(xml, 
+					XML.init(TreeGenerator.XML_ROOT)
+					.doctype("properties SYSTEM \"http://java.sun.com/dtd/properties.dtd\"")
+					.root().newPairTag("entry").addAttribute("_lang_short", langName).close().close());
+		} catch (IOException e) {
+			eOut.set(e);
+		}
     	
     	if (!eOut.isNull())
     		return;
@@ -197,7 +208,7 @@ public class LangCotroller implements Initializable {
     		handlerException(eOut.get());
     	
     	eOut.set();
-    	Node root = XMLLoader.load(xml, eOut);
+    	Node root = XMLLoader.load(xml, eOut.typed());
     	if (eOut.isNull())
     		TreeGenerator.from(
     			langName, 

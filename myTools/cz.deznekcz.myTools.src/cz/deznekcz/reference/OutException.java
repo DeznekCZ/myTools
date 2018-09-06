@@ -1,5 +1,6 @@
 package cz.deznekcz.reference;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
@@ -59,5 +60,14 @@ public class OutException extends Out<Exception> {
 
 	public void printStackTrace(PrintWriter stream) {
 		get().printStackTrace(stream);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T extends Exception> Out<T> typed() {
+		return new Out<T>(this == null ? null : (T) this.get()) {
+			{
+				onChange(OutException.this::set);
+			}
+		};
 	}
 }
