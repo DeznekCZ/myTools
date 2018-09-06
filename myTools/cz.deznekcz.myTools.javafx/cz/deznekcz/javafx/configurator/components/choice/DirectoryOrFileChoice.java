@@ -17,24 +17,25 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 
 public class DirectoryOrFileChoice extends Choice implements HasDirProperty {
-	
+
 	private static class DirectoryOrFileChoiceSkin extends DirectoryOrFileChoice.ChoiceSkin {
-		
+
+		private static final String PREFIX = "| ";
 		public StringProperty dir;
 		private Label dirLabel;
 		private BooleanProperty unnecesary;
 
 		public DirectoryOrFileChoiceSkin(DirectoryOrFileChoice text) {
 			super(text);
-			
+
 			dir = new SimpleStringProperty();
 			dir.addListener((o,l,n) -> {
 				text.refresh();
 			});
-			
+
 			dirLabel = new Label();
-			dirLabel.textProperty().bind(Bindings.concat(Configurator.choice.DIR, dir));
-			
+			dirLabel.textProperty().bind(Bindings.concat(PREFIX, Configurator.choice.DIR, dir));
+
 			unnecesary = new SimpleBooleanProperty(true);
 			unnecesary.bind(Unnecesary.hiddenProperty());
 			unnecesary.addListener((o,l,n) -> {
@@ -45,7 +46,7 @@ public class DirectoryOrFileChoice extends Choice implements HasDirProperty {
 
 		@Override
 		public DirectoryOrFileChoice getSkinnable() {
-			return (DirectoryOrFileChoice) super.getNode();
+			return (DirectoryOrFileChoice) super.getSkinnable();
 		}
 
 		@Override
@@ -55,28 +56,28 @@ public class DirectoryOrFileChoice extends Choice implements HasDirProperty {
 
 		@Override
 		public void dispose() {
-			
+
 		}
 
 	}
-	
+
 	public DirectoryOrFileChoice() {
 		setSkin(new DirectoryOrFileChoiceSkin(this));
 		register();
 	}
-	
+
 	public StringProperty dirProperty() {
 		return ((DirectoryOrFileChoiceSkin) getSkin()).dir;
 	}
-	
+
 	public void setDir(String dir) {
 		dirProperty().set(dir);
 	}
-	
+
 	public String getDir() {
 		return dirProperty().get();
 	}
-	
+
 	public void refresh() {
 		getItems().clear();
 		try {

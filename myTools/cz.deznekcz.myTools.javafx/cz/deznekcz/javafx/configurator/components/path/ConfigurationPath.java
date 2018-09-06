@@ -2,7 +2,8 @@ package cz.deznekcz.javafx.configurator.components.path;
 
 import java.util.function.Predicate;
 
-import cz.deznekcz.javafx.components.Dialog;
+import cz.deznekcz.javafx.components.Dialogs;
+import cz.deznekcz.javafx.configurator.ConfigEntry;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.components.Path;
 import cz.deznekcz.util.LiveStorage;
@@ -15,7 +16,7 @@ public class ConfigurationPath extends Path {
 	}
 	@Override
 	public Predicate<String> getValidator() {
-		return (value) -> {
+		return value -> {
 			try {
 				java.io.File f = new java.io.File(value);
 				return f.exists() && f.isFile() && f.getName().endsWith(".run.xml") && LiveStorage.isStorage(f);
@@ -27,9 +28,10 @@ public class ConfigurationPath extends Path {
 	@Override
 	public void openPath(ActionEvent event) {
 		try {
-			Configurator.getCtrl().loadConfig(new java.io.File(getValue()));
+			Configurator.getCtrl().loadConfig(ConfigEntry.loaded(getValue()));
+			Configurator.getCtrl().selectLastConfig();
 		} catch (Exception e) {
-			Dialog.EXCEPTION.show(e);
+			Dialogs.EXCEPTION.show(e);
 		}
 	}
 	@Override
@@ -42,16 +44,7 @@ public class ConfigurationPath extends Path {
 		java.io.File result = chooser.showOpenDialog(null);
 		if (result != null) {
 			setValue(result.getPath());
+			setLast(result.getParentFile());
 		}
-	}
-
-	@Override
-	public void setValue(String value) {
-		valueProperty().setValue(value);
-	}
-
-	@Override
-	public String getValue() {
-		return valueProperty().getValue();
 	}
 }

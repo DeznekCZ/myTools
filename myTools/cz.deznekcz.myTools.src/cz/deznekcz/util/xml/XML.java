@@ -1,5 +1,8 @@
 package cz.deznekcz.util.xml;
 
+import java.io.IOException;
+import java.io.PrintStream;
+
 import cz.deznekcz.reference.OutString;
 
 /**
@@ -22,16 +25,18 @@ import cz.deznekcz.reference.OutString;
  */
 public class XML {
 
-	public static enum Type {
-		UTF8("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+	public enum Type {
+		UTF8("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "UTF8");
 
-		String value;
-		private Type(String value) {
-			this.value = value;
+		String xmlEntry;
+		String streamName;
+		private Type(String xmlEntry, String streamName) {
+			this.xmlEntry = xmlEntry;
+			this.streamName = streamName;
 		}
 	}
 
-	private String head;
+	private Type head;
 	private String comment;
 	private XMLRoot root;
 
@@ -82,7 +87,7 @@ public class XML {
 	}
 
 	private XML(String root, Type head, String comment) {
-		this.head = head == null ? Type.UTF8.value : head.value;
+		this.head = head == null ? Type.UTF8 : head;
 		this.comment = ((comment == null || comment.length() == 0) ? "" : String.format("<!-- %s -->", comment));
 		this.root = new XMLRoot(root, this);
 	}
@@ -103,13 +108,31 @@ public class XML {
 	public String write() {
 		OutString builder = OutString.init();
 
-		builder.appendLn  (head);
-		builder.appendLn  ("");
-		builder.appendLnIf((t) -> t != null && t.length() > 0, comment);
-		builder.append    (root.write(0, root.expanded))
-		;
+		try {
+			write(builder);
+		} catch (IOException e) {
+			// IOException no error is available
+		}
 
 		return builder.get();
+	}
+
+	/**
+	 * Writes {@link XML} tree directly to {@link PrintStream}
+	 * @param stream string value of XML tree
+	 * @throws IOException
+	 */
+	public void write(Appendable stream) throws IOException {
+		stream.append(head.xmlEntry);
+		stream.append('\n');
+		stream.append("");
+
+		if (comment != null && comment.length() > 0) {
+			stream.append('\n');
+			stream.append(comment);
+		}
+
+		root.write(stream, 0, root.expanded);
 	}
 
 	/**
@@ -120,5 +143,13 @@ public class XML {
 	public XML comment(String comment) {
 		this.comment = ((comment == null || comment.length() == 0) ? "" : String.format("<!-- %s -->", comment));
 		return this;
+	}
+
+	/**
+	 * Returns current type of charset for stream
+	 * @return
+	 */
+	public String getCharset() {
+		return head.streamName;
 	}
 }

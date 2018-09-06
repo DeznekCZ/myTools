@@ -2,6 +2,7 @@ package cz.deznekcz.tool.i18n;
 
 import java.util.HashMap;
 import java.util.IllegalFormatException;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -9,6 +10,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.collections.ObservableList;
 
 /**
  * New type of searching key in lang file.
@@ -25,7 +27,7 @@ import javafx.beans.value.ObservableValue;
 
 public interface ILangKey extends ObservableValue<String> {
 
-	HashMap<String, String> DEFAULTS = new HashMap<>();
+	public static final Map<String, String> DEFAULTS = new HashMap<>();
 
 	/**
 	 * Returns a name of <code>enum</code> constant or user defined
@@ -98,12 +100,12 @@ public interface ILangKey extends ObservableValue<String> {
 	@Override
 	default void addListener(ChangeListener<? super String> listener) {
 		Lang.LANGaddOnChange(symbol(), listener);
-	};
+	}
 
 	@Override
 	default void removeListener(ChangeListener<? super String> listener) {
 		Lang.LANGremoveOnChange(symbol(), listener);
-	};
+	}
 
 	@Override
 	default String getValue() {
@@ -136,9 +138,6 @@ public interface ILangKey extends ObservableValue<String> {
 	 */
 	public static ILangKey simple(String symbol, String defaultValue) {
 		return new ILangKey() {
-			{
-				initDefault(defaultValue);
-			}
 			@Override
 			public String symbol() {
 				return symbol;
@@ -151,7 +150,7 @@ public interface ILangKey extends ObservableValue<String> {
 			public String defaultValue() {
 				return defaultValue;
 			}
-		};
+		}.initDefault(defaultValue);
 	}
 
 	/**
@@ -203,7 +202,7 @@ public interface ILangKey extends ObservableValue<String> {
 			};
 		} catch (IllegalFormatException e) {
 			Logger.getGlobal().log(
-					Level.FINER, String.format("LangKey<%s>[%s]:\n%s",
+					Level.FINER, String.format("LangKey<%s>[%s]:%n%s",
 						ILangKey.this.getClass().getSimpleName(),
 						ILangKey.this.symbol(),
 						e.getLocalizedMessage()
@@ -217,7 +216,7 @@ public interface ILangKey extends ObservableValue<String> {
 	 * @param simpleKey {@link ObservableValue} of {@link ILangKey}
 	 * @return new instance of {@link StringBinding}
 	 */
-	public static ObservableValue<? extends String> binding(ObservableValue<ILangKey> simpleKey) {
+	public static ObservableValue<String> binding(ObservableValue<ILangKey> simpleKey) {
 		return new StringBinding() {
 			{
 				bind(simpleKey);

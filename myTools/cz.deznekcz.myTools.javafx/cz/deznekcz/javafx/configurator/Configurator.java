@@ -2,14 +2,17 @@ package cz.deznekcz.javafx.configurator;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import cz.deznekcz.javafx.components.Dialog;
+import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.javafx.configurator.components.Command;
 import cz.deznekcz.tool.i18n.Arguments;
 import cz.deznekcz.tool.i18n.IKeysClassLangKey;
 import cz.deznekcz.tool.i18n.Lang;
+import cz.deznekcz.util.EqualArrayList;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -31,16 +34,16 @@ public class Configurator extends Application {
 		@Arguments(hints="cmd data", types=String.class)
 		ASK_INTERRUPT,
 		@Arguments(hints="cmd data", types=String.class)
-		ASK_STORE_LOG, 
+		ASK_STORE_LOG,
 		@Arguments(hints="cmd data", types=String.class)
-		NO_LOG_FILE, 
+		NO_LOG_FILE,
 		@Arguments(hints="cmd data", types=String.class)
 		SAVE_EXCEPTION,
-		COMMAND_EXECUTION, 
-		NOT_ACTIVATED, 
+		COMMAND_EXECUTION,
+		NOT_ACTIVATED,
 		SEND, INTERRUPT, EXPORT_LOG
 		;
-		
+
 		static {
 			STATE_RUN.initDefault("Running");
 			STATE_STOPPED.initDefault("Stopped");
@@ -53,10 +56,10 @@ public class Configurator extends Application {
 			INSTANCES.initDefault("Instances: %d");
 			CLOSE.initDefault("Close");
 			SAVE_LOG.initDefault("Save log");
-			CMD.initDefault("| Command: ");
-			DIR.initDefault("| Directory: ");
-			ARGS.initDefault("| Arguments: ");
-			NO_LOG_FILE.initDefault("| Arguments: ");
+			CMD.initDefault("Command:");
+			DIR.initDefault("Directory:");
+			ARGS.initDefault("Arguments:");
+			NO_LOG_FILE.initDefault("No log file exists");
 			SAVE_EXCEPTION.initDefault("Error while saving of log file!\n%s");
 			ASK_INTERRUPT.initDefault("Do you want interrupt command?\n%s");
 			ASK_STORE_LOG.initDefault("Do you want store log?\n%s");
@@ -69,38 +72,41 @@ public class Configurator extends Application {
 	/** Class keys for {@link Tab} */
 	public static enum tab implements IKeysClassLangKey {
 		CLOSE_DEFAULT;
-		
+
 		static {
 			CLOSE_DEFAULT.initDefault("Do you want close default tab \"%s\"?");
 		}
 	}
 	/** Class keys for {@link ResultValue} */
 	public static enum result implements IKeysClassLangKey {
-		OK, FAIL, NR, IF;
-		
+		OK, FAIL, NR, IF,
+		REFRESH;
+
 		static {
 			OK.initDefault("OK");
 			FAIL.initDefault("FAIL");
 			NR.initDefault("NO RESULTS");
 			IF.initDefault("INVALID FUNCTION");
+			REFRESH.initDefault("Refresh result");
 		}
 	}
 	/** Class keys for {@link DirectoryChoice} */
 	public static enum choice implements IKeysClassLangKey {
-		DIR;
-		
+		DIR, EXTENSIONS;
+
 		static {
-			DIR.initDefault("| Choosing directory: ");
+			DIR.initDefault("Choosing directory: ");
+			EXTENSIONS.initDefault("Extension filter: ");
 		}
 	}
 	/** Class keys for {@link Path} */
 	public static enum path implements IKeysClassLangKey {
 		OPEN_FILE, SELECT_FILE,
 		OPEN_DIR, SELECT_DIR,
-		OPEN_CONFIG, SELECT_CONFIG, 
+		OPEN_CONFIG, SELECT_CONFIG,
 		OPEN_WEB,
 		FILTER_CONFIG, ALL_FILES, FILTER_LAYOUT;
-		
+
 		static {
 			OPEN_FILE.initDefault("Open File");
 			SELECT_FILE.initDefault("Browse File");
@@ -115,17 +121,25 @@ public class Configurator extends Application {
 		}
 	}
 
+	public static enum refresh implements IKeysClassLangKey {
+		HEADER, ID, NO_ID;
+
+		static {
+			HEADER.initDefault("REFRESHING");
+		}
+	}
+
 	private static ConfiguratorApplication application;
 
 	private static List<ExecutorService> services = new ArrayList<>();
-	
+
+	private static ExecutorService executorService = Executors.newFixedThreadPool(5);
+
 	public static void launch(ConfiguratorApplication appl) {
 		application = appl;
 		Lang.LANGload(appl.getLang());
 		Application.launch(appl.getArgs());
-		for (ExecutorService executorService : services) {
-			executorService.shutdownNow();
-		}
+		executorService.shutdownNow();
 		Lang.LANGgererate(appl.getLang());
 	}
 
@@ -133,25 +147,32 @@ public class Configurator extends Application {
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		FXMLLoader loader = new FXMLLoader(Configurator.class.getResource("Configurator.fxml"), Lang.asResourceBundle());
+		FXMLLoader loader = new FXMLLoader(
+				Configurator.class.getResource(
+						"Configurator" + (application.hasRibbonHeader() ? "Ribbon" : "") + ".fxml"
+				), Lang.asResourceBundle()
+		);
 		BorderPane root = loader.load();
 		root.getStylesheets().add("Configurator.css");
 		ctrl = loader.<ConfiguratorController>getController();
 		primaryStage.titleProperty().bind(application.getTitle());
+
 		for (String path : application.getIconPaths()) {
 			try {
 				primaryStage.getIcons().add(new Image(new File(path).toURI().toString()));
 			} catch (Exception e) {
-				Dialog.EXCEPTION.show(e);
+				Dialogs.EXCEPTION.show(e);
 			}
 		}
 		primaryStage.setOnCloseRequest(ctrl::exit);
 		primaryStage.setScene(new Scene(root));
+
+		ctrl.handleApplication(primaryStage, application);
 		primaryStage.show();
 
-		ctrl.loadLast(application.getDefaultConfigs());
+		ctrl.loadLast(new EqualArrayList<ConfigEntry>(Arrays.asList(application.getDefaultConfigs())));
+		Configurator.application.onStartUp();
 	}
-
 
 	public static ConfiguratorController getCtrl() {
 		return ctrl;
@@ -161,8 +182,15 @@ public class Configurator extends Application {
 		return application;
 	}
 
+	public static void setApplication(ConfiguratorApplication application) {
+		Configurator.application = application;
+	}
 
-	public static List<ExecutorService> getServices() {
-		return services;
+	public static void setController(ConfiguratorController ctrl) {
+		Configurator.ctrl = ctrl;
+	}
+
+	public static ExecutorService getService() {
+		return executorService;
 	}
 }

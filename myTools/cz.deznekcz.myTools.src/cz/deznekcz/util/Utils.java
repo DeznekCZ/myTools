@@ -12,7 +12,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.text.Normalizer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -20,7 +19,6 @@ import java.util.Iterator;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
@@ -28,51 +26,53 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.sun.istack.internal.NotNull;
-import com.sun.javafx.collections.ObservableMapWrapper;
-
 import cz.deznekcz.reference.OutBoolean;
+import cz.deznekcz.reference.OutInteger;
 import cz.deznekcz.reference.OutString;
 import cz.deznekcz.tool.QueuedExecutor;
+import cz.deznekcz.tool.i18n.ILangKey;
+import cz.deznekcz.util.Utils.TreeMapHandler.TreeMapPath;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
 import javafx.util.Callback;
 import javafx.util.Pair;
 import sun.reflect.CallerSensitive;
 
 public class Utils {
-	
+
+	private static final String NULL = "null";
 	private static QueuedExecutor executor;
 	static {
 		executor = new QueuedExecutor(Utils.class.toString().concat("$").concat(QueuedExecutor.class.toString()));
 	}
 
 	/**
-	 * 
+	 *
 	 * @param observable value which will be checked as not null
 	 * @param action instance of lambda of action apply-able to not null value
 	 * @param values rejected values for this action (array, none (meaning: not null) or more values)
 	 */
 	@SafeVarargs
 	@CallerSensitive
-	public static <T> void initAfterNotValue(@NotNull ObservableValue<T> observable, Runnable action, T...values) {
+	public static <T> void initAfterNotValue(ObservableValue<T> observable, Runnable action, T...values) {
+		Objects.nonNull(observable);
 		ChangeListener<T> change = null;
 		if (values == null || (values.getClass().isArray() && values.length == 0)) {
 			change = new ChangeListener<T>() {
@@ -103,7 +103,7 @@ public class Utils {
 							}
 						}
 					}
-					
+
 					if (found) {
 						executor.execute(action);
 						observable.removeListener(this);
@@ -119,7 +119,7 @@ public class Utils {
 				}
 			};
 		}
-		if (change != null) 
+		if (change != null)
 			observable.addListener(change);
 	}
 
@@ -134,7 +134,7 @@ public class Utils {
 				}
 				return null;
 			}
-			
+
 			@Override
 			public boolean containsKey(String key) {
 				for (ResourceBundle resourceBundle : bundles) {
@@ -158,14 +158,14 @@ public class Utils {
 				}
 				return Utils.iterableToEnumeration(keyList);
 			}
-			
+
 		};
 	}
 
 	public static <E> Enumeration<E> iterableToEnumeration(Iterable<E> iterable) {
 		return new Enumeration<E>() {
 			Iterator<E> it = iterable.iterator();
-			
+
 			@Override
 			public E nextElement() {
 				return it.next();
@@ -176,8 +176,8 @@ public class Utils {
 			}
 		};
 	}
-	
-	
+
+
 
 	public static <E> java.util.List<E> iterableToList(Iterable<E> iterable) {
 		ArrayList<E> list = new ArrayList<>();
@@ -200,14 +200,14 @@ public class Utils {
 						Object obj = field.get(instance);
 						if (obj instanceof String)
 							fields.put(field.toString(), Utils.normalizedString((String) obj));
-						else 
+						else
 							fields.put(field.toString(), field.get(instance));
 						field.setAccessible(accesible);
 					}
-					
+
 					keys = Utils.iterableToEnumeration(fields.keySet());
 				}
-				
+
 				@Override
 				public Enumeration<String> getKeys() {
 					return keys;
@@ -226,11 +226,11 @@ public class Utils {
 	}
 
 	public static String normalizedString(String str) {
-	    String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD); 
+	    String nfdNormalizedString = Normalizer.normalize(str, Normalizer.Form.NFD);
 	    Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
 	    return pattern.matcher(nfdNormalizedString).replaceAll("");
 	}
-	
+
 	public static <C> ResourceBundle classFieldValues(C instance, Class<C> clazz) {
 		return classFieldValues(instance, clazz, false);
 	}
@@ -289,12 +289,12 @@ public class Utils {
 
 	public static void copyProperties(ResourceBundle asBundle, ResourceBundle classFieldValues) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
 	 * Combine comparators by delegated functions that is represented by {@link BiFunction} instances.
-	 * Comparing is solving like OR conditions for boolean. If is taken first non zero result returns that result. 
+	 * Comparing is solving like OR conditions for boolean. If is taken first non zero result returns that result.
 	 * <br><b>Using:</b>
 	 * <br>Utils.priorityComparator(String::compare, Collator.getInstance()::compare, AnotherClass::methodWithSameNotation)
 	 * @param comparators
@@ -324,7 +324,7 @@ public class Utils {
 	public static void externalExecution(String execution, OutBoolean anyError, OutString errorValue) throws IOException, InterruptedException {
 		externalExecution(execution, anyError, errorValue, (String[]) null);
 	}
-	
+
 	public static void externalExecution(String execution, OutBoolean anyError, OutString errorValue, String... commands) throws IOException, InterruptedException {
 		try {
 			externalExecution(execution, anyError, errorValue, null, commands);
@@ -344,7 +344,7 @@ public class Utils {
 
     	System.out.println("External execution "+appname+"\n"+execution);
     	Process p = Runtime.getRuntime().exec(execution); //"cmd.exe")
-    
+
     	if (timeout != null) {
     		Worker worker = new Worker(p);
         	worker.start();
@@ -361,25 +361,25 @@ public class Utils {
         	}
     	}
 
-    	
+
     	OutputStream ps = p.getOutputStream();
 //    	ps.println(execution);
-    	
+
     	Thread.sleep(300L);
-    	
+
     	if (commands != null && commands.length > 0) {
     		for (String string : commands) {
 				ps.write((string + " /r/n").getBytes());
 				ps.flush();
 			}
     	}
-    	
+
 //    	ps.println("exit");
 
-    	BufferedReader stdInput = new BufferedReader(new 
+    	BufferedReader stdInput = new BufferedReader(new
     			InputStreamReader(p.getInputStream()));
 
-    	BufferedReader stdError = new BufferedReader(new 
+    	BufferedReader stdError = new BufferedReader(new
     			InputStreamReader(p.getErrorStream()));
 
     	// read the output from the command
@@ -397,7 +397,7 @@ public class Utils {
     		errorValue.append(s).append("\n");
     	}
 	}
-	
+
 	private static class Worker extends Thread {
 		  private final Process process;
 		  private Integer exit;
@@ -405,12 +405,12 @@ public class Utils {
 		    this.process = process;
 		  }
 		  public void run() {
-		    try { 
+		    try {
 		      exit = process.waitFor();
 		    } catch (InterruptedException ignore) {
 		      return;
 		    }
-		  }  
+		  }
 		}
 
 	public static String[] readLines(URI uri, Predicate<String> filter, String encoding) throws MalformedURLException, IOException {
@@ -426,26 +426,26 @@ public class Utils {
 		sc.close();
 		return list.toArray(new String[list.size()]);
 	}
-	
+
 	public static enum LineFilter implements Predicate<String> {
 		NONE((s) -> false),
 		FREE((s) -> s == null || s.trim().length() == 0);
-		
+
 		public static class Match implements Predicate<String> {
 			private final String ANY = "\\.*";
-			
+
 			public Match contains(String substring) {
 				return pattern(ANY+substring+ANY);
 			}
-			
+
 			public Match startsWith(String substring) {
 				return pattern(substring+ANY);
 			}
-			
+
 			public Match endsWith(String substring) {
 				return pattern(ANY+substring);
 			}
-			
+
 			public Match pattern(String patern) {
 				return new Match((line) -> line.matches(patern));
 			}
@@ -455,7 +455,7 @@ public class Utils {
 			}
 
 			private Predicate<String> predicate;
-			
+
 			@Override
 			public boolean test(String t) {
 				return predicate.test(t);
@@ -467,7 +467,7 @@ public class Utils {
 		}
 
 		private Predicate<String> predicate;
-		
+
 		@Override
 		public boolean test(String t) {
 			return predicate.test(t);
@@ -487,14 +487,38 @@ public class Utils {
 			}
 		};
 	}
-	
+
 	public static class FX {
+
+		private FX() {
+		}
+
+		public static class VoidBinding implements InvalidationListener {
+
+			private Consumer<Observable> onChange;
+			private Observable[] observables;
+
+			public VoidBinding(Consumer<Observable> onChange, Observable...observables) {
+				this.onChange = onChange;
+				this.observables = observables;
+				for (Observable observable : this.observables) {
+					observable.addListener(this);
+				}
+			}
+
+			@Override
+			public void invalidated(Observable observable) {
+				onChange.accept(observable);
+			}
+
+		}
+
 		public static class Callbacks {
 
 
 			public static <T,V> Callback<TableColumn<T, V>, TableCell<T, V>> tableDefaultCell(boolean wraptext,
 					Pos alignment, Insets padding, Function<V,String[]> converter, String styleSheet, String[]...styles) {
-				return (tbl) -> new TableCell<T, V>() {
+				return tbl -> new TableCell<T, V>() {
 					protected void updateItem(V item, boolean empty) {
 						if (empty) {
 							setGraphic(null);
@@ -516,15 +540,25 @@ public class Utils {
 							setAlignment(alignment);
 //							getTableRow().setMinHeight(text.getLayoutBounds().getHeight());
 						}
-						
+
 						super.updateItem(item, empty);
 					};
 				};
 			}
-			
+
+		}
+
+		public static <T> ChangeListener<T> onValue(final Predicate<T> test, final Runnable runLater) {
+			return (observable, oldValue, newValue) -> {
+					if (test.test(oldValue)) Platform.runLater(runLater);
+				};
+		}
+
+		public static VoidBinding voidBinding(Consumer<Observable> onChange, Observable...observables) {
+			return new VoidBinding(onChange, observables);
 		}
 	}
-	
+
 	public static class Functions {
 		public static <T> Function<T,T> same() {
 			return (a) -> a;
@@ -550,7 +584,7 @@ public class Utils {
 			};
 		}
 	}
-	
+
 	public static class List {
 
 		public static <P,O extends P,R> Consumer<P> applyIfNot(Predicate<O> predicate, Function<O,R> action) {
@@ -578,18 +612,294 @@ public class Utils {
 		return new Pair<>(unit,value);
 	}
 
-	public static String concat(String...array) {
+	@SafeVarargs
+	public static <T> String concat(T...array) {
 		return concat("", array);
 	}
 
-	public static String concat(String binder, String...array) {
+	public static <T> String concat(Iterable<String> iterable) {
+		return concat("", iterable);
+	}
+
+	@SafeVarargs
+	public static <T> String concat(Function<T, String> toStringMethod, T...array) {
+		return concat("", toStringMethod, array);
+	}
+
+	public static <T> String concat(Function<T, String> toStringMethod, Iterable<String> iterable) {
+		return concat("", toStringMethod, iterable);
+	}
+
+	/**
+	 * Concatenating static method
+	 * @param <T> Type of instances inside {@link Iterable}
+	 * @param binder string value between each element
+	 * @param toStringMethod method delegate (DeclaredClass::toString or another)
+	 * <br>or functional interface matching {@link Function}&lt;{@link T},{@link String}&gt;
+	 * @param iterable instance which contains values of type {@link T}
+	 * @return Returns concatenated string of {@link Iterable}
+	 *
+	 * @see #concat(Iterable)
+	 * @see #concat(Function, Iterable)
+	 * @see #concat(String, Iterable)
+	 * @see #concat(String, Function, Object...)
+	 */
+	public static <T> String concat(String binder, Function<T, String> toStringMethod, Iterable<T> iterable) {
+		Objects.requireNonNull(binder);
+		Objects.requireNonNull(iterable);
+		Iterator<T> iterator = iterable.iterator();
+
+		if (iterator.hasNext()) {
+			T next = iterator.next();
+			OutString string = OutString.init(next != null ? toStringMethod.apply(next) : NULL);
+			while (iterator.hasNext()) {
+				next = iterator.next();
+				string.append(binder);
+				string.append(next != null ? toStringMethod.apply(next) : NULL);
+			}
+			return string.get();
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * Concatenating static method
+	 * @param <T> Type of instances inside array
+	 * @param binder string value between each element
+	 * @param toStringMethod method delegate (DeclaredClass::toString or another)
+	 * <br>or functional interface matching {@link Function}&lt;{@link T},{@link String}&gt;
+	 * @param array of values of type {@link T}
+	 * @return Returns concatenated string of array
+	 *
+	 * @see #concat(Object...)
+	 * @see #concat(String, Object...)
+	 * @see #concat(Function, Object...)
+	 * @see #concat(String, Function, Iterable)
+	 */
+	@SafeVarargs
+	public static <T> String concat(String binder, Function<T, String> toStringMethod, T...array) {
 		Objects.requireNonNull(binder);
 		Objects.requireNonNull(array);
-		OutString string = OutString.init(array[0]);
-		for (int i = 1; i < array.length; i++) {
-			string.append(binder);
-			string.append(array[i]);
+
+		if (array.length > 0) {
+			OutString string = OutString.init(array[0] != null ? toStringMethod.apply(array[0]) : NULL);
+			for (int i = 1; i < array.length; i++) {
+				string.append(binder);
+				string.append(array[i] != null ? toStringMethod.apply(array[i]) : NULL);
+			}
+			return string.get();
+		} else {
+			return "";
 		}
-		return string.get();
+	}
+
+	public static <T> String concat(String binder, Iterable<T> iterable) {
+		Objects.requireNonNull(binder);
+		Objects.requireNonNull(iterable);
+		Iterator<T> iterator = iterable.iterator();
+
+		if (iterator.hasNext()) {
+			T next = iterator.next();
+			OutString string = OutString.init(next != null ? next.toString() : NULL);
+			while (iterator.hasNext()) {
+				next = iterator.next();
+				string.append(binder);
+				string.append(next != null ? next.toString() : NULL);
+			}
+			return string.get();
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * Concatenating static method
+	 * @param <T> Type of instances inside array
+	 * @param binder string value between each element
+	 * @param toStringMethod method delegate (DeclaredClass::toString or another)
+	 * <br>or functional interface matching {@link Function}&lt;{@link T},{@link String}&gt;
+	 * @param array of values of type {@link T}
+	 * @return Returns concatenated string of array
+	 *
+	 * @see #concat(Object...)
+	 * @see #concat(Function, Object...)
+	 * @see #concat(Function, Iterable)
+	 * @see #concat(String, Function, Object...)
+	 */
+	@SafeVarargs
+	public static <T> String concat(String binder, T...array) {
+		Objects.requireNonNull(binder);
+		Objects.requireNonNull(array);
+
+		if (array.length > 0) {
+			OutString string = OutString.init(array[0] != null ? array[0].toString() : NULL);
+			for (int i = 1; i < array.length; i++) {
+				string.append(binder);
+				string.append(array[i] != null ? array[i].toString() : NULL);
+			}
+			return string.get();
+		} else {
+			return "";
+		}
+	}
+
+	public static class Array {
+		public static <T> T next(Class<T> returned, Object[] array, OutInteger startIndex, T defaultValue) {
+			for (; startIndex.isLess(array.length); startIndex.increment()) {
+				int index = startIndex.get();
+				Object output = array[index];
+				if (output != null && returned.isInstance(output)) {
+					return returned.cast(output);
+				}
+			}
+			return defaultValue;
+		}
+	}
+
+	public static class TreeMapHandler<T> {
+
+		public class TreeMapPath<S> {
+
+			private String[] keys;
+			private Object root;
+			private ObservableMap<String, Object> parent;
+
+			@SuppressWarnings("unchecked")
+			public TreeMapPath(String[] keys) {
+				this.keys = keys;
+				this.parent = (ObservableMap<String, Object>) tree;
+				this.root = tree;
+			}
+
+			private String lastKey() {
+				return this.keys[(this.keys.length - 1)];
+			}
+
+			private ObservableMap<String, Object> getParent() {
+				return this.parent;
+			}
+
+			@SuppressWarnings("unchecked")
+			private Object getRoot() {
+				for (int i = 0; i < keys.length; i++) {
+					parent = (ObservableMap<String, Object>) root;
+					root = parent.get(keys[i]);
+					if (i >= 0 && i < (keys.length - 1) && root == null) {
+						root = FXCollections.<String,Object>observableHashMap();
+						parent.put(keys[i], root);
+					}
+				}
+				return root;
+			}
+
+			/**
+			 * Return last value stored in leaf
+			 * @param value new value
+			 * @return last stored value
+			 */
+			@SuppressWarnings("unchecked")
+			public S value(S value) {
+				Object finalRoot = getRoot();
+				((ObservableMap<String, Object>) getParent()).put(lastKey(), value);
+				return finalRoot != null ? (S) finalRoot : null;
+			}
+
+			@SuppressWarnings("unchecked")
+			public void valueList(S...value) {
+				Object finalRoot = getRoot();
+				if (finalRoot == null) {
+					ObservableList<S> list = FXCollections.observableArrayList();
+					list.addAll(value);
+					getParent().put(lastKey(), list);
+				}
+			}
+
+			public void valueList(java.util.Collection<S> value) {
+				Object finalRoot = getRoot();
+				if (finalRoot == null) {
+					ObservableList<S> list = FXCollections.observableArrayList();
+					list.addAll(value);
+					getParent().put(lastKey(), list);
+				}
+			}
+
+		}
+
+		private Class<T> leaves;
+		private ObservableMap<String, ?> tree;
+
+		public TreeMapHandler(Class<T> leaves, ObservableMap<String, ?> tree) {
+			this.leaves = leaves;
+			this.tree = tree;
+		}
+
+		public static <T> TreeMapHandler<T> handle(Class<T> leaves, ObservableMap<String, ?> tree) {
+			return new TreeMapHandler<>(leaves, tree);
+		}
+
+		public TreeMapPath<T> put(String...keys) {
+			return new TreeMapPath<T>(keys);
+		}
+
+		public T get(String...keys) {
+			Object root = new TreeMapPath<T>(keys).getRoot();
+
+			if (leaves.isInstance(root)) {
+				return leaves.cast(root);
+			} else if (root == null) {
+				return null;
+			} else {
+				throw new InconsistentTreeException();
+			}
+		}
+
+		@SuppressWarnings("unchecked")
+		public ObservableList<T> getList(String...keys) {
+			TreeMapPath<T> treePath = new TreeMapPath<>(keys);
+			Object root = treePath.getRoot();
+
+			if (root != null) {
+				return (ObservableList<T>) root;
+			} else {
+				ObservableList<T> list = FXCollections.observableArrayList();
+				treePath.getParent().put(treePath.lastKey(), list);
+				return list;
+			}
+		}
+
+		@SuppressWarnings("rawtypes")
+		public boolean hasLeaf(String...keys) {
+			Object leaf = new TreeMapPath<T>(keys).getRoot();
+			return ( leaves.isInstance(leaf) )
+			||	(  java.util.List.class.isInstance(leaf) && !((java.util.List) leaf).isEmpty()	);
+		}
+
+		@SuppressWarnings("unchecked")
+		public T getOrDefault(Supplier<T> constructor, String...keys) {
+			TreeMapPath<T> treePath = new TreeMapPath<>(keys);
+			Object root = treePath.getRoot();
+
+			if (leaves.isInstance(root)) {
+				return leaves.cast(root);
+			} else if (root == null) {
+				root = constructor.get();
+				treePath.getParent().put(treePath.lastKey(), root);
+				return (T) root;
+			} else {
+				throw new InconsistentTreeException(leaves, root.getClass());
+			}
+		}
+
+	}
+
+	public static <T> T[] subArray(int start, T[] array, IntFunction<T[]> arrayConstructor) {
+		return subArray(start, array.length - 1, array, arrayConstructor);
+	}
+
+	public static <T> T[] subArray(int start, int end, T[] array, IntFunction<T[]> arrayConstructor) {
+		T[] newArray = arrayConstructor.apply(end - start + 1);
+		System.arraycopy(array, start, newArray, 0, end - start + 1);
+		return newArray;
 	}
 }

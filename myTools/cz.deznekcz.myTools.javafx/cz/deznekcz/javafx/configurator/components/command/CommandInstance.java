@@ -6,21 +6,21 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.lang.reflect.Method;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import cz.deznekcz.javafx.components.Dialog;
+import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.components.Command;
-import cz.deznekcz.javafx.configurator.components.support.RefreshOnChange;
 import cz.deznekcz.reference.Out;
 import cz.deznekcz.reference.OutArray;
 import cz.deznekcz.reference.OutBoolean;
@@ -35,6 +35,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -53,10 +54,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 
-public class CommandInstance extends Thread implements RefreshOnChange {
-	
+public class CommandInstance extends Thread {
+
 	private static int index = 0;
-	
+
 	private static enum Force {
 		/**  */
 		INMEDIATELY,
@@ -65,7 +66,7 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 		ERROR,
 		INTERRUPT
 	}
-	
+
 	private static final File TEMP_FILE = new File("temp");
 	static {
 		TEMP_FILE.mkdirs();
@@ -79,15 +80,9 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 	private Out<Configurator.command> fxState;
 	private MenuItem item;
 	private Menu menu;
-	private String cmd;
-	private String args;
-	private String dir;
 	private RadioButton node;
-	private File standartOutputFile;
-	private File standartInputFile;
-	private File standartErrorFile;
 	private Exception error;
-	
+
 	private TextArea outputTextArea;
 	private TextArea errorTextArea;
 	private TextField cmdLine;
@@ -95,9 +90,37 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 
 	private Button cmdInterruptButton;
 	private Button cmdExportButton;
-	
+
 	private BorderPane commandPane;
 	private Process process;
+
+	private Method method;
+
+	private String cmd;
+	private String args;
+	private String dir;
+
+	private File standartOutputFile;
+	private File standartInputFile;
+	private File standartErrorFile;
+
+	public File getStandartOutputFile() {
+		return standartOutputFile;
+	}
+
+	public File getStandartErrorFile() {
+		return standartErrorFile;
+	}
+
+	public File getStandartInputFile() {
+		return standartInputFile;
+	}
+
+	private Map<String,String> enviroment;
+
+	public Map<String, String> getEnviroment() {
+		return enviroment;
+	}
 
 	public CommandInstance(Command command) {
 		super(command.getText() + ":" + index);
@@ -107,12 +130,15 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 		this.dir = command.getDir();
 		this.state = Out.init(Configurator.command.STATE_RUN);
 		this.fxState = this.state.fxThread();
-		
+		this.method = (command.isJavaFunction() ? ((JavaRunnability) command.getRunnabilty()).getMethod() : null);
+		this.enviroment = new HashMap<>();
+		this.command.getExtendedEnvironment().forEach((key,property) -> this.enviroment.put(key,property.getValue()));
+
 		node = new RadioButton();
 		node.textProperty().bind(Bindings.concat(
-				index + ": ", command.textProperty(), 
+				index + ": ", command.textProperty(),
 				" ", OutString.bindFormat(
-						Configurator.command.STATE, 
+						Configurator.command.STATE,
 						(Out<?>) fxState.bindTransform(OutString::init, (cmd) -> cmd.value())
 					),
 				args.length() > 0 ? Bindings.concat("\n", Configurator.command.ARGS, args) : "",
@@ -121,7 +147,7 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 		node.setTextAlignment(TextAlignment.LEFT);
 		node.setAlignment(Pos.CENTER_LEFT);
 		node.getStyleClass().add("command-instance-button");
-		
+
 		try {
 			this.standartOutputFile = File.createTempFile("commandOutput", ".log");
 			this.standartOutputFile.deleteOnExit();
@@ -130,9 +156,9 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 			this.standartErrorFile = File.createTempFile("commandError", ".log");
 			this.standartErrorFile.deleteOnExit();
 		} catch (IOException e1) {
-			Dialog.EXCEPTION.show(e1, Configurator.command.NO_LOG_FILE.value(node.getText()));
+			Dialogs.EXCEPTION.show(e1, Configurator.command.NO_LOG_FILE.value(node.getText()));
 		}
-		
+
 		ContextMenu contextMenu = new ContextMenu(OutArray.from(
 				Builder.create(new MenuItem())
 				.set((menuItem) -> {
@@ -147,16 +173,16 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 					menuItem.setOnAction((e) -> CommandInstance.this.exitInstance(Force.USER_INTERRUPT));
 				})
 				.build()
-				
+
 				).getValue());
 		node.setContextMenu(contextMenu);
-		
+
 		if (command.isRunnable()) {
 			tab = new Tab();
 			tab.textProperty().bind(Bindings.concat(
-					index + ": ", command.getInstancesStage().titleProperty(), 
+					index + ": ", command.getInstancesStage().titleProperty(),
 					" ", OutString.bindFormat(
-							Configurator.command.STATE, 
+							Configurator.command.STATE,
 							(Out<?>) fxState.bindTransform(OutString::init, (cmd) -> cmd.value())
 						)
 					));
@@ -169,48 +195,49 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 			node.selectedProperty().addListener((o,l,n) -> {
 				if (n != tab.isSelected()) node.setSelected(tab.isSelected());
 			});
-			
+
 			Configurator.getCtrl().openCommand(tab);
-			
+
 			node.setOnAction((e) -> {
 				Configurator.getCtrl().selectCommand(tab);
 			});
-			
+
 			if (command.getCommandsMenu() != null) {
 				menu = command.getCommandsMenu();
-				
+
 				if (menu.getItems().size() == 1) {
 					menu.getItems().add(new SeparatorMenuItem());
 				}
-				
+
 				item = new MenuItem();
 				item.textProperty().bind(
 						Bindings.concat(
-								tab.textProperty(), 
-								" ", 
-								Configurator.command.ARGS, 
-								args
+								tab.textProperty(),
+								" ",
+								Configurator.command.ARGS,
+								String.join("\n", splitArguments(args))
 								)
 						);
+				item.setMnemonicParsing(false);
 				menu.getItems().add(item);
 			}
-			
+
 			outputTextArea = new TextArea();
 			outputTextArea.setEditable(false);
 			outputTextArea.setStyle("-fx-font-family: monospace;");
-			
+
 			errorTextArea = new TextArea();
 			errorTextArea.setEditable(false);
-			errorTextArea.setStyle("-fx-font-family: monospace; -fx-font-color: red; ");
-			errorTextArea.setPrefHeight(50);
-			
+			errorTextArea.setStyle("-fx-font-family: monospace; -fx-fill: red; ");
+			errorTextArea.setPrefHeight(200);
+
 			BorderPane logs = new BorderPane();
 			logs.setCenter(outputTextArea);
 			logs.setBottom(errorTextArea);
 
 			cmdExportButton = new Button(Configurator.command.EXPORT_LOG.value());
 			cmdExportButton.setOnAction((event) -> {
-				if (Dialog.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
+				if (Dialogs.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
 						ButtonType.YES, Utils.array(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL)) == ButtonType.YES) {
 					saveLog(null);
 				}
@@ -224,7 +251,7 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 					return Configurator.command.STATE_RUN == fxState.get();
 				}
 			});
-			
+
 			cmdInterruptButton = new Button(Configurator.command.INTERRUPT.value());
 			cmdInterruptButton.setOnAction((event) -> {
 				if (doInterrupt()) exitInstance(Force.INTERRUPT);
@@ -238,50 +265,48 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 					return Configurator.command.STATE_RUN != fxState.get();
 				}
 			});
-			
+
 			cmdSend = new Button(Configurator.command.SEND.value());
 			cmdLine = new TextField();
 			cmdLine.setOnKeyPressed((event) -> {
 				if (event.getCode() == KeyCode.ENTER) cmdSend.getOnAction().handle(null);
 			});
-			
+
 			HBox cmdBox = new HBox(cmdLine, cmdSend, cmdInterruptButton, cmdExportButton);
 			cmdBox.getStyleClass().add("parameters");
 			HBox.setHgrow(cmdLine, Priority.ALWAYS);
-			
+
 			commandPane = new BorderPane();
 			commandPane.setCenter(logs);
 			commandPane.setBottom(cmdBox);
-			
+
 			tab.setContent(commandPane);
-			
+
 			index++;
 			start();
 		} else {
-			Dialog.EXCEPTION.show(new IllegalAccessError(Configurator.command.NOT_RUNABLE.value(command.getText())));
+			Dialogs.EXCEPTION.show(new IllegalAccessError(Configurator.command.NOT_RUNABLE.value(command.getText())));
 			invalid = true;
 		}
 	}
 
 	public static class Runnability extends BooleanBinding implements ChangeListener<String> {
-		private ExecutorService service = Executors.newSingleThreadExecutor();
+		private ExecutorService service = Configurator.getService();
 		private Future<?> lastCall;
 		private BooleanProperty computed = new SimpleBooleanProperty(false);
 		private BooleanProperty result = new SimpleBooleanProperty(false);
 		private Command command;
-		
+
 		public Runnability(Command command) {
 			bind(computed);
 			command.cmdProperty().addListener(this);
 			command.dirProperty().addListener(this);
 			this.command = command;
-			
-			Configurator.getServices().add(service);
-			
+
 			// RUN FIRST CHECK
 			refresh();
 		}
-		
+
 		@Override
 		protected boolean computeValue() {
 			return computed.get() && result.get();
@@ -290,14 +315,14 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 		@Override
 		public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 			computed.set(false);
-			
+
 			if (lastCall != null && !lastCall.isDone()) {
 				lastCall.cancel(true);
 				lastCall = null;
 			}
 			final String cmd = command.getCmd();
 			final String dir = command.getDir();
-			
+
 			if (isLocal(cmd, dir)) {
 				result.set(true);
 				computed.set(true);
@@ -312,11 +337,50 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 				});
 			}
 		}
-		
+
+		public void refresh() {
+			changed(null, null, null);
+		}
+	}
+
+	public static class JavaRunnability extends BooleanBinding implements ChangeListener<String> {
+		private Command command;
+		private BooleanProperty computed = new SimpleBooleanProperty();
+		private Method method;
+
+		public JavaRunnability(Command command) {
+			command.cmdProperty().addListener(this);
+			command.dirProperty().addListener(this);
+			this.command = command;
+
+			// RUN FIRST CHECK
+			refresh();
+		}
+
 		@Override
-		protected void finalize() throws Throwable {
-			service.shutdownNow();
-			super.finalize();
+		protected boolean computeValue() {
+			return computed.get();
+		}
+
+		@Override
+		public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+			computed.set(false);
+			String cmd = command.getCmd();
+			String className = cmd.substring(0, cmd.lastIndexOf('.'));
+			String methodName = cmd.substring(cmd.lastIndexOf('.') + 1);
+
+			try {
+				Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass(className);
+				method = clazz.getMethod(methodName, JavaProcess.class, String[].class);
+				computed.set(true);
+			} catch (ClassNotFoundException | NoSuchMethodException | SecurityException e) {
+				Dialogs.EXCEPTION.show(e);
+				computed.set(false);
+			}
+		}
+
+		public Method getMethod() {
+			return method;
 		}
 
 		public void refresh() {
@@ -327,11 +391,11 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 	protected static boolean isInPath(String cmd) {
 		if (cmd == null || cmd.length() == 0) return false;
 		Map<String, String> enviroments = System.getenv();
-		
+
 		for (Entry<String, String> entry : enviroments.entrySet()) {
 
 			String[] paths = entry.getValue().split(";");
-			try { 
+			try {
 				for (String path : paths) {
 					File f = new File(path);
 					if (!f.exists()) continue;
@@ -341,7 +405,7 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 					if (f.isDirectory()) {
 						for (File subFile : f.listFiles()) {
 							if (subFile.isDirectory()) continue;
-							if (subFile.getName().endsWith(cmd) 
+							if (subFile.getName().endsWith(cmd)
 									||  subFile.getName().endsWith(cmd + ".exe"))
 							{
 								return true;
@@ -360,39 +424,45 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 	protected static boolean isLocal(String cmd, String dir) {
 		if (cmd == null || cmd.length() == 0) return false;
 		try {
-			return (  (  dir == null 
+			return (  (  dir == null
 				      || dir.length() == 0
-				      ) 
+				      )
 				      && new File(cmd).exists()
-				   )  
-				   || 
+				   )
+				   ||
 				   (  new File(dir + "\\" + cmd).exists()
 				   );
 		} catch (Exception e) {
 			return false;
 		}
 	}
-	
+
 	@Override
 	public void run() {
 		if (invalid) exitInstance(Force.INMEDIATELY);
 		try {
-			ProcessBuilder pb = new ProcessBuilder();
-			if (cmd.endsWith(".bat")) {
-				pb.command(splitArguments("cmd.exe @echo off /c " + cmd, args));
+			if (command.isJavaFunction()) {
+				process = new JavaProcess(this);
 			} else {
-				pb.command(splitArguments(cmd, args));
+				ProcessBuilder pb = new ProcessBuilder();
+				enviroment.forEach(pb.environment()::put);
+				if (cmd.endsWith(".bat")) {
+					pb.command(splitArguments("cmd.exe @echo off /c " + cmd, args));
+				} else {
+					pb.command(splitArguments(cmd, args));
+				}
+				if (dir.length() > 0)
+					pb.directory(new File(dir));
+				pb.redirectOutput(standartOutputFile);
+				pb.redirectInput(standartInputFile);
+				pb.redirectError(standartErrorFile);
+
+				process = pb.start();
 			}
-			if (dir.length() > 0)
-				pb.directory(new File(dir));
-			pb.redirectOutput(standartOutputFile);
-			pb.redirectInput(standartInputFile);
-			pb.redirectError(standartErrorFile);
-			process = pb.start();
 
 			BufferedReader outputReader = new BufferedReader(new FileReader(standartOutputFile));
 			BufferedReader errorReader = new BufferedReader(new FileReader(standartErrorFile));
-			
+
 			cmdSend.setOnAction((event) -> {
 				try {
 					PrintStream stream = new PrintStream(standartInputFile);
@@ -400,10 +470,10 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 					stream.close();
 					cmdLine.setText("");
 				} catch (Exception e) {
-					Dialog.EXCEPTION.show(e);
+					Dialogs.EXCEPTION.show(e);
 				}
 			});
-			
+
 			while (process.isAlive()) {
 				handle(outputReader, outputTextArea);
 				handle(errorReader, errorTextArea);
@@ -412,55 +482,73 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 
 			cmdLine.setDisable(true);
 			cmdSend.setDisable(true);
-			
+
 			handle(outputReader, outputTextArea);
 			handle(errorReader, errorTextArea);
 
 			outputReader.close();
 			errorReader.close();
-			
+
 			int returnKey = process.exitValue();
 			Exit.Type returnValue = Exit.Type.FAIL;
 			for (Exit exit : command.getExits()) {
-				if (exit.getId() == returnKey) {
+				if (exit.getNumber() == returnKey) {
 					returnValue = exit.getType();
 					break;
 				}
 			}
-			if (returnValue == Exit.Type.SUCCESS || returnKey == 0) {
-				state.set(Configurator.command.STATE_COMPLETE);
-			} else if (returnValue == Exit.Type.FAIL && state.get() != Configurator.command.STATE_STOPPED) {
+			if (returnKey == 0 && returnValue == Exit.Type.FAIL) {
+				returnValue = Exit.Type.SUCCESS;
+			}
+
+			if (returnValue == Exit.Type.FAIL && state.get() != Configurator.command.STATE_STOPPED) {
 				state.set(Configurator.command.STATE_ERROR);
+				runOnResult(command.getOnFail());
 			} else if (returnValue == Exit.Type.CANCEL) {
 				state.set(Configurator.command.STATE_STOPPED);
+				runOnResult(command.getOnCancel());
 			} else {
 				state.set(Configurator.command.STATE_COMPLETE);
+				runOnResult(command.getOnSuccess());
 			}
-				
 		} catch(IllegalThreadStateException e) {
 			state.set(Configurator.command.STATE_STOPPED);
+			runOnResult(command.getOnCancel());
+			command.getRefreshables().forEach(r -> r.refresh(command.getConfiguration()));
 		} catch (Exception e) {
 			error = e;
+			runOnResult(command.getOnFail());
 			exitInstance(Force.ERROR);
+			command.getRefreshables().forEach(r -> r.refresh(command.getConfiguration()));
+		} finally {
+			command.getRefreshables().forEach(r -> r.refresh(command.getConfiguration()));
 		}
-		
-		Platform.runLater(this::doRefresh); // Refresh on finish
+
+		// Platform.runLater(RefreshOnChange::doRefresh); // Refresh on finish
 	}
 
-	private String[] splitArguments(String command, String arguments) {
+	private void runOnResult(EventHandler<ActionEvent> action) {
+		if (action != null) action.handle(null);
+	}
+
+	public static String[] splitArguments(String arguments) {
+		return splitArguments(null, arguments);
+	}
+
+	public static String[] splitArguments(String command, String arguments) {
 		if (arguments.contains("\"")) {
 			List<String> argList = new ArrayList<>();
-			argList.add(command);
-			
+			if (command != null) argList.add(command);
+
 			// (("[^"]*")|([^" =]+=("[^"]*"|[^" =]*))|[^" =]+) // original regex
 			Matcher matcher = Pattern.compile("((\"[^\"]*\")|([^\" =]+=(\"[^\"]*\"|[^\" =]*))|[^\" =]+)").matcher(arguments);
 			while(matcher.find()) {
 				argList.add(matcher.group());
 			}
-			
+
 			return argList.toArray(new String[argList.size()]);
 		} else {
-			return (command + " " + arguments).split(" ");
+			return ((command != null) ? (command + " " + arguments) : (arguments)).split(" ");
 		}
 	}
 
@@ -481,19 +569,19 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 
 	private boolean exitInstance(Force force) {
 		switch (force) {
-		case INMEDIATELY: 
+		case INMEDIATELY:
 			if (menu != null) menu.getItems().remove(item);
-			command.getRunningCommands().remove(this); 
+			command.getRunningCommands().remove(this);
 			state.set(Configurator.command.STATE_ERROR);
 			return true;
-			
+
 		case USER_INTERRUPT:
-			//={"Question", "Default button", "Buttons"}, 
-			if (state.equalsTo(Configurator.command.STATE_COMPLETE) 
-			||  state.equalsTo(Configurator.command.STATE_ERROR)  
+			//={"Question", "Default button", "Buttons"},
+			if (state.equalsTo(Configurator.command.STATE_COMPLETE)
+			||  state.equalsTo(Configurator.command.STATE_ERROR)
 			||  state.equalsTo(Configurator.command.STATE_STOPPED)
 			||  doInterrupt()) {
-				ButtonType askLogSave = Dialog.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
+				ButtonType askLogSave = Dialogs.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
 						ButtonType.YES, Utils.array(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL));
 				if (askLogSave == ButtonType.YES) {
 					OutBoolean canceled = OutBoolean.FALSE();
@@ -511,44 +599,56 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 				}
 			}
 			return false;
-			
+
 		case INTERRUPT:
 			if (process != null && process.isAlive())
 				process.destroy();
 			state.set(Configurator.command.STATE_STOPPED);
 			return false;
-			
+
 		case ERROR:
 			state.set(Configurator.command.STATE_ERROR);
 			Platform.runLater(()->{
-				if (error != null) Dialog.EXCEPTION.show(error);
+				if (error != null) Dialogs.EXCEPTION.show(error);
 			});
 			return false;
-			
+
 		default:
-			
+
 			return false;
 		}
 	}
-	
+
 	private boolean doInterrupt() {
-		return ButtonType.YES == Dialog.ASK.show(Configurator.command.ASK_INTERRUPT.value(node.getText()),
+		boolean interupt = ButtonType.YES == Dialogs.ASK.show(Configurator.command.ASK_INTERRUPT.value(node.getText()),
 				ButtonType.YES, Utils.array(ButtonType.YES, ButtonType.NO)
 				);
+		if (interupt) {
+			process.destroy();
+		}
+		return interupt;
 	}
 
 	public String getCmd() {
 		return cmd;
 	}
-	
+
 	public String getArgs() {
 		return args;
+	}
+
+	public String getDir() {
+		return dir;
+	}
+
+	public Method getMethod() {
+		return method;
 	}
 
 	public RadioButton getButton() {
 		return node;
 	}
-	
+
 	public void saveLog(ActionEvent event) {
 		FileChooser chooser = new FileChooser();
 		chooser.setInitialDirectory(Command.getLogOutputDirectory());
@@ -563,9 +663,9 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 				Utils.stream(new FileInputStream(standartOutputFile), new PrintStream(file));
 			} catch (IOException e) {
 				if (standartOutputFile == null)
-					Dialog.EXCEPTION.show(e, Configurator.command.NO_LOG_FILE.value(node.getText()));
+					Dialogs.EXCEPTION.show(e, Configurator.command.NO_LOG_FILE.value(node.getText()));
 				else
-					Dialog.EXCEPTION.show(e, Configurator.command.SAVE_EXCEPTION.value(node.getText()));
+					Dialogs.EXCEPTION.show(e, Configurator.command.SAVE_EXCEPTION.value(node.getText()));
 			}
 		}
 	}
@@ -573,7 +673,7 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 	public MenuItem getMenuItem() {
 		return item;
 	}
-	
+
 	public Tab getTab() {
 		return tab;
 	}
@@ -582,14 +682,16 @@ public class CommandInstance extends Thread implements RefreshOnChange {
 		String cmd  = command.getCmd();
 		String args = command.getArgs();
 		String dir  = command.getDir();
+
 		try {
 			ProcessBuilder pb = new ProcessBuilder();
+			command.getExtendedEnvironment().forEach((key,property) -> pb.environment().put(key,property.getValue()));
 			pb.command(cmd, args);
 			if (dir.length() > 0)
 				pb.directory(new File(dir));
 			pb.start();
 		} catch (Exception e) {
-			Dialog.EXCEPTION.show(e, Configurator.command.COMMAND_EXECUTION.value());
+			Dialogs.EXCEPTION.show(e, Configurator.command.COMMAND_EXECUTION.value());
 		}
 	}
 }

@@ -1,43 +1,36 @@
 package cz.deznekcz.javafx.configurator.components;
 
 import cz.deznekcz.javafx.configurator.components.support.AValue;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
 import javafx.scene.control.Skin;
-import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 
-public class TextEntry extends AValue {
+public class PasswordEntry extends AValue {
 
-	private static class TextEntrySkin implements Skin<TextEntry> {
+	private static class PasswordEntrySkin implements Skin<PasswordEntry> {
 
-		private TextEntry text;
+		private PasswordEntry text;
 		private BorderPane box;
 		private Label label;
-		private TextField value;
+		private PasswordField value;
 
-		private StringProperty pattern;
 		private StringProperty valueString;
-		private BooleanProperty limited;
-		private BooleanProperty mismach;
 
-		public TextEntrySkin(TextEntry text) {
+		public PasswordEntrySkin(PasswordEntry text) {
 			this.text = text;
 			text.getStyleClass().add("text-entry");
 			text.setTooltip(new Tooltip(""));
 
 			box = new BorderPane();
 			label = new Label();
-			value = new TextField();
+			value = new PasswordField();
 			box.disableProperty().bind(text.disableProperty());
 
 			label.getStyleClass().add("text-entry-label");
@@ -59,14 +52,6 @@ public class TextEntry extends AValue {
 			box.setLeft(label);
 			box.setRight(value);
 
-			pattern = new SimpleStringProperty("*");
-			limited = new SimpleBooleanProperty(false);
-
-			mismach = new SimpleBooleanProperty(false);
-
-			pattern.addListener((o,l,n) -> {
-				refresh();
-			});
 			value.textProperty().addListener((o,l,n) -> {
 				refresh();
 			});
@@ -74,7 +59,6 @@ public class TextEntry extends AValue {
 				refresh();
 			});
 
-//			System.out.println(label.getText());
 			label.tooltipProperty().bind(text.tooltipProperty());
 			value.tooltipProperty().bind(text.tooltipProperty());
 
@@ -85,18 +69,11 @@ public class TextEntry extends AValue {
 		}
 
 		private void refresh() {
-			limited.set(!pattern.get().equals("*"));
-			boolean active = limited.get() && !value.isDisabled()
-					&& (value.getText() == null || !value.getText().matches(pattern.get()));
-			value.pseudoClassStateChanged(PseudoClass.getPseudoClass("mismach"), active);
-			mismach.set(active);
-
-			if ((!limited.get() || !active) && !value.getText().equals(valueString.get()))
-				valueString.set(value.getText());
+			valueString.set(value.getText());
 		}
 
 		@Override
-		public TextEntry getSkinnable() {
+		public PasswordEntry getSkinnable() {
 			return text;
 		}
 
@@ -112,7 +89,7 @@ public class TextEntry extends AValue {
 	}
 
 	public StringProperty textProperty() {
-		return ((TextEntrySkin) getSkin()).label.textProperty();
+		return ((PasswordEntrySkin) getSkin()).label.textProperty();
 	}
 
 	public String getText() {
@@ -124,43 +101,11 @@ public class TextEntry extends AValue {
 	}
 
 	public StringProperty valueProperty() {
-		return ((TextEntrySkin) getSkin()).valueString;
-	}
-
-	public StringProperty patternProperty() {
-		return ((TextEntrySkin) getSkin()).pattern;
-	}
-
-	public String getPattern() {
-		return patternProperty().get();
-	}
-
-	public void setPattern(String text) {
-		this.patternProperty().set(text);
-	}
-
-	public ReadOnlyBooleanProperty limitedProperty() {
-		return ((TextEntrySkin) getSkin()).limited;
-	}
-
-	public boolean isLimited() {
-		return limitedProperty().get();
-	}
-
-	public boolean hasPattern() {
-		return !isLimited();
-	}
-
-	public ReadOnlyBooleanProperty mismachProperty() {
-		return ((TextEntrySkin) getSkin()).mismach;
-	}
-
-	public Boolean isMismach() {
-		return mismachProperty().get();
+		return ((PasswordEntrySkin) getSkin()).valueString;
 	}
 
 	public StringProperty promptPropterty() {
-		return ((TextEntrySkin) getSkin()).value.promptTextProperty();
+		return ((PasswordEntrySkin) getSkin()).value.promptTextProperty();
 	}
 
 	public void setPrompt(String prompt) {
@@ -183,8 +128,8 @@ public class TextEntry extends AValue {
 		return helpPropterty().get();
 	}
 
-	public TextEntry() {
-		setSkin(new TextEntrySkin(this));
+	public PasswordEntry() {
+		setSkin(new PasswordEntrySkin(this));
 	}
 
 	@Override

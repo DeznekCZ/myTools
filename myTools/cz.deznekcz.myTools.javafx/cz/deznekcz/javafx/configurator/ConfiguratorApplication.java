@@ -13,15 +13,19 @@ public abstract class ConfiguratorApplication {
 	public abstract ILangKey getTitle();
 	public abstract String getProject();
 	public abstract String[] getIconPaths();
-	public abstract String[] getDefaultConfigs();
+	public abstract ConfigEntry[] getDefaultConfigs();
 	public abstract boolean getDefaultUnnecessary();
 	public abstract Class<? extends ConfiguratorApplication> thisClass();
 	public abstract boolean hasExtendedMenus();
+	public abstract void onStartUp();
+	public abstract boolean hasRibbonHeader();
+	public abstract void editRibbon(ConfiguratorRibbonController controller);
 
 	public String[] getArgs() {
 		return args;
 	}
 
-	
+
+
 
 }

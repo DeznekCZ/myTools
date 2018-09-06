@@ -1,10 +1,12 @@
 package cz.deznekcz.javafx.configurator.components.path;
 
 import java.awt.Desktop;
+import java.io.File;
 import java.util.function.Predicate;
 
-import cz.deznekcz.javafx.components.Dialog;
+import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.javafx.configurator.Configurator;
+import cz.deznekcz.javafx.configurator.components.ListEntry;
 import cz.deznekcz.javafx.configurator.components.Path;
 import javafx.event.ActionEvent;
 import javafx.stage.DirectoryChooser;
@@ -29,7 +31,7 @@ public class DirectoryPath extends Path {
 		try {
 			Desktop.getDesktop().browse(new java.io.File(getValue()).toURI());
 		} catch (Exception e) {
-			Dialog.EXCEPTION.show(e);
+			Dialogs.EXCEPTION.show(e);
 		}
 	}
 	@Override
@@ -40,16 +42,41 @@ public class DirectoryPath extends Path {
 		java.io.File result = chooser.showDialog(null);
 		if (result != null) {
 			setValue(result.getPath());
+			setLast(result.getParentFile());
 		}
 	}
 
-	@Override
-	public void setValue(String value) {
-		valueProperty().setValue(value);
+	/**
+	 * Returns validator for {@link ListEntry}
+	 * @return
+	 */
+	public Predicate<String> isChildDirectory() {
+		return fileName -> {
+            try {
+            	String tmpVal = getValue();
+            	if (!getValue().endsWith("\\")) tmpVal += "\\";
+            	File file = new File(tmpVal + fileName);
+                return file.exists() && file.isDirectory();
+            } catch (Exception e) {
+                return false;
+            }
+        };
 	}
 
-	@Override
-	public String getValue() {
-		return valueProperty().getValue();
+	/**
+	 * Returns validator for {@link ListEntry}
+	 * @return
+	 */
+	public Predicate<String> isChildFile() {
+		return fileName -> {
+			try {
+            	String tmpVal = getValue();
+            	if (!getValue().endsWith("\\")) tmpVal += "\\";
+            	File file = new File(tmpVal + fileName);
+                return file.exists() && file.isFile();
+            } catch (Exception e) {
+                return false;
+            }
+        };
 	}
 }

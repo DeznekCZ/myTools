@@ -10,7 +10,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
 
 public class TextValue extends AValue {
-	
+
 	private static class TextValueSkin implements Skin<TextValue> {
 
 		private TextValue text;
@@ -18,20 +18,20 @@ public class TextValue extends AValue {
 		private Label label;
 		private Label value;
 		private Pane fill;
-		
+
 		public TextValueSkin(TextValue text) {
 			this.text = text;
 			text.getStyleClass().add("text-value");
 			text.setTooltip(new Tooltip());
-			
+
 			box = new HBox();
 			label = new Label();
 			fill = new Pane();
 			value = new Label();
 			box.disableProperty().bind(text.disableProperty());
 
-			label.getStyleClass().add("text-value-label");	
-			fill .getStyleClass().add("text-value-fill");	
+			label.getStyleClass().add("text-value-label");
+			fill .getStyleClass().add("text-value-fill");
 			value.getStyleClass().add("text-value-value");
 
 			label.idProperty().bind(text.idProperty().concat("_label"));
@@ -39,7 +39,7 @@ public class TextValue extends AValue {
 			value.idProperty().bind(text.idProperty().concat("_value"));
 
 			HBox.setHgrow(fill, Priority.ALWAYS);
-			
+
 			box.getChildren().addAll(label, fill, value);
 		}
 
@@ -55,55 +55,45 @@ public class TextValue extends AValue {
 
 		@Override
 		public void dispose() {
-			
+
 		}
 
 	}
-	
+
 	public StringProperty textProperty() {
 		return ((TextValueSkin) getSkin()).label.textProperty();
 	}
-	
+
 	public String getText() {
 		return textProperty().get();
 	}
-	
+
 	public void setText(String text) {
 		this.textProperty().set(text);
 	}
-	
+
 	public StringProperty valueProperty() {
 		return ((TextValueSkin) getSkin()).value.textProperty();
 	}
-	
+
 	public StringProperty helpPropterty() {
 		return getTooltip().textProperty();
 	}
-	
+
 	public void setHelp(String prompt) {
 		helpPropterty().set(prompt);
 	}
-	
+
 	public String getHelp() {
 		return helpPropterty().get();
 	}
-	
+
 	public TextValue() {
 		setSkin(new TextValueSkin(this));
 	}
 
 	@Override
-	public void setValue(String value) {
-		valueProperty().setValue(value);
-	}
-
-	@Override
-	public String getValue() {
-		return valueProperty().getValue();
-	}
-	
-	@Override
 	public void refresh() {
-		
+
 	}
 }

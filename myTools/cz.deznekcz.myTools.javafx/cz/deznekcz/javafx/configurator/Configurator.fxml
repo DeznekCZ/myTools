@@ -5,18 +5,19 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.layout.BorderPane?>
+<?scenebuilder-preview-i18n-resource lang_en_US.properties?>
 
 
 <BorderPane fx:controller="cz.deznekcz.javafx.configurator.ConfiguratorController"
 	prefHeight="800.0" prefWidth="1000.0" xmlns:fx="http://javafx.com/fxml/1"
-	xmlns="http://javafx.com/javafx/8">
+	xmlns="http://javafx.com/javafx/8" >
 	<top>
-		<MenuBar BorderPane.alignment="CENTER" fx:id="CFG_menu_bar" >
+		<MenuBar BorderPane.alignment="CENTER" fx:id="configuratorMenuBar" >
 			<menus>
-				<Menu fx:id="CFG_menu_file" mnemonicParsing="false"
+				<Menu fx:id="configuratorMenuFile" mnemonicParsing="false"
 					text="%Configurator.menu.file">
 					<items>
-						<MenuItem fx:id="CFG_menu_file_open" mnemonicParsing="false"
+						<MenuItem fx:id="configuratorMenuFileOpen" mnemonicParsing="false"
 							text="%Configurator.menu.file.open" onAction="#openConfiguration" >
 							<accelerator>
 								<KeyCodeCombination alt="UP" code="O"
@@ -24,33 +25,45 @@
 							</accelerator>
 						</MenuItem>
 						<SeparatorMenuItem mnemonicParsing="false" />
-						<MenuItem fx:id="CFG_menu_file_close" mnemonicParsing="false"
+						<MenuItem fx:id="configuratorMenuFileClose" mnemonicParsing="false"
 							text="%Configurator.menu.file.close" />
 					</items>
 				</Menu>
 				<Menu mnemonicParsing="false" text="%Configurator.menu.settings"
-					fx:id="CFG_menu_settings">
+					fx:id="configuratorMenuSettings">
 					<items>
-						<CheckMenuItem mnemonicParsing="false"
-							text="%Configurator.menu.settings.unnecessary" fx:id="CFG_menu_settings_unnecessary" />
+            <MenuItem mnemonicParsing="false"
+              text="%Configurator.menu.settings.refresh" fx:id="configuratorMenuSettingsRefresh" >
+              <accelerator>
+                <KeyCodeCombination alt="UP" code="F5"
+                  control="UP" meta="UP" shift="UP" shortcut="UP" />
+              </accelerator>
+            </MenuItem>
+            <CheckMenuItem mnemonicParsing="false"
+              text="%Configurator.menu.settings.unnecessary" fx:id="configuratorMenuSettingsUnnecessary" >
+              <accelerator>
+                <KeyCodeCombination alt="UP" code="F6"
+                  control="UP" meta="UP" shift="UP" shortcut="UP" />
+              </accelerator>
+            </CheckMenuItem>
 					</items>
 				</Menu>
-				<!-- <Menu mnemonicParsing="false" text="%Configurator.menu.help"> <items> 
-					<MenuItem mnemonicParsing="false" text="%Configurator.menu.help.about" /> 
+				<!-- <Menu mnemonicParsing="false" text="%Configurator.menu.help"> <items>
+					<MenuItem mnemonicParsing="false" text="%Configurator.menu.help.about" />
 					</items> </Menu> -->
 			</menus>
 		</MenuBar>
 	</top>
 	<center>
-		<TabPane fx:id="CFG_tabs" tabClosingPolicy="UNAVAILABLE"
+		<TabPane fx:id="configuratorTabs" tabClosingPolicy="UNAVAILABLE"
 			BorderPane.alignment="CENTER">
 			<tabs>
-				<Tab fx:id="CFG_tab_configs" closable="false"
+				<Tab fx:id="configuratorTabConfigs" closable="false"
 					text="%Configurator.tabs.configurations">
 					<content>
 						<AnchorPane >
 							<children>
-								<TabPane fx:id="CFG_tab_configs_tabs" 
+								<TabPane fx:id="configuratorTabConfigsTabs"
 									AnchorPane.bottomAnchor="0.0"
 									AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
 									AnchorPane.topAnchor="0.0" />
@@ -58,12 +71,12 @@
 						</AnchorPane>
 					</content>
 				</Tab>
-				<Tab fx:id="CFG_tab_commands" closable="false"
+				<Tab fx:id="configuratorTabCommands" closable="false"
 					text="%Configurator.tabs.commands">
 					<content>
 						<AnchorPane >
 							<children>
-								<TabPane fx:id="CFG_tab_commands_tabs" 
+								<TabPane fx:id="configuratorTabCommandsTabs"
 									tabClosingPolicy="ALL_TABS" AnchorPane.bottomAnchor="0.0"
 									AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
 									AnchorPane.topAnchor="0.0" />

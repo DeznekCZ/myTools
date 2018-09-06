@@ -3,16 +3,21 @@ package cz.deznekcz.javafx.configurator.components;
 import java.util.Calendar;
 import java.util.function.Supplier;
 
+import cz.deznekcz.javafx.configurator.ASetup;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Configurator.result;
 import cz.deznekcz.javafx.configurator.components.result.ResultValueImage;
 import cz.deznekcz.javafx.configurator.components.support.Refreshable;
+import cz.deznekcz.util.ForEach;
+import cz.deznekcz.util.Utils;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.StringBinding;
+import javafx.beans.binding.StringExpression;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.SimpleLongProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
@@ -21,11 +26,12 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
+import javafx.scene.control.Tab;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
 public class ResultValue extends Control implements Refreshable {
-	
+
 	private static class CheckValueSkin implements Skin<ResultValue> {
 
 		private ResultValue text;
@@ -33,15 +39,18 @@ public class ResultValue extends Control implements Refreshable {
 		private Label label;
 		private Label timeLabel;
 
-		private Control okValue;
-		private Control failValue;
-		private Control noResultValue;
-		private Control invalidFunctionValue;
+		private ResultValueImage okValue;
+		private ResultValueImage failValue;
+		private ResultValueImage noResultValue;
+		private ResultValueImage invalidFunctionValue;
+
+		private StringProperty tooltipText;
+		private StringProperty fullTooltip;
 
 		private SimpleObjectProperty<result> resultPropterty;
 		private Property<Supplier<Configurator.result>> onValidation;
 		private LongProperty timePropterty;
-		
+
 		public CheckValueSkin(ResultValue text) {
 			this.text = text;
 			text.getStyleClass().add("text-value");
@@ -56,8 +65,8 @@ public class ResultValue extends Control implements Refreshable {
 			invalidFunctionValue = new ResultValueImage("resultInvalidIcon.png", result.IF.value());
 			box.disableProperty().bind(text.disableProperty());
 
-			label.getStyleClass().add("result-value-label");	
-			timeLabel.getStyleClass().add("result-value-time-label");	
+			label.getStyleClass().add("result-value-label");
+			timeLabel.getStyleClass().add("result-value-time-label");
 			okValue.getStyleClass().add("result-value-ok");
 			failValue.getStyleClass().add("result-value-fail");
 			noResultValue.getStyleClass().add("result-value-no-result");
@@ -76,18 +85,19 @@ public class ResultValue extends Control implements Refreshable {
 			timeLabel.setPadding(new Insets(0, 5, 0, 0));
 			box.setCenter(timeLabel);
 			box.setRight(invalidFunctionValue);
-			
+
 			onValidation = new SimpleObjectProperty<>();
-			
+
 			resultPropterty = new SimpleObjectProperty<>(result.IF);
 			resultPropterty.addListener((o,l,n) -> {
 				box.setRight(resultNode(n));
+				listener(null, null, null);
 			});
-			
+
 			onValidation.addListener((o,l,n) -> {
 				text.refresh();
 			});
-			
+
 			timePropterty = new SimpleLongProperty(0L);
 			timeLabel.textProperty().bind(new StringBinding() {
 				{
@@ -97,13 +107,49 @@ public class ResultValue extends Control implements Refreshable {
 				protected String computeValue() {
 					Calendar calendar = Calendar.getInstance();
 					calendar.setTimeInMillis(timePropterty.get());
-					return (timePropterty.get() == 0) ? "" : 
+					return (timePropterty.get() == 0) ? "" :
 						String.format("%1$te. %1$tb %1$tY, %1$tT", calendar);
 				}
 			});
+
+			tooltipText = new SimpleStringProperty();
+			fullTooltip = new SimpleStringProperty();
+
+			for (StringExpression expr :
+					Utils.array(
+						tooltipText,
+						okValue.tooltipTextProperty(), failValue.tooltipTextProperty(),
+						invalidFunctionValue.tooltipTextProperty(), noResultValue.tooltipTextProperty()
+					)
+				) {
+				expr.addListener(this::listener);
+			}
 		}
 
-		private Node resultNode(result n) {
+		private void listener(ObservableValue<? extends String> o, String l, String n) {
+			ResultValueImage image = resultNode(resultPropterty.get());
+			boolean isImageTooltiped = image.getTooltipText() != null;
+			boolean isTooltiped = getSkinnable().getHelp() != null;
+
+			String tooltipText = null;
+			String lastTooltipText = fullTooltip.get();
+
+			if (isTooltiped && isImageTooltiped) {
+				tooltipText = getSkinnable().getHelp() + ": \n" + image.getTooltipText();
+			} else if (isTooltiped && !isImageTooltiped) {
+				tooltipText = getSkinnable().getHelp();
+			} else if (!isTooltiped && isImageTooltiped) {
+				tooltipText = image.getTooltipText();
+			}
+
+			if (lastTooltipText == null ? tooltipText != null : !lastTooltipText.equals(tooltipText)) {
+				getSkinnable().setTooltip(new Tooltip(tooltipText));
+				fullTooltip.unbind();
+				fullTooltip.bind(getSkinnable().getTooltip().textProperty());
+			}
+		}
+
+		private ResultValueImage resultNode(result n) {
 			switch (n) {
 			case OK:   return okValue;
 			case FAIL: return failValue;
@@ -124,55 +170,107 @@ public class ResultValue extends Control implements Refreshable {
 
 		@Override
 		public void dispose() {
-			
+
 		}
 
 	}
-	
+
 	public StringProperty textProperty() {
 		return ((CheckValueSkin) getSkin()).label.textProperty();
 	}
-	
+
 	public String getText() {
 		return textProperty().get();
 	}
-	
+
 	public void setText(String text) {
 		this.textProperty().set(text);
 	}
-	
+
 	public StringProperty helpPropterty() {
-		return getTooltip().textProperty();
+		return ((CheckValueSkin) getSkin()).tooltipText;
 	}
-	
+
 	public void setHelp(String prompt) {
 		helpPropterty().set(prompt);
 	}
-	
+
 	public String getHelp() {
 		return helpPropterty().get();
 	}
-	
+
+	public StringProperty helpOkPropterty() {
+		return ((CheckValueSkin) getSkin()).okValue.tooltipTextProperty();
+	}
+
+	public void setHelpOk(String prompt) {
+		helpOkPropterty().set(prompt);
+	}
+
+	public String getHelpOk() {
+		return helpOkPropterty().get();
+	}
+
+	public StringProperty helpFailPropterty() {
+		return ((CheckValueSkin) getSkin()).failValue.tooltipTextProperty();
+	}
+
+	public void setHelpFail(String prompt) {
+		helpFailPropterty().set(prompt);
+	}
+
+	public String getHelpFail() {
+		return helpFailPropterty().get();
+	}
+
+	public StringProperty helpInvalidFunctionPropterty() {
+		return ((CheckValueSkin) getSkin()).invalidFunctionValue.tooltipTextProperty();
+	}
+
+	public void setHelpInvalidFunction(String prompt) {
+		helpInvalidFunctionPropterty().set(prompt);
+	}
+
+	public String getHelpInvalidFunction() {
+		return helpInvalidFunctionPropterty().get();
+	}
+
+	public StringProperty helpNoResultPropterty() {
+		return ((CheckValueSkin) getSkin()).noResultValue.tooltipTextProperty();
+	}
+
+	public void setHelpNoResult(String prompt) {
+		helpNoResultPropterty().set(prompt);
+	}
+
+	public String getHelpNoResult() {
+		return helpNoResultPropterty().get();
+	}
+
+	public String getHelpFull() {
+		return ((CheckValueSkin) getSkin()).fullTooltip.get();
+	}
+
 	public Property<Supplier<Configurator.result>> validatorProperty() {
 		return ((CheckValueSkin) getSkin()).onValidation;
 	}
-	
+
 	public void setValidator(Supplier<Configurator.result> validation) {
 		validatorProperty().setValue(validation);
 	}
-	
+
 	public Supplier<Configurator.result> getValidator() {
 		return validatorProperty().getValue();
 	}
-	
+
 	public Property<result> resultProperty() {
 		return ((CheckValueSkin) getSkin()).resultPropterty;
 	}
-	
+
 	public result getResult() {
 		return resultProperty().getValue();
 	}
-	
+
 	public void setResult(result resultValue) {
 		this.resultProperty().setValue(resultValue);
 	}
@@ -180,20 +278,27 @@ public class ResultValue extends Control implements Refreshable {
 	public LongProperty timeProperty() {
 		return ((CheckValueSkin) getSkin()).timePropterty;
 	}
-	
+
 	public long getTime() {
 		return timeProperty().get();
 	}
-	
+
 	public void setTime(long time) {
 		timeProperty().set(time);
 	}
-	
+
 	public void refresh() {
-		if (!resultProperty().isBound() && getValidator() != null)
-			setResult(getValidator().get());
+		if (!resultProperty().isBound()) {
+			if (getValidator() != null) {
+				setResult(getValidator().get());
+			} else {
+				setResult(result.IF);
+			}
+		} else {
+			// changes independently to refresh
+		}
 	}
-	
+
 	public ResultValue() {
 		setSkin(new CheckValueSkin(this));
 	}
@@ -208,5 +313,26 @@ public class ResultValue extends Control implements Refreshable {
 				return resultProperty().getValue() == resultValue;
 			}
 		};
+	}
+
+	private boolean searched;
+	private ASetup found;
+
+	@Override
+	public ASetup getConfiguration() {
+		if (searched) return found;
+		searched = true;
+
+		for (Tab tab : Configurator.getCtrl().getConfigs()) {
+			Node tabContent = tab.getContent();
+			Node parent = getParent();
+			while (parent != null && !parent.equals(tabContent))
+				parent = parent.getParent();
+			if (parent != null) {
+				found = (ASetup) tab.getProperties().get(ASetup.class);
+			}
+		}
+
+		return found;
 	}
 }

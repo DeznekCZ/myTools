@@ -16,9 +16,9 @@ import javafx.scene.layout.Pane;
  * Represents string value which can be also changed inside controller but initial value is always same.
  * Could be stored in {@link LiveStorage} (on restore set to last value)
  * @author Zdenek Novotny (DeznekCZ)
- * @see Variable
+ * @see Constant
  */
-public class Constant extends AValue {
+public class Variable extends AValue {
 
 	private StringProperty property;
 	private AccessType global;
@@ -30,7 +30,7 @@ public class Constant extends AValue {
 
 			@Override
 			public Skinnable getSkinnable() {
-				return Constant.this;
+				return Variable.this;
 			}
 
 			@Override
@@ -45,9 +45,8 @@ public class Constant extends AValue {
 		};
 	}
 
-	public Constant() {
+	public Variable() {
 		property = new SimpleStringProperty("");
-		global = AccessType.NOT_GLOBAL;
 	}
 
 	public StringProperty valueProperty() {

@@ -1,9 +1,13 @@
 package cz.deznekcz.javafx.configurator.components.choice;
 
 import java.io.File;
+import java.nio.file.FileSystem;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
+import javax.swing.filechooser.FileSystemView;
+
+import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Unnecesary;
 import cz.deznekcz.javafx.configurator.components.Choice;
@@ -13,21 +17,43 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.event.ActionEvent;
+import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.SingleSelectionModel;
+import javafx.scene.input.ContextMenuEvent;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
-public class DirectoryChoice extends Choice implements HasDirProperty {
+public class PathChoice extends Choice implements HasDirProperty {
+
+	public static class PathSelectionModel extends SingleSelectionModel<String> {
+
+		private String lastSelected = "";
+
+		@Override
+		protected String getModelItem(int index) {
+			return lastSelected;
+		}
+
+		@Override
+		protected int getItemCount() {
+			return 1;
+		}
+
+	}
 
 	private boolean selectFromRoot;
 
-	private static class DirectoryChoiceSkin extends DirectoryChoice.ChoiceSkin {
+	private static class PathChoiceSkin extends PathChoice.ChoiceSkin {
 
 		private static final String PREFIX = "| ";
-		private StringProperty dir;
-		private BooleanProperty unnecesary;
+		public StringProperty dir;
 		private Label dirLabel;
+		private BooleanProperty unnecesary;
 
-		public DirectoryChoiceSkin(DirectoryChoice text) {
+		public PathChoiceSkin(PathChoice text) {
 			super(text);
 
 			dir = new SimpleStringProperty();
@@ -45,11 +71,14 @@ public class DirectoryChoice extends Choice implements HasDirProperty {
 				if (n) getBox().setBottom(null);
 				else   getBox().setBottom(dirLabel);
 			});
+
+			ChoiceBox<String> choiceBox = getChoiceBox();
+			choiceBox.setSkin(new GraphChoiceSkin(choiceBox));
 		}
 
 		@Override
-		public DirectoryChoice getSkinnable() {
-			return (DirectoryChoice) super.getSkinnable();
+		public PathChoice getSkinnable() {
+			return (PathChoice) super.getSkinnable();
 		}
 
 		@Override
@@ -64,15 +93,15 @@ public class DirectoryChoice extends Choice implements HasDirProperty {
 
 	}
 
-	public DirectoryChoice() {
+	public PathChoice() {
 		selectFromRoot = true;
-		setSkin(new DirectoryChoiceSkin(this));
+		setSkin(new PathChoiceSkin(this));
 		register();
-//		refresh();
+		refresh();
 	}
 
 	public StringProperty dirProperty() {
-		return ((DirectoryChoiceSkin) getSkin()).dir;
+		return ((PathChoiceSkin) getSkin()).dir;
 	}
 
 	public void setDir(String dir) {
@@ -83,14 +112,14 @@ public class DirectoryChoice extends Choice implements HasDirProperty {
 		return dirProperty().get();
 	}
 
+	@Override
 	public void refresh() {
 		getItems().clear();
 		try {
 			if (selectFromRoot) {
-				File[] files = File.listRoots();
 				getItems().addAll(
 						Arrays.asList(
-							files != null ? files : new File[0]
+							File.listRoots()
 						)
 						.stream()
 						.map(File::getAbsolutePath)
@@ -98,10 +127,9 @@ public class DirectoryChoice extends Choice implements HasDirProperty {
 						.collect(Collectors.toList())
 					);
 			} else {
-				File[] files = new File(getDir()).listFiles();
 				getItems().addAll(
 						Arrays.asList(
-							files != null ? files : new File[0]
+							new File(getDir()).listFiles()
 						)
 						.stream()
 						.map(File::getName)
@@ -111,5 +139,9 @@ public class DirectoryChoice extends Choice implements HasDirProperty {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void wantSelect(ContextMenuEvent event) {
+		Dialogs.EXCEPTION.show(new NotImplementedException());
 	}
 }

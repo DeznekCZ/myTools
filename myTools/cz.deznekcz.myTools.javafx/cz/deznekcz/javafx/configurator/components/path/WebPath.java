@@ -4,7 +4,7 @@ import java.awt.Desktop;
 import java.net.URL;
 import java.util.function.Predicate;
 
-import cz.deznekcz.javafx.components.Dialog;
+import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.components.Path;
 import cz.deznekcz.reference.OutBoolean;
@@ -32,20 +32,10 @@ public class WebPath extends Path {
 		try {
 			Desktop.getDesktop().browse(new URL(getValue()).toURI());
 		} catch (Exception e) {
-			Dialog.EXCEPTION.show(e);
+			Dialogs.EXCEPTION.show(e);
 		}
 	}
 	@Override
 	public void selectPath(ActionEvent event) {
-	}
-
-	@Override
-	public void setValue(String value) {
-		valueProperty().setValue(value);
-	}
-
-	@Override
-	public String getValue() {
-		return valueProperty().getValue();
 	}
 }

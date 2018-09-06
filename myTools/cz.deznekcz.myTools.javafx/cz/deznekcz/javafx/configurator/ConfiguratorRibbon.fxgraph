@@ -1,0 +1,151 @@
+package cz.deznekcz.javafx.configurator
+
+import java.lang.*
+import javafx.scene.layout.BorderPane
+import javafx.scene.control.MenuBar
+import javafx.scene.control.Menu
+import javafx.scene.control.MenuItem
+import javafx.scene.input.KeyCodeCombination
+import javafx.scene.control.SeparatorMenuItem
+import javafx.scene.control.CheckMenuItem
+import javafx.scene.control.TabPane
+import javafx.scene.control.Tab
+import javafx.scene.layout.AnchorPane
+import javafx.scene.control.Button
+import javafx.scene.layout.HBox
+import javafx.scene.control.Label
+import cz.deznekcz.javafx.configurator.ConfiguratorRibbonController
+import javafx.geometry.Insets
+import javafx.scene.layout.Border
+import javafx.scene.control.ContextMenu
+
+component ConfiguratorRibbon controlledby ConfiguratorRibbonController resourcefile "lang_en_US.properties" styledwith "/Configurator.css" {
+  BorderPane {
+    prefHeight :  800.0,
+    prefWidth  : 1000.0,
+    top : BorderPane {
+      maxHeight : 48,
+      minHeight : 48,
+      left : Button id ribbonButton {
+        minWidth : 48,
+        minHeight : 48,
+        maxWidth : 48,
+        maxHeight : 48,
+        onAction : controllermethod openRibbonMenu,
+        contextMenu : ContextMenu id ribbonMenu {
+          items : [
+            MenuItem id ribbonOpenConfiguration {
+              mnemonicParsing : false,
+              text : rstring "Configurator.menu.file.open",
+              onAction : controllermethod openConfiguration,
+              accelerator : KeyCodeCombination {
+                alt : "UP",
+                code : "O",
+                control : "DOWN",
+                meta : "UP",
+                shift : "UP",
+                shortcut : "UP"
+              }
+            },
+            SeparatorMenuItem {},
+            Menu id configuratorMenuSettings {
+              mnemonicParsing : true,
+              text : rstring "Configurator.menu.settings",
+              MenuItem id configuratorMenuSettingsRefresh {
+                mnemonicParsing : true,
+                text : rstring "Configurator.menu.settings.refresh",
+                accelerator : KeyCodeCombination {
+                  alt : "UP",
+                  code : "F5",
+                  control : "UP",
+                  meta : "UP",
+                  shift : "UP",
+                  shortcut : "UP"
+                }
+              },
+              CheckMenuItem id configuratorMenuSettingsUnnecessary {
+                mnemonicParsing : true,
+                text : rstring "Configurator.menu.settings.unnecessary",
+                accelerator : KeyCodeCombination {
+                  alt : "UP",
+                  code : "F6",
+                  control : "UP",
+                  meta : "UP",
+                  shift : "UP",
+                  shortcut : "UP"
+                }
+              }
+            },
+            SeparatorMenuItem {},
+            MenuItem id configuratorMenuFileClose {
+              mnemonicParsing : true,
+              text : rstring "Configurator.menu.file.close",
+              onAction : controllermethod exit,
+              accelerator : KeyCodeCombination {
+                alt : "DOWN",
+                code : "F4",
+                control : "UP",
+                meta : "UP",
+                shift : "UP",
+                shortcut : "UP"
+              }
+            }
+          ]
+        }
+      },
+      center : BorderPane id ribbonTitlePane {
+        center : Label id ribbonTitle {
+          maxHeight : 24,
+          minHeight : 24,
+          text : "TITLE",
+          padding : Insets { left : 5, right : 5 },
+          static alignment : "CENTER_LEFT"
+        },
+        right  : HBox id ribbonToolButtons {
+          maxHeight : 24,
+          Button id ribbonMinimizeButton {
+            onAction : controllermethod minimize
+          },
+          Button id ribbonMaximizeButton {
+            onAction : controllermethod maximize
+          },
+          Button id ribbonCloseButton {
+            onAction : controllermethod exit,
+            styleClass : "close-button"
+          }
+        },
+        bottom : MenuBar id configuratorMenuBar {
+          maxHeight : 24
+        }
+      }
+    },
+    center : TabPane id configuratorTabs {
+      tabClosingPolicy : "UNAVAILABLE",
+      static alignment : "CENTER",
+      Tab id configuratorTabConfigs {
+        text : rstring "Configurator.tabs.configurations",
+        content : AnchorPane {
+          TabPane id configuratorTabConfigsTabs {
+            tabClosingPolicy : "ALL_TABS",
+            static bottomAnchor : 0.0,
+            static leftAnchor : 0.0,
+            static rightAnchor : 0.0,
+            static topAnchor : 0.0
+          }
+        }
+      },
+      Tab id configuratorTabCommands {
+        text : rstring "Configurator.tabs.commands",
+        content : AnchorPane {
+          TabPane id configuratorTabCommandsTabs {
+            tabClosingPolicy : "ALL_TABS",
+            static bottomAnchor : 0.0,
+            static leftAnchor : 0.0,
+            static rightAnchor : 0.0,
+            static topAnchor : 0.0
+          }
+        }
+      }
+    }
+  }
+}

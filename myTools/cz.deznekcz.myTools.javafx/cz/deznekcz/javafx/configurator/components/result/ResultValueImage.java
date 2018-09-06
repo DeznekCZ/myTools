@@ -4,6 +4,8 @@ import javax.swing.GroupLayout.Alignment;
 
 import cz.deznekcz.javafx.configurator.Unnecesary;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -24,6 +26,7 @@ public class ResultValueImage extends Control {
 		private Label text;
 
 		private SimpleBooleanProperty unnecesary;
+		private StringProperty tooltipText;
 
 		public ResultValueImageSking(String imageName, ResultValueImage skinnable, String text) {
 			this.skinnable = skinnable;
@@ -44,6 +47,8 @@ public class ResultValueImage extends Control {
 				if (n) box.setLeft(null);
 				else   box.setLeft(this.text);
 			});
+			
+			tooltipText = new SimpleStringProperty(null);
 		}
 
 		@Override
@@ -65,5 +70,13 @@ public class ResultValueImage extends Control {
 
 	public ResultValueImage(String imageName, String text) {
 		setSkin(new ResultValueImageSking(imageName, this, text));
+	}
+	
+	public StringProperty tooltipTextProperty() {
+		return ((ResultValueImageSking) getSkin()).tooltipText;
+	}
+
+	public String getTooltipText() {
+		return tooltipTextProperty().get();
 	}
 }
