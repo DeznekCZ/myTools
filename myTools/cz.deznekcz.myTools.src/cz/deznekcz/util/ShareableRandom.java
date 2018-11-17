@@ -31,6 +31,10 @@ public class ShareableRandom extends Random {
 		return from(stringSeed, longHash(stringSeed), restore);
 	}
 
+	public static ShareableRandom from(long longSeed, long restore) {
+		return from("",longSeed,restore);
+	}
+
 	private static long longHash(String stringSeed) {
 		long hash = 0L;
 		if (stringSeed != null && stringSeed.length() > 0)
@@ -59,10 +63,6 @@ public class ShareableRandom extends Random {
 	}
 	private static long apply(long before, long flagNew, long valueNew, int shift) {
 		return ( before & ~flagNew ) | ( ( before & ( flagNew << shift ) ) ^ ( ( valueNew ) << shift ) );
-	}
-
-	public static ShareableRandom from(long longSeed, long restore) {
-		return from("",longSeed,restore);
 	}
 	
 	public static ShareableRandom from(String stringSeed, long longSeed, long restore) {

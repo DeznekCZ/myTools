@@ -1,26 +1,22 @@
 package cz.deznekcz.tool.langEditor;
 
 import java.io.File;
+import java.io.IOException;
 import java.text.Collator;
 import java.util.HashMap;
 
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.w3c.dom.DOMException;
-import org.w3c.dom.Document;
 import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.w3c.dom.UserDataHandler;
 
+import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.tool.i18n.Lang;
+import cz.deznekcz.util.xml.XML;
 import cz.deznekcz.util.xml.XMLLoader;
+import cz.deznekcz.util.xml.XMLRoot;
+import cz.deznekcz.util.xml.XMLStepper;
+import cz.deznekcz.util.xml.XMLStepper.Step;
+import cz.deznekcz.util.xml.XMLStepper.StepDocument;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -95,10 +91,29 @@ public class TreeGenerator {
 	}
 
 	public static void storeChanges(RootLangKey root) {
-		XMLLoader.save(root.getXml(), root.getDocumentRoot(), transformer -> 
-	        transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, 
-	        		"http://java.sun.com/dtd/properties.dtd")
-		);
+//		XMLLoader.save(root.getXml(), root.getDocumentRoot(), transformer -> 
+//	        transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, 
+//	        		"http://java.sun.com/dtd/properties.dtd")
+//		);
+//		^ OLD SAVING
+		
+		StepDocument doc = XMLStepper.from(root.getDocumentRoot().getOwnerDocument());
+		
+		XMLRoot properties = XML.init(doc.getXMLDocument().getChildNodes().item(0).getNodeName())
+				.doctype(doc.getXMLDocument().getDoctype().getName())
+				.root();
+		
+		for (Step entry : doc.getList("entry")) {
+			properties.newPairTag("entry", false)
+				.addAttribute("key", entry.attribute("key"))
+				.setText(entry.text());
+		}
+		
+		try {
+			XMLLoader.save(root.getXml(), properties.close());
+		} catch (IOException e) {
+			Dialogs.EXCEPTION.show(e);
+		}
 	}
 
 	/**
