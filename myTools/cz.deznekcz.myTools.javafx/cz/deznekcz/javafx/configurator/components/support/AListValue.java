@@ -13,6 +13,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.EventTarget;
 
 public abstract class AListValue extends AValue implements ListChangeListener<String> {
 
@@ -51,6 +52,11 @@ public abstract class AListValue extends AValue implements ListChangeListener<St
 			@Override
 			public BooleanProperty sortableProperty() {
 				return sortable;
+			}
+
+			@Override
+			public EventTarget getEventTarget() {
+				return null;
 			}
 		};
 	}

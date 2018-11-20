@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 
 import cz.deznekcz.javafx.configurator.components.Command;
+import cz.deznekcz.javafx.configurator.components.support.AValue;
 import cz.deznekcz.javafx.configurator.components.support.Storeable;
 import cz.deznekcz.util.LiveStorage;
 import cz.deznekcz.util.LiveStorage.EntryValue;
@@ -46,7 +47,7 @@ public abstract class ASetup extends ATemplate {
     	super();
     }
 
-    public final void externalInitialization(ConfiguratorController ctrl, LiveStorage storage, ResourceBundle bundle) {
+    public final void externalInitialization(ConfiguratorController ctrl, LiveStorage storage, ResourceBundle bundle) throws Exception {
         this.ctrl = ctrl;
         this.storage = storage;
         this.resourceBundle = bundle;
@@ -110,9 +111,5 @@ public abstract class ASetup extends ATemplate {
 
     protected final void setTittleAsStorageFileName(boolean tittleAsStorageFileName) {
         this.tittleAsStorageFileName = tittleAsStorageFileName;
-    }
-
-    public final boolean isTittleAsStorageFileName() {
-        return tittleAsStorageFileName;
     }
 }

@@ -8,6 +8,7 @@ import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Unnecesary;
 import cz.deznekcz.javafx.configurator.components.Choice;
 import cz.deznekcz.javafx.configurator.components.support.HasDirProperty;
+import cz.deznekcz.util.ITryDo;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -78,18 +79,21 @@ public class DirectoryOrFileChoice extends Choice implements HasDirProperty {
 		return dirProperty().get();
 	}
 
-	public void refresh() {
-		getItems().clear();
-		try {
-			getItems().addAll(
-				Arrays.asList(
-					new File(getDir()).listFiles()
-				)
-				.stream()
-				.map((f)->f.getName())
-				.collect(Collectors.toList())
-			);
-		} catch (Exception e) {
-		}
+	@Override
+	protected void refreshList() {
+		Configurator.getService().execute(() -> {
+			try {
+				getNonFXItems().setAll(
+					Arrays.asList(
+						new File(getDir()).listFiles()
+					)
+					.stream()
+					.map((f)->f.getName())
+					.collect(Collectors.toList())
+				);
+			} catch (Exception e) {
+				getNonFXItems().clear();
+			}
+		});
 	}
 }

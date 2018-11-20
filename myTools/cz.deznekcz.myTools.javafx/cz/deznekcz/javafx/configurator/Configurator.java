@@ -99,6 +99,19 @@ public class Configurator extends Application {
 			EXTENSIONS.initDefault("Extension filter: ");
 		}
 	}
+	/** Class keys for {@link DirectoryChoice} */
+	public static enum loading implements IKeysClassLangKey {
+		CONF, GETTING_STORAGE, GETTING_RESOURCE, GETTING_LAYOUT, GETTING_CONTROLLER, OPENING;
+
+		static {
+			CONF.initDefault("Configuration file:%n%s");
+			GETTING_STORAGE.initDefault("storage ...");
+			GETTING_RESOURCE.initDefault("resource ...");
+			GETTING_LAYOUT.initDefault("layout ...");
+			GETTING_CONTROLLER.initDefault("controller ...");
+			OPENING.initDefault("opening: %s ...");
+		}
+	}
 	/** Class keys for {@link Path} */
 	public static enum path implements IKeysClassLangKey {
 		OPEN_FILE, SELECT_FILE,
@@ -133,14 +146,14 @@ public class Configurator extends Application {
 
 	private static List<ExecutorService> services = new ArrayList<>();
 
-	private static ExecutorService executorService = Executors.newFixedThreadPool(5);
+	private static ExecutorService executorService = Executors.newFixedThreadPool(10);
 
 	public static void launch(ConfiguratorApplication appl) {
 		application = appl;
 		Lang.LANGload(appl.getLang());
 		Application.launch(appl.getArgs());
 		executorService.shutdownNow();
-		Lang.LANGgererate(appl.getLang());
+//		Lang.LANGgererate(appl.getLang());
 	}
 
 	private static ConfiguratorController ctrl;
@@ -170,8 +183,9 @@ public class Configurator extends Application {
 		ctrl.handleApplication(primaryStage, application);
 		primaryStage.show();
 
-		ctrl.loadLast(new EqualArrayList<ConfigEntry>(Arrays.asList(application.getDefaultConfigs())));
 		Configurator.application.onStartUp();
+		ctrl.loadLast(new EqualArrayList<ConfigEntry>(Arrays.asList(application.getDefaultConfigs())));
+		ConfiguratorApplication.showErrors();
 	}
 
 	public static ConfiguratorController getCtrl() {

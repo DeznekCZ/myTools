@@ -3,15 +3,19 @@ package cz.deznekcz.javafx.configurator.components;
 import cz.deznekcz.javafx.configurator.components.support.AValue;
 import cz.deznekcz.javafx.configurator.components.support.BooleanValue;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.event.EventTarget;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 
 public class CheckValue extends AValue implements BooleanValue {
 
@@ -19,10 +23,13 @@ public class CheckValue extends AValue implements BooleanValue {
 
 		private CheckValue text;
 		private CheckBox value;
-		private BorderPane box;
+		private StackPane box;
+		private BorderPane valueBox;
+		private BorderPane childBox;
 
 		private StringProperty valueProperty;
 		private BooleanProperty selectedProperty;
+		private ObjectProperty<Node> childProperty;
 
 		public CheckValueSkin(CheckValue text) {
 			this.text = text;
@@ -33,8 +40,12 @@ public class CheckValue extends AValue implements BooleanValue {
 			value.tooltipProperty().bind(AValue.tooltipBind(text.tooltipProperty()));
 			value.disableProperty().bind(text.disableProperty());
 
-			BorderPane.setAlignment(value, Pos.CENTER_RIGHT);
-			box = new BorderPane(null,null,null,null,value);
+			valueBox = new BorderPane(value);
+			valueBox.setPickOnBounds(false);
+			childBox = new BorderPane();
+
+			BorderPane.setAlignment(value, Pos.CENTER_LEFT);
+			box = new StackPane(childBox, valueBox);
 
 			value.getStyleClass().add("check-value-value");
 
@@ -57,6 +68,20 @@ public class CheckValue extends AValue implements BooleanValue {
 				String current = Boolean.toString(value.isSelected());
 				if (!current.equals(n)) {
 					value.setSelected(Boolean.parseBoolean(n));
+				}
+			});
+
+			selectedProperty.addListener((o,l,n) -> {
+				value.selectedProperty().set(n);
+			});
+
+			childProperty = childBox.centerProperty();
+			childProperty.addListener((o,l,n) -> {
+				if (n != null) {
+					n.disableProperty().bind(selectedProperty.not());
+				}
+				if (l != null) {
+					n.disableProperty().unbind();
 				}
 			});
 		}
@@ -110,6 +135,18 @@ public class CheckValue extends AValue implements BooleanValue {
 		return helpPropterty().get();
 	}
 
+	public ObjectProperty<Node> childPropterty() {
+		return ((CheckValueSkin) getSkin()).childProperty;
+	}
+
+	public void setChild(Node prompt) {
+		childPropterty().set(prompt);
+	}
+
+	public Node getChild() {
+		return childPropterty().get();
+	}
+
 	public BooleanProperty selectedProperty() {
 		return ((CheckValueSkin) getSkin()).selectedProperty;
 	}
@@ -129,5 +166,15 @@ public class CheckValue extends AValue implements BooleanValue {
 	@Override
 	public void refresh() {
 
+	}
+
+	@Override
+	public ObservableBooleanValue booleanProperty() {
+		return selectedProperty();
+	}
+
+	@Override
+	public EventTarget getEventTarget() {
+		return ((CheckValueSkin) getSkin()).value;
 	}
 }

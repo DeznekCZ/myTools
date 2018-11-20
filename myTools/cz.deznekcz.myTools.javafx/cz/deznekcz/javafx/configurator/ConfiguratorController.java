@@ -1,11 +1,9 @@
 package cz.deznekcz.javafx.configurator;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,12 +11,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
-import java.util.Scanner;
 
 import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.javafx.configurator.components.support.RefreshOnChange;
-import cz.deznekcz.javafx.configurator.components.support.Refreshable;
-import cz.deznekcz.javafx.configurator.errhdl.CFGLoadException;
 import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.tool.i18n.Lang;
 import cz.deznekcz.util.EqualArrayList;
@@ -28,7 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.Observable;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.Event;
@@ -47,7 +41,6 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
-import javafx.scene.control.Button;
 
 public class ConfiguratorController implements Initializable {
 
@@ -56,8 +49,8 @@ public class ConfiguratorController implements Initializable {
 						(Configurator.getApplication() != null ? Configurator.getApplication().getProject() : "test")
 						+"\\lastOpened.cfg"
 			);
-	public static final ConfiguratorController getTest() {
-		return new ConfiguratorController();
+	public ConfiguratorController() {
+		Configurator.setController(this);
 	}
 
 
@@ -152,69 +145,69 @@ public class ConfiguratorController implements Initializable {
 	}
 
 	public void exit(Event event) {
-		// TODO close all opened
 		Platform.exit();
 	}
 
 	private PrintStream loadStream;
-	private Tab lastConfig;
 
-	public void loadConfig(ConfigEntry configEntry) {
-		try {
-			LiveStorage storage = configEntry.isTemplate() ? configEntry.createCopyStorage() : configEntry.getStorage();
-			if (storage == null) throw new NullPointerException("storage is not initialized");
-			storage.setAutosave(true);
-			String storagePath = configEntry.getFile().getAbsolutePath();
+	public void loadConfig(ConfigEntry configEntry, boolean openOnLoad) {
+		Dialogs.LOADING.start("Loading of " + configEntry.getStorage().getName());
+		Platform.runLater(() -> {
+			try {
 
-			URL[] urls = { new File("config\\" + storage.getId()).toURI().toURL() };
-			URLClassLoader clLoader = new URLClassLoader(urls);
-			ResourceBundle bundle = ResourceBundle.getBundle("lang", Locale.getDefault(), clLoader);
+				LiveStorage storage = configEntry.isTemplate() ? configEntry.createCopyStorage() : configEntry.getStorage();
+				if (storage == null) throw new NullPointerException("storage is not initialized");
+				storage.setAutosave(true);
 
-			URL fxmlFile = new File("config\\" + storage.getId() + "\\Layout.fxml").toURI().toURL();
+				ResourceBundle bundle = ResourceBundle.getBundle(
+								"config."+storage.getId()+".lang", Locale.getDefault(), getClass().getClassLoader()
+						);
 
-			FXMLLoader loader = new FXMLLoader(fxmlFile, bundle);
-			loader.load();
+				FXMLLoader loader = new FXMLLoader(
+						ClassLoader.getSystemResource("config/"+storage.getId()+"/Layout.fxml"), bundle);
+				loader.load();
 
-			ASetup setup = loader.<ASetup>getController();
-
-			Tab foundRoot = null;
-			for (Tab tab : configuratorTabConfigsTabs.getTabs()) {
-				ASetup openedSetup = (ASetup) tab.getProperties().get(ASetup.class);
-				if (openedSetup.storage.getFile().equals(storage.getFile())) {
-					foundRoot = tab;
-					break;
-				}
-			}
-
-			if (foundRoot == null) {
-				setup.externalInitialization(this, storage, bundle);
-
-				setup.getRoot().getProperties().put("path", storagePath);
+				ASetup setup = loader.getController();
+				setup.externalInitialization(ConfiguratorController.this, storage, bundle);
+				setup.getRoot().getProperties().put("path", configEntry.getFile().getAbsolutePath());
 				setup.getRoot().getProperties().put(ASetup.class, setup);
 
-				configuratorTabConfigsTabs.getTabs().add(setup.getRoot());
-				lastConfig = setup.getRoot();
-
-				if (configEntry.isDefaultInstance()) {
-					final String finalName = lastConfig.getText();
-					lastConfig.setOnCloseRequest(e -> {
-						if (Dialogs.ASK.show(
-									Configurator.tab.CLOSE_DEFAULT.value(finalName),
-									ButtonType.YES,
-									Utils.array(ButtonType.YES, ButtonType.NO)) != ButtonType.YES
-							) {
-							e.consume();
-						}
-					});
+				Tab foundRoot = null;
+				Dialogs.LOADING.updateLoadingText(Configurator.loading.OPENING.value(setup.getRoot().getText()));
+				for (Tab tab : configuratorTabConfigsTabs.getTabs()) {
+					ASetup openedSetup = (ASetup) tab.getProperties().get(ASetup.class);
+					if (openedSetup.storage.getFile().equals(storage.getFile())) {
+						foundRoot = tab;
+						break;
+					}
 				}
 
-			} else {
-				lastConfig = foundRoot;
+				if (foundRoot == null) {
+					Tab lastConfig = setup.getRoot();
+					configuratorTabConfigsTabs.getTabs().add(lastConfig);
+					if (openOnLoad) configuratorTabConfigsTabs.getSelectionModel().select(lastConfig);
+
+					if (configEntry.isDefaultInstance()) {
+						final String finalName = lastConfig.getText();
+						lastConfig.setOnCloseRequest(e -> {
+							if (Dialogs.ASK.show(
+										Configurator.tab.CLOSE_DEFAULT.value(finalName),
+										ButtonType.YES,
+										Utils.array(ButtonType.YES, ButtonType.NO)) != ButtonType.YES
+								) {
+								e.consume();
+							}
+						});
+					}
+
+				} else {
+					if (openOnLoad) configuratorTabConfigsTabs.getSelectionModel().select(foundRoot);
+				}
+				Platform.runLater(Dialogs.LOADING::close);
+			} catch (Exception e) {
+				Dialogs.EXCEPTION.show(e);
 			}
-		} catch (Exception e) {
-			Dialogs.EXCEPTION.show(new CFGLoadException(e));
-			lastConfig = null;
-		}
+		});
 	}
 
 	public void loadLast(EqualArrayList<ConfigEntry> defaultFiles) {
@@ -234,13 +227,14 @@ public class ConfiguratorController implements Initializable {
 			int countOfDefaults = 0;
 			for (String path : paths) {
 				ConfigEntry configEntry = ConfigEntry.loaded(path);
-				int contains = defaultFiles.indexOf(configEntry);
+				int contains = list.indexOf(configEntry);
 				if (contains >= 0) {
-					list.set(contains, configEntry);
-					configEntry.setAsDefaultInstance();
 					countOfDefaults++;
 				}
-				list.add(configEntry);
+				else
+				{
+					list.add(configEntry);
+				}
 			}
 
 			boolean reopenDefault = countOfDefaults != defaultFiles.size() &&
@@ -254,11 +248,11 @@ public class ConfiguratorController implements Initializable {
 
 			for (ConfigEntry configEntry : list) {
 				if (!configEntry.isDefault() || reopenDefault)
-					loadConfig(configEntry);
+					loadConfig(configEntry, false);
 			}
 		} else {
 			for (ConfigEntry configEntry : defaultFiles) {
-				loadConfig(configEntry);
+				loadConfig(configEntry, false);
 			}
 		}
 	}
@@ -292,19 +286,12 @@ public class ConfiguratorController implements Initializable {
 
 		File selected = chooser.showOpenDialog(null);
 		if (selected != null) {
-			loadConfig(ConfigEntry.loaded(selected.getAbsolutePath()));
-			selectLastConfig();
+			loadConfig(ConfigEntry.loaded(selected.getAbsolutePath()), true);
 		}
 	}
 
 	public ObservableList<Tab> getConfigs() {
 		return configuratorTabConfigsTabs.getTabs();
-	}
-
-	public void selectLastConfig() {
-		if (lastConfig != null) {
-			configuratorTabConfigsTabs.getSelectionModel().select(lastConfig);
-		}
 	}
 
 	public StringProperty getGlobal(String id) {

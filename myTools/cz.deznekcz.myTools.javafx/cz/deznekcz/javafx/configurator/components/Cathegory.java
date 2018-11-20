@@ -8,10 +8,12 @@ import javafx.beans.property.Property;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TitledPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 @DefaultProperty("content")
@@ -44,6 +46,7 @@ public class Cathegory extends TitledPane implements BooleanValue {
 
 	public Cathegory() {
 		getStyleClass().add("cathegory");
+		setCollapsible(false);
 
 		parameters = new VBox();
 		parameters.getStyleClass().add("parameters");
@@ -67,14 +70,24 @@ public class Cathegory extends TitledPane implements BooleanValue {
 		});
 	}
 
-	@Override
-	public Property<String> valueProperty() {
-		return expandedAsString;
-	}
+	private boolean searched;
+	private ASetup found;
 
-	@Override
-	public void refresh() {
+	public ASetup getConfiguration() {
+		if (searched) return found;
+		searched = true;
 
+		for (Tab tab : Configurator.getCtrl().getConfigs()) {
+			Node tabContent = tab.getContent();
+			Node parent = getParent();
+			while (parent != null && !parent.equals(tabContent))
+				parent = parent.getParent();
+			if (parent != null) {
+				found = (ASetup) tab.getProperties().get(ASetup.class);
+			}
+		}
+
+		return found;
 	}
 
 	private Property<ASetup> configuration = new SimpleObjectProperty<>();
@@ -84,29 +97,18 @@ public class Cathegory extends TitledPane implements BooleanValue {
 	}
 
 	@Override
-	public ASetup getConfiguration() {
-		if (configuration.getValue() != null) return configuration.getValue();
-
-		for (Tab tab : Configurator.getCtrl().getConfigs()) {
-			Node tabContent = tab.getContent();
-			Node parent = getParent();
-			while (parent != null && !parent.equals(tabContent))
-				parent = parent.getParent();
-			if (parent != null) {
-				configuration.setValue((ASetup) tab.getProperties().get(ASetup.class));
-			}
-		}
-
-		return configuration.getValue();
+	public ObservableBooleanValue booleanProperty() {
+		return expandedProperty();
 	}
 
-	@Override
-	public final String getValue() {
-		return valueProperty().getValue();
+	public void setVerticalContent(Node...nodes) {
+		parameters.getChildren().setAll(nodes);
 	}
 
-	@Override
-	public final void setValue(String value) {
-		valueProperty().setValue(value);
+	public void setHorizontalContent(Node...nodes) {
+		HBox box = new HBox();
+		box.getStyleClass().add("line-parameters");
+		box.getChildren().addAll(nodes);
+		parameters.getChildren().setAll(box);
 	}
 }

@@ -8,6 +8,7 @@ import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Unnecesary;
 import cz.deznekcz.javafx.configurator.components.Choice;
 import cz.deznekcz.javafx.configurator.components.support.HasDirProperty;
+import cz.deznekcz.util.ITryDo;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -83,33 +84,36 @@ public class DirectoryChoice extends Choice implements HasDirProperty {
 		return dirProperty().get();
 	}
 
-	public void refresh() {
-		getItems().clear();
-		try {
-			if (selectFromRoot) {
-				File[] files = File.listRoots();
-				getItems().addAll(
-						Arrays.asList(
-							files != null ? files : new File[0]
-						)
-						.stream()
-						.map(File::getAbsolutePath)
-						.map(string -> string.substring(0, 1))
-						.collect(Collectors.toList())
-					);
-			} else {
-				File[] files = new File(getDir()).listFiles();
-				getItems().addAll(
-						Arrays.asList(
-							files != null ? files : new File[0]
-						)
-						.stream()
-						.map(File::getName)
-						.collect(Collectors.toList())
-					);
+	@Override
+	protected void refreshList() {
+		Configurator.getService().execute(() -> {
+			try {
+				if (selectFromRoot) {
+					File[] files = File.listRoots();
+					getNonFXItems().setAll(
+							Arrays.asList(
+								files != null ? files : new File[0]
+							)
+							.stream()
+							.map(File::getAbsolutePath)
+							.map(string -> string.substring(0, 1))
+							.collect(Collectors.toList())
+						);
+				} else {
+					File[] files = new File(getDir()).listFiles();
+					getNonFXItems().setAll(
+							Arrays.asList(
+								files != null ? files : new File[0]
+							)
+							.stream()
+							.filter(File::isDirectory)
+							.map(File::getName)
+							.collect(Collectors.toList())
+						);
+				}
+			} catch (Exception e) {
+				getNonFXItems().clear();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		});
 	}
 }

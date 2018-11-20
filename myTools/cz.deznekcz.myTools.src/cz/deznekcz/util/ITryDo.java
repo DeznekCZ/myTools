@@ -1,11 +1,14 @@
 package cz.deznekcz.util;
 
+import java.util.Random;
+
 import javax.xml.xpath.XPathExpression;
 
+import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.reference.Out;
 
 /**
- *     Instances or lambda functions of {@link ITryDo} is usable to remove a 
+ *     Instances or lambda functions of {@link ITryDo} is usable to remove a
  * <br>&nbsp;<code>try {var = sometingWhatCauseException();} catch({@link Exception} e) {e.printStackTrace();}</code>
  * <br>and replace with
  * <br>&nbsp;<code>{@link Exception} e = (({@link ITryDo}) ()->outVar.set(sometingWhatCauseException())).{@link #doAction()};</code>
@@ -16,7 +19,7 @@ import cz.deznekcz.reference.Out;
 @FunctionalInterface
 public interface ITryDo {
 	/**
-	 * Method returns 
+	 * Method returns
 	 * @return instance of {@link Exception}
 	 * @see #checkValue(CheckAction)
 	 */
@@ -38,7 +41,7 @@ public interface ITryDo {
 	public interface CheckAction {
 		void get() throws Exception;
 	}
-	
+
 	/**
 	 *     Method is usable to check casting classes.
 	 * <br>
@@ -60,12 +63,12 @@ public interface ITryDo {
 			}
 		}.doAction();
 	}
-	
+
 	@FunctionalInterface
 	public interface CheckActionReturnable<A> {
 		A get() throws Exception;
 	}
-	
+
 	/**
 	 *     Method is usable to check casting classes.
 	 * <br>
@@ -102,5 +105,21 @@ public interface ITryDo {
 		}.doAction();
 		if (e != null) e.printStackTrace();
 		return value.get();
+	}
+
+	static void fxTask(boolean showError, CheckAction action) {
+		Thread t = new Thread(() -> {
+					try {
+						action.get();
+					} catch (Exception e) {
+						if (showError) {
+							Dialogs.EXCEPTION.show(e);
+						} else {
+							e.printStackTrace(System.err);
+						}
+					}
+				}, String.format("ITryDo#%x", new Random().nextInt()));
+		t.setDaemon(true);
+		t.start();
 	}
 }

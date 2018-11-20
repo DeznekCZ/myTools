@@ -1,12 +1,11 @@
 package cz.deznekcz.javafx.configurator.components.support;
 
 import cz.deznekcz.javafx.configurator.ASetup;
-import cz.deznekcz.javafx.configurator.Configurator;
-import cz.deznekcz.javafx.configurator.ConfiguratorController;
 import cz.deznekcz.util.LiveStorage;
-import javafx.beans.property.Property;
+import javafx.beans.NamedArg;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.event.EventTarget;
 import javafx.scene.Node;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Skinnable;
@@ -21,7 +20,6 @@ import javafx.scene.layout.Pane;
 public class Constant extends AValue {
 
 	private StringProperty property;
-	private AccessType global;
 
 	@Override
 	protected Skin<?> createDefaultSkin() {
@@ -47,7 +45,11 @@ public class Constant extends AValue {
 
 	public Constant() {
 		property = new SimpleStringProperty("");
-		global = AccessType.NOT_GLOBAL;
+	}
+
+	public Constant(@NamedArg("value") String value) {
+		this();
+		setValue(value);
 	}
 
 	public StringProperty valueProperty() {
@@ -59,40 +61,13 @@ public class Constant extends AValue {
 
 	}
 
-	public final boolean isGlobal() {
-		return global != AccessType.NOT_GLOBAL;
-	}
-
-	public final AccessType getGlobal() {
-		return global;
-	}
-
-	public final void setGlobal(AccessType newState) {
-		ConfiguratorController controller = Configurator.getCtrl();
-		if (controller == null) controller = ConfiguratorController.getTest();
-
-		if (newState == null || newState == AccessType.NOT_GLOBAL) {
-			if (this.global == AccessType.SOURCE) {
-				valueProperty().unbindBidirectional(controller.getGlobal(getId()));
-			} else if (this.global == AccessType.REFERENCE) {
-				valueProperty().unbind();
-			} else {
-				// was not bound by global access
-			}
-		} else {
-			if (newState == AccessType.SOURCE) {
-				valueProperty().bindBidirectional(controller.getGlobal(getId()));
-			} else if (newState == AccessType.REFERENCE) {
-				valueProperty().bind(controller.getGlobal(getId()));
-			} else {
-				// was not bound by global access
-			}
-		}
-		this.global = newState == null ? AccessType.NOT_GLOBAL : newState;
+	@Override
+	public ASetup getConfiguration() {
+		return null;
 	}
 
 	@Override
-	public ASetup getConfiguration() {
+	public EventTarget getEventTarget() {
 		return null;
 	}
 }

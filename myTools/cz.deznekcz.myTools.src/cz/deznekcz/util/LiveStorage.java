@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.util.xml.XML;
@@ -58,10 +60,16 @@ public class LiveStorage {
      */
     public static class EntryValue<I> implements ChangeListener<I> {
 
+    	public static <I> void setup(ObservableValue<I> observable, LiveStorage storage, String id) {
+    		EntryValue<I> listener = new EntryValue<>(storage, id);
+    		observable.removeListener(listener);
+    		observable.addListener(listener);
+    	}
+
         private LiveStorage storage;
         private String id;
 
-        public EntryValue(LiveStorage storage, String id) {
+        private EntryValue(LiveStorage storage, String id) {
             this.storage = storage;
             this.id = id;
         }
@@ -70,6 +78,21 @@ public class LiveStorage {
         public void changed(ObservableValue<? extends I> observable, I oldValue, I newValue) {
             storage.setValue(id, newValue == null ? "" : newValue.toString());
         }
+
+        @SuppressWarnings("unchecked")
+		@Override
+        public boolean equals(Object obj) {
+        	return obj instanceof EntryValue && match((EntryValue<I>) obj);
+        }
+
+        @Override
+        public int hashCode() {
+        	return this.storage.getId().hashCode() ^ this.id.hashCode();
+        }
+
+		private boolean match(EntryValue<I> obj) {
+			return this.storage == obj.storage && this.id.equals(obj.id);
+		}
 
     }
 
@@ -104,8 +127,8 @@ public class LiveStorage {
             searched.put(value.attribute("id"), value.text());
         }
 
-        if (!this.cfg.setWritable(!this.cfg.getName().equals("template.run.xml")))
-            Dialogs.EXCEPTION.show(new IOException("Writeability can not be changed! file: " + this.cfg.getName()));
+        if (!this.cfg.getName().equals("template.run.xml") && !this.cfg.setWritable(true))
+            Dialogs.EXCEPTION.show(new IOException("Writeability can not be changed! file: \n" + this.cfg.getAbsolutePath()));
     }
 
     public StringProperty idProperty() {
@@ -143,6 +166,10 @@ public class LiveStorage {
     	}
 	}
 
+	public static String getId(File file) throws IOException {
+        return XMLStepper.fromFile(file).getNode("storage/id").text();
+    }
+
 	public String getId() {
         return id.get();
     }
@@ -159,18 +186,15 @@ public class LiveStorage {
         return searched.get(key);
     }
 
-    public <C> C getValue(String key, Class<C> casting) {
-    	Objects.requireNonNull(casting, "No casting class was set");
-        String value = getValue(key);
-		if (value != null) try {
-			Constructor<C> ctor = casting.getConstructor(String.class);
-			return (ctor != null) ? ctor.newInstance(value) : null;
-		} catch ( NoSuchMethodException  | SecurityException        | InstantiationException
-				| IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			throw new GetValueRuntimeException(key, e);
-		} else {
-			return null;
-		}
+    /**
+     *
+     * @param key
+     * @param generator usually method like {@link Boolean#valueOf(String)}
+     * @return
+     */
+    public <C> C getValue(String key, Function<String, C> generator) {
+    	Objects.requireNonNull(generator, "Generator not specified");
+		return generator.apply(getValue(key));
     }
 
 	public <C> C getValue(String key, C defaultValue) {

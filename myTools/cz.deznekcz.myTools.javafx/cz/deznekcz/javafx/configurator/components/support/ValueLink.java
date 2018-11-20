@@ -1,51 +1,60 @@
 package cz.deznekcz.javafx.configurator.components.support;
 
-import java.util.HashMap;
-import java.util.Map;
+import cz.deznekcz.javafx.configurator.ATemplate;
+import javafx.application.Platform;
+import javafx.beans.NamedArg;
+import javafx.fxml.LoadException;
+import javafx.scene.control.Control;
 
-import cz.deznekcz.javafx.configurator.ASetup;
-import cz.deznekcz.javafx.configurator.components.ResultValue;
+public class ValueLink extends Control {
 
-public class ValueLink {
+    private AValue value;
+    private String id;
 
-	private final static Map<Refreshable, ValueLink> REFERENCES
-		= new HashMap<>();
+    public ValueLink() {
 
-	private Refreshable value;
-	private boolean notSearched;
-	private String ref;
-
-	public ValueLink() {
-		this.notSearched = true;
 	}
 
-	public String getRef() {
-		return ref;
+    public ValueLink(@NamedArg("id") String id) {
+    	setId(id);
+    }
+
+    public ValueLink(@NamedArg("value") AValue value) {
+		setValue(value);
 	}
 
-	public Refreshable getValue() {
-		return value;
+    public ValueLink(@NamedArg("id") String id, @NamedArg("value") AValue value) {
+    	setId(id);
+		setValue(value);
 	}
 
-	public final void setRef(String ref) {
-		this.ref = ref;
+    public void init(ATemplate controller) {
+    	if (id == null || id.length() == 0) {
+    		controller.getVariable(getId().replace("ref_", ""));
+    	} else {
+    		Platform.runLater(() -> init(controller));
+    	}
+    }
+
+	public void setValue(AValue value) {
+		this.value = value;
 	}
 
-	public void refresh(ASetup aSetup) {
-		if (value != null) {
-			value.refresh();
-		} else if (notSearched) {
-			notSearched = false;
-			value = aSetup.getVariable(ref);
-			if (value != null) {
-				REFERENCES.put(value, this);
-				value.refresh();
-			}
-		}
-	}
+    public AValue getValue() {
+    	if (value == null) {
+    		throw new RuntimeException(new LoadException("ValueLink id:"+getId()+" was not initialized"));
+    	} else {
+    		return value;
+    	}
+    }
 
-	public static ValueLink find(Refreshable refreshable) {
-		return REFERENCES.get(refreshable);
-	}
+    public void refresh() {
+        value.refresh();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+    	return obj instanceof ValueLink && ((ValueLink) obj).value == this.value;
+    }
 
 }

@@ -1,8 +1,14 @@
 package cz.deznekcz.javafx.configurator;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import cz.deznekcz.javafx.components.Dialogs;
 import cz.deznekcz.tool.i18n.ILangKey;
 
 public abstract class ConfiguratorApplication {
+
+	private static List<Exception> errors = new ArrayList<>();
 
 	private String[] args;
 	public ConfiguratorApplication(String[] args) {
@@ -21,11 +27,18 @@ public abstract class ConfiguratorApplication {
 	public abstract boolean hasRibbonHeader();
 	public abstract void editRibbon(ConfiguratorRibbonController controller);
 
+	public static void initialize() {}
+
 	public String[] getArgs() {
 		return args;
 	}
 
+	public static void catchException(Exception e) {
+		errors.add(e);
+	}
 
-
+	public static void showErrors() {
+		errors.forEach(Dialogs.EXCEPTION::show);
+	}
 
 }

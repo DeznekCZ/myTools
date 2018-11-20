@@ -26,13 +26,11 @@ public class RefreshOnChange {
 				Configurator.refresh.ID.value(((Control) refreshable).getId());
 
 			final int fIndex = index;
-			if (refreshable.isValid()) {
-				Platform.runLater(() -> {
-					refreshable.refresh();
-					Dialogs.LOADING.updateLoadingText(idText);
-					Dialogs.LOADING.updateProgress(fIndex / size);
-				});
-			}
+			Platform.runLater(() -> {
+				refreshable.refresh();
+				Dialogs.LOADING.updateLoadingText(idText);
+				Dialogs.LOADING.updateProgress(fIndex / size);
+			});
 
 			index ++;
 		}

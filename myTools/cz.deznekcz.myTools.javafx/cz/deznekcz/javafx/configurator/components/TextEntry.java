@@ -2,11 +2,13 @@ package cz.deznekcz.javafx.configurator.components;
 
 import cz.deznekcz.javafx.configurator.components.support.AValue;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
+import javafx.event.EventTarget;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -25,6 +27,8 @@ public class TextEntry extends AValue {
 		private Label label;
 		private TextField value;
 
+		private BorderPane valueDecorator;
+
 		private StringProperty pattern;
 		private StringProperty valueString;
 		private BooleanProperty limited;
@@ -38,6 +42,7 @@ public class TextEntry extends AValue {
 			box = new BorderPane();
 			label = new Label();
 			value = new TextField();
+			valueDecorator = new BorderPane(value);
 			box.disableProperty().bind(text.disableProperty());
 
 			label.getStyleClass().add("text-entry-label");
@@ -47,8 +52,11 @@ public class TextEntry extends AValue {
 			label.idProperty().bind(text.idProperty().concat("_label"));
 			value.idProperty().bind(text.idProperty().concat("_value"));
 
-			value.maxWidthProperty().bind(text.widthProperty().divide(2));
-			value.prefWidthProperty().bind(text.widthProperty().divide(2));
+			valueDecorator.maxWidthProperty().bind(text.widthProperty().divide(2));
+			valueDecorator.prefWidthProperty().bind(text.widthProperty().divide(2));
+
+			value.maxWidthProperty().bind(valueDecorator.widthProperty());
+			value.prefWidthProperty().bind(valueDecorator.widthProperty());
 
 			label.setOnMouseClicked((e) -> {
 				if (e.getButton() == MouseButton.PRIMARY) value.requestFocus();
@@ -57,7 +65,7 @@ public class TextEntry extends AValue {
 			BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 			BorderPane.setAlignment(value, Pos.CENTER_RIGHT);
 			box.setLeft(label);
-			box.setRight(value);
+			box.setRight(valueDecorator);
 
 			pattern = new SimpleStringProperty("*");
 			limited = new SimpleBooleanProperty(false);
@@ -183,6 +191,30 @@ public class TextEntry extends AValue {
 		return helpPropterty().get();
 	}
 
+	public final ObjectProperty<Node> leftDecoratorProperty() {
+		return ((TextEntrySkin) getSkin()).valueDecorator.leftProperty();
+	}
+
+	public final void setLeftDecorator(Node left) {
+		leftDecoratorProperty().set(left);
+	}
+
+	public final Node getLeftDecorator() {
+		return leftDecoratorProperty().get();
+	}
+
+	public final ObjectProperty<Node> rightDecoratorProperty() {
+		return ((TextEntrySkin) getSkin()).valueDecorator.rightProperty();
+	}
+
+	public final void setRightDecorator(Node right) {
+		rightDecoratorProperty().set(right);
+	}
+
+	public final Node getRightDecorator() {
+		return rightDecoratorProperty().get();
+	}
+
 	public TextEntry() {
 		setSkin(new TextEntrySkin(this));
 	}
@@ -190,5 +222,10 @@ public class TextEntry extends AValue {
 	@Override
 	public void refresh() {
 
+	}
+
+	@Override
+	public EventTarget getEventTarget() {
+		return ((TextEntrySkin) getSkin()).value;
 	}
 }

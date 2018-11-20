@@ -23,19 +23,20 @@ public class ConfigEntry implements EqualAble {
 	private boolean isDefault;
 	private boolean asDefaultInstance;
 
-	private ConfigEntry(String fileName, boolean searchCopy, boolean isDefault) {
+	private ConfigEntry(String fileName, boolean isTemplate, boolean isDefault) {
 		try {
-			this.file = new File(fileName);
-			this.storage = LiveStorage.open(file);
-			this.controllerName = this.storage.getId();
-			this.isDefault = isDefault;
-
-			if (searchCopy) {
-				this.templateFile = file;
+			if (isTemplate) {
+				this.templateFile = new File(fileName);
+				this.controllerName = LiveStorage.getId(this.templateFile);
 				this.copyPath = String.format("%s\\%s\\%s.run.xml",
 						System.getenv("APPDATA"), Configurator.getApplication().getProject(), this.controllerName);
 				this.file = new File(this.copyPath);
 				createCopyStorage();
+			} else {
+				this.file = new File(fileName);
+				this.storage = LiveStorage.open(file);
+				this.controllerName = this.storage.getId();
+				this.isDefault = isDefault;
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -51,7 +52,7 @@ public class ConfigEntry implements EqualAble {
 	}
 
 	public static ConfigEntry loaded(String fileName, boolean isDefault) {
-		return new ConfigEntry(fileName, false, isDefault);
+		return new ConfigEntry(fileName, fileName.endsWith("template.run.xml"), isDefault);
 	}
 
 	public static ConfigEntry loaded(String fileName) {
@@ -71,6 +72,13 @@ public class ConfigEntry implements EqualAble {
 	}
 
 	public File getFile() {
+		if (file.getName().equals("template.run.xml")) {
+			try {
+				createCopyStorage();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 		return file;
 	}
 
@@ -105,7 +113,7 @@ public class ConfigEntry implements EqualAble {
 	}
 
 	public boolean equalsTo(ConfigEntry obj) {
-		return file.equals(obj.file);
+		return this.getFile().getAbsolutePath().equals(obj.getFile().getAbsolutePath());
 	}
 
 	public void setAsDefaultInstance() {
@@ -114,5 +122,10 @@ public class ConfigEntry implements EqualAble {
 
 	public boolean isDefaultInstance() {
 		return isDefault || asDefaultInstance;
+	}
+
+	@Override
+	public String toString() {
+		return "Config"+(isTemplate()?"Template:"+templateFile.getPath():"File")+":"+file.getPath();
 	}
 }

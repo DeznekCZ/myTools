@@ -2,11 +2,15 @@ package cz.deznekcz.javafx.components;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
+
+import com.sun.org.apache.bcel.internal.generic.ISUB;
 
 import cz.deznekcz.javafx.configurator.components.CheckValue;
 import cz.deznekcz.javafx.configurator.components.PasswordEntry;
@@ -17,6 +21,9 @@ import cz.deznekcz.tool.i18n.ILangKey;
 import cz.deznekcz.util.Utils;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -25,8 +32,13 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TitledPane;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
@@ -40,7 +52,7 @@ import javafx.util.Pair;
 public abstract class Dialogs {
 
 	static final ILangKey ILK_LOADING = ILangKey.simple("Dialog.Loading.TITLE", "LOADING");
-	static final ILangKey ILK_EXCEPTION = ILangKey.simple("Dialog.Exception.");
+	static final ILangKey ILK_EXCEPTION = ILangKey.simple("Dialog.Exception.").initDefault("Exception");
 	static final ILangKey ILK_EXCEPTION_TITLE = ILK_EXCEPTION.extended("Title")
 										.initDefault("Error cached");
 	static final ILangKey ILK_EXCEPTION_LOAD_TITLE = ILK_EXCEPTION.extended("LoadTitle")
@@ -61,6 +73,7 @@ public abstract class Dialogs {
 	public static final class ExceptionDialog extends Dialogs {
 		private TextArea textArea;
 		private Alert alert;
+		private Object lock = new Object();
 
 		private ExceptionDialog() {
 			alert = new Alert(AlertType.ERROR);
@@ -79,6 +92,10 @@ public abstract class Dialogs {
 		}
 
 		public void show(Throwable e, String contentText) {
+			System.err.println("============== Log error");
+			System.err.println("= "+Date.from(Instant.now()).toString());
+			System.err.println("==============");
+
 			if (Dialogs.LOADING.alert.getHeaderText() != null) {
 				alert.setTitle(ILK_EXCEPTION_LOAD_TITLE.value());
 				alert.setContentText(
@@ -106,7 +123,7 @@ public abstract class Dialogs {
 			textArea.setText(writer.toString());
 			alert.getDialogPane().setExpandableContent(textArea);
 
-
+			e.printStackTrace(System.err);
 			handle();
 		}
 	}
@@ -168,28 +185,38 @@ public abstract class Dialogs {
 		}
 
 		public void close() {
-			alert.close();
+			if (Platform.isFxApplicationThread()) {
+				alert.close();
+			} else {
+				Platform.runLater(alert::close);
+			}
 		}
 
 		public void start(String headerText, String contentText, String expandedText, double progress) {
-			alert.setResult(null);
+			if (Platform.isFxApplicationThread()) {
+				alert.setResult(null);
 
-			if (headerText != null) {
-				alert.setHeaderText(headerText);
-			}
+				if (headerText != null) {
+					alert.setHeaderText(headerText);
+				}
 
-			if (expandedText != null && expandedText.length() > 0) {
-				expandable.setText(expandedText);
-				alert.getDialogPane().setExpandableContent(expandable);
+				if (expandedText != null && expandedText.length() > 0) {
+					expandable.setText(expandedText);
+					alert.getDialogPane().setExpandableContent(expandable);
+				} else {
+					expandable.setText("");
+					alert.getDialogPane().setExpandableContent(null);
+					content.setText(contentText);
+				}
+
+				progressIndicator.setProgress(progress < 0.0 ? -1 : Math.min(1, progress));
+
+				alert.show();
+
 			} else {
-				expandable.setText("");
-				alert.getDialogPane().setExpandableContent(null);
-				content.setText(contentText);
+				Platform.runLater(() -> start(headerText, contentText, expandedText, progress));
 			}
 
-			progressIndicator.setProgress(progress < 0.0 ? -1 : Math.min(1, progress));
-
-			if (isHidden) alert.show();
 		}
 
 		public void start(String headerText, String contentText, double progress) {
@@ -205,19 +232,34 @@ public abstract class Dialogs {
 		}
 
 		public void updateLoadingText(String contentText) {
-			content.setText(contentText);
+			if (Platform.isFxApplicationThread()) {
+				content.setText(contentText);
+				alert.getDialogPane().requestLayout();
+			} else {
+				Platform.runLater(() -> updateLoadingText(contentText));
+			}
 		}
 
 		public void updateProgress(double progress) {
-			progressIndicator.setProgress(progress);
+			if (Platform.isFxApplicationThread()) {
+				progressIndicator.setProgress(progress);
+				alert.getDialogPane().requestLayout();
+			} else {
+				Platform.runLater(() -> updateProgress(progress));
+			}
 		}
 
 		public void expandedText(String expandedText) {
-			expandable.setText(expandedText);
-			if (expandedText == null || expandedText.isEmpty()) {
-				alert.getDialogPane().setExpandableContent(null);
+			if (Platform.isFxApplicationThread()) {
+				expandable.setText(expandedText);
+				if (expandedText == null || expandedText.isEmpty()) {
+					alert.getDialogPane().setExpandableContent(null);
+				} else {
+					alert.getDialogPane().setExpandableContent(expandable);
+				}
+				alert.getDialogPane().requestLayout();
 			} else {
-				alert.getDialogPane().setExpandableContent(expandable);
+				Platform.runLater(() -> expandedText(expandedText));
 			}
 		}
 
@@ -250,6 +292,7 @@ public abstract class Dialogs {
 			String  storeKey();
 			boolean store();
 			void    login(String name, String password, OutException error, Consumer<Boolean> resultAction);
+			String title();
 		}
 
 		private Alert alert;
@@ -260,11 +303,15 @@ public abstract class Dialogs {
 		private Button cancel;
 		private ProgressIndicator doing;
 		private VBox content;
-		private TitledPane errorCollapser;
 		private Text errorText;
+		private ScrollPane errorTextSP;
+		private Tab errorTab;
 
 		public LoginDialog() {
-			alert = new Alert(AlertType.WARNING);
+			alert = new Alert(AlertType.CONFIRMATION);
+
+			TabPane tabs = new TabPane();
+			tabs.getStylesheets().add("Configurator.css");
 
 			VBox loginBox = new VBox();
 			loginBox.getStyleClass().add("parameters");
@@ -273,7 +320,9 @@ public abstract class Dialogs {
 			doing.setProgress(-1);
 			doing.setOpacity(0.5);
 
-			StackPane stack = new StackPane(loginBox, doing);
+			Tab loginBoxTab = new Tab(ILK_LOGIN_LOGIN.value(), loginBox);
+			loginBoxTab.setClosable(false);
+			tabs.getTabs().add(loginBoxTab);
 
 			store = new CheckValue();
 			store.setText(ILK_LOGIN_STORE.value());
@@ -284,23 +333,80 @@ public abstract class Dialogs {
 			alert.getButtonTypes().clear();
 
 			Node buttonFill = new Pane(); HBox.setHgrow(buttonFill, Priority.ALWAYS);
-			HBox buttons = new HBox(buttonFill, store, login, cancel);
+			HBox buttons = new HBox(store, buttonFill, login, cancel);
 
 			buttons.getStyleClass().add("parameters");
 
-			content = new VBox(stack, buttons);
+			errorText = new Text();
+			errorTextSP = new ScrollPane();
+			errorTextSP.setContent(errorText);
+			errorTab = new Tab(ILK_EXCEPTION.value(), errorTextSP);
+			errorTab.setClosable(false);
+			tabs.getTabs().add(errorTab);
+
+			content = new VBox(new StackPane(tabs, doing), buttons);
+			VBox.setVgrow(content.getChildren().get(0), Priority.ALWAYS);
+			content.setMaxHeight(250);
+			content.setMaxWidth(400);
+			content.setPrefHeight(250);
+			content.setPrefWidth(400);
 			alert.getDialogPane().setContent(content);
 
-			errorText = new Text();
-			errorCollapser = new TitledPane(ILK_EXCEPTION.value(), errorText);
+			username = new TextEntry();
+			username.setId("loginUsername");
+			username.setText("Username");
+			password = new PasswordEntry();
+			password.setText("Password");
+			password.setId("loginPassword");
+
+			loginBox.getChildren().addAll(username, password);
+
+			alert.getDialogPane().addEventFilter(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
+
+				@Override
+				public void handle(KeyEvent event) {
+					if (username.getEventTarget().equals(event.getTarget())) {
+						switch (event.getCode()) {
+						case TAB:
+							password.requestFocus();
+							event.consume();
+							break;
+						case ESCAPE:
+							cancel.fire();
+							event.consume();
+							break;
+
+						default:
+							break;
+						}
+					} else if (password.getEventTarget().equals(event.getTarget())) {
+						switch (event.getCode()) {
+						case ESCAPE:
+							cancel.fire();
+							event.consume();
+							break;
+						case ENTER:
+							login.getOnAction().handle(null);
+							event.consume();
+							break;
+
+						default:
+							break;
+						}
+					}
+				}
+
+			});
 		}
 
 		public boolean show(LoginInfo loginInfo, OutException error) {
 			doing.setVisible(false);
 			login.setDisable(false);
-			content.getChildren().remove(errorCollapser);
-			errorCollapser.setExpanded(false);
+			errorTab.setDisable(true);
 			store.setValue(loginInfo.store());
+			errorText.setText("");
+
+			alert.setTitle(loginInfo.title());
 
 			username.setValue(loginInfo.username());
 			password.setValue(loginInfo.password());
@@ -318,9 +424,10 @@ public abstract class Dialogs {
 								stored.put(loginInfo.storeKey(), new Pair<>(username.getValue(), password.getValue()));
 							}
 						} else {
-							login.setDisable(true);
-							doing.setVisible(true);
-							content.getChildren().add(errorCollapser);
+							login.setDisable(false);
+							doing.setVisible(false);
+							password.setFailed(true);
+							errorTab.setDisable(false);
 							errorText.setText(Utils.getStackTrace(error.get()));
 
 							if (stored.containsKey(loginInfo.storeKey())) {
@@ -331,6 +438,8 @@ public abstract class Dialogs {
 				});
 			});
 
+			Platform.runLater(() -> password.requestFocus());
+			alert.getDialogPane().getScene().getWindow().setOnCloseRequest(event -> cancel.fire());
 			return handle() == ButtonType.OK;
 		}
 
@@ -360,10 +469,7 @@ public abstract class Dialogs {
 				Platform.runLater(task);
 				try {
 					return task.get();
-				} catch (InterruptedException e) {
-					error.set(e);
-					return false;
-				} catch (ExecutionException e) {
+				} catch (InterruptedException | ExecutionException e) {
 					error.set(e);
 					return false;
 				}

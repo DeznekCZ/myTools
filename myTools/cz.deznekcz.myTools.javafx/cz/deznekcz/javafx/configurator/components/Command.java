@@ -1,15 +1,15 @@
 package cz.deznekcz.javafx.configurator.components;
 
 import java.io.File;
-import java.util.HashMap;
+import java.io.IOException;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import cz.deznekcz.javafx.configurator.ASetup;
+import cz.deznekcz.javafx.configurator.ATemplate;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Unnecesary;
 import cz.deznekcz.javafx.configurator.components.command.CommandInstance;
 import cz.deznekcz.javafx.configurator.components.command.CommandInstance.JavaRunnability;
-import cz.deznekcz.javafx.configurator.components.command.CommandInstance.Runnability;
 import cz.deznekcz.javafx.configurator.components.command.Exit;
 import cz.deznekcz.javafx.configurator.components.support.AValue;
 import cz.deznekcz.javafx.configurator.components.support.HasArgsProperty;
@@ -19,12 +19,13 @@ import cz.deznekcz.javafx.configurator.components.support.Refreshable;
 import cz.deznekcz.javafx.configurator.components.support.ValueLink;
 import javafx.beans.DefaultProperty;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
 import javafx.beans.binding.IntegerExpression;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.StringExpression;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.Property;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -48,7 +49,6 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Separator;
 import javafx.scene.control.Skin;
-import javafx.scene.control.Tab;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -329,16 +329,17 @@ public class Command extends Control implements HasDirProperty, HasCmdProperty, 
     }
 
     private boolean notPrepared = true;
-    private BooleanBinding runnability;
+    private BooleanExpression runnability;
 	private boolean javaFunction;
+	private boolean usingLayout;
 
     public void setActive() {
         if (notPrepared) {
             notPrepared = false;
-            if (isJavaFunction()) {
+            if (isJavaFunction() && !isUsingLayout()) {
             	runnability = new CommandInstance.JavaRunnability(this);
             } else {
-            	runnability = new CommandInstance.Runnability(this);
+            	runnability = new SimpleBooleanProperty(true);
             }
         	((BooleanProperty) runnableProperty()).bind(runnability);
         }
@@ -350,6 +351,14 @@ public class Command extends Control implements HasDirProperty, HasCmdProperty, 
 
     public void setJavaFunction(boolean value) {
     	javaFunction = value;
+    }
+
+    public boolean isUsingLayout() {
+		return usingLayout;
+	}
+
+    public void setUsingLayout(boolean value) {
+    	usingLayout = value;
     }
 
     public Command() {
@@ -442,16 +451,9 @@ public class Command extends Control implements HasDirProperty, HasCmdProperty, 
         validator = new SimpleObjectProperty<>(null);
         validator.addListener((o,l,n) -> {
         	if (n == null && l != null) {
-        		ValueLink link = ValueLink.find(l);
-        		if (link != null)
-        			refreshables.remove(link);
+        		refreshables.remove(new ValueLink(l));
         	} else if (n == null) {
-        		ValueLink link = ValueLink.find(l);
-        		if (link == null) {
-        			link = new ValueLink();
-        			link.setRef(n.getId());
-        		}
-        		refreshables.add(link);
+        		refreshables.add(new ValueLink(n));
         	}
         });
 
@@ -522,7 +524,7 @@ public class Command extends Control implements HasDirProperty, HasCmdProperty, 
         	if (isJavaFunction()) {
         		((JavaRunnability) runnability).refresh();
         	} else {
-        		((Runnability) runnability).refresh();
+        		// Removed
         	}
         }
     }
@@ -544,27 +546,6 @@ public class Command extends Control implements HasDirProperty, HasCmdProperty, 
         return refreshables;
     }
 
-    private boolean searched = false;
-    private ASetup found;
-
-    @Override
-    public ASetup getConfiguration() { // Same in AValue
-        if (searched) return found;
-        searched = true;
-
-        for (Tab tab : Configurator.getCtrl().getConfigs()) {
-            Node tabContent = tab.getContent();
-            Node parent = getParent();
-            while (parent != null && !parent.equals(tabContent))
-                parent = parent.getParent();
-            if (parent != null) {
-                found = (ASetup) tab.getProperties().get(ASetup.class);
-            }
-        }
-
-        return found;
-    }
-
 	public StringProperty nameProperty() {
 		return name;
 	}
@@ -581,11 +562,35 @@ public class Command extends Control implements HasDirProperty, HasCmdProperty, 
 		this.validator.setValue(validator);
 	}
 
-	public BooleanBinding getRunnabilty() {
+	public BooleanExpression getRunnabilty() {
 		return runnability;
 	}
 
 	public Map<String, StringProperty> getExtendedEnvironment() {
 		return environment;
+	}
+
+	public void addEnviroment(Map<String, StringProperty> environment) {
+		for (Entry<String, StringProperty> variable : environment.entrySet()) {
+			this.environment.put(variable.getKey(), variable.getValue());
+		}
+	}
+
+	public static interface LayoutGenerator {
+		public ATemplate generate() throws IOException;
+	}
+
+	private ObjectProperty<LayoutGenerator> layoutGenerator = new SimpleObjectProperty<>();
+
+	public ObjectProperty<LayoutGenerator> layoutGeneratorProperty() {
+		return layoutGenerator;
+	}
+
+	public void setLayoutGenerator(LayoutGenerator layoutGenerator) {
+		layoutGeneratorProperty().setValue(layoutGenerator);
+	}
+
+	public LayoutGenerator getLayoutGenerator() {
+		return layoutGeneratorProperty().getValue();
 	}
 }

@@ -1,6 +1,9 @@
 package cz.deznekcz.util;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -10,15 +13,18 @@ import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Scanner;
+import java.util.SortedMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
@@ -127,6 +133,15 @@ public class Utils {
 		return new ResourceBundle() {
 
 			@Override
+			public Locale getLocale() {
+				for (ResourceBundle resourceBundle : bundles) {
+					if (resourceBundle.getLocale() != null)
+						return resourceBundle.getLocale();
+				}
+				return null;
+			}
+
+			@Override
 			protected Object handleGetObject(String key) {
 				for (ResourceBundle resourceBundle : bundles) {
 					if (resourceBundle.containsKey(key))
@@ -181,9 +196,7 @@ public class Utils {
 
 	public static <E> java.util.List<E> iterableToList(Iterable<E> iterable) {
 		ArrayList<E> list = new ArrayList<>();
-		for (E e : iterable) {
-			list.add(e);
-		}
+		iterable.forEach(list::add);
 		return list;
 	}
 
@@ -264,6 +277,27 @@ public class Utils {
 		}
 	}
 
+	public static void stream(File in, OutputStream out) throws IOException {
+		stream(new FileInputStream(in), out);
+	}
+
+	public static void stream(File in, OutString out) throws IOException {
+		for(String line : readLinesMultiCharset(in.toURI(), null, Charset.availableCharsets())) {
+			out.appendLn(line);
+		}
+		if (out.getValue().endsWith("\n")) {
+			out.subSequence(0, out.length() - 1);
+		}
+	}
+
+	public static void stream(File in, File out) throws IOException {
+		stream(new FileInputStream(in), new FileOutputStream(out));
+	}
+
+	public static void stream(InputStream in, File out) throws IOException {
+		stream(in, new FileOutputStream(out));
+	}
+
 	public static String getStackTrace(Exception e) {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
@@ -337,12 +371,12 @@ public class Utils {
 	public static void externalExecution(String execution, OutBoolean anyError, OutString errorValue,
 			Pair<TimeUnit, Long> timeout, String... commands) throws IOException, InterruptedException, TimeoutException {
 		String s;
-		System.out.println(execution);
+//		System.out.println(execution);
 		Matcher m = Pattern.compile("\\.exe").matcher(execution);
 		m.find();
 		String appname = execution.substring(0, m.end());
 
-    	System.out.println("External execution "+appname+"\n"+execution);
+//    	System.out.println("External execution "+appname+"\n"+execution);
     	Process p = Runtime.getRuntime().exec(execution); //"cmd.exe")
 
     	if (timeout != null) {
@@ -399,32 +433,46 @@ public class Utils {
 	}
 
 	private static class Worker extends Thread {
-		  private final Process process;
-		  private Integer exit;
-		  private Worker(Process process) {
-		    this.process = process;
-		  }
-		  public void run() {
-		    try {
-		      exit = process.waitFor();
-		    } catch (InterruptedException ignore) {
-		      return;
-		    }
-		  }
+		private final Process process;
+		private Integer exit;
+		private Worker(Process process) {
+			this.process = process;
 		}
+		public void run() {
+			try {
+				exit = process.waitFor();
+			} catch (InterruptedException ignore) {
+				return;
+			}
+		}
+	}
 
-	public static String[] readLines(URI uri, Predicate<String> filter, String encoding) throws MalformedURLException, IOException {
-		Scanner sc = new Scanner(uri.toURL().openStream(), encoding);
+	public static String[] readLines(URI uri, Predicate<String> filter, Charset encoding) throws MalformedURLException, IOException {
+		Scanner sc = new Scanner(uri.toURL().openStream(), encoding.name());
 		ArrayList<String> list = new ArrayList<>();
 		String line;
+		final boolean isFilter = filter != null;
 		while(sc.hasNextLine()) {
 			line = sc.nextLine();
-			if (filter.test(line))
+			if (isFilter && filter.test(line))
 				continue;
 			list.add(line);
 		}
 		sc.close();
 		return list.toArray(new String[list.size()]);
+	}
+
+	public static String[] readLinesMultiCharset(URI uri, Predicate<String> filter, SortedMap<String, Charset> availableCharsets)  throws MalformedURLException, IOException {
+		for (Charset charset : availableCharsets.values()) {
+			try {
+				return readLines(uri, filter, charset);
+			} catch (MalformedURLException e) {
+				throw e;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		throw new IOException("Charsets not matched");
 	}
 
 	public static enum LineFilter implements Predicate<String> {
@@ -755,6 +803,30 @@ public class Utils {
 			}
 			return defaultValue;
 		}
+
+		public static String next(String pattern, String[] array, OutInteger startIndex, String defaultString) {
+			return next(Pattern.compile(pattern), 0, array, startIndex, defaultString);
+		}
+
+		public static String next(String pattern, int group, String[] array, OutInteger startIndex, String defaultString) {
+			return next(Pattern.compile(pattern), group, array, startIndex, defaultString);
+		}
+
+		public static String next(Pattern pattern, String[] array, OutInteger startIndex, String defaultString) {
+			return next(pattern, 0, array, startIndex, defaultString);
+		}
+
+		public static String next(Pattern pattern, int group, String[] array, OutInteger startIndex, String defaultString) {
+			for (; startIndex.isLess(array.length); startIndex.increment()) {
+				int index = startIndex.get();
+				String output = array[index];
+				Matcher matcher = pattern.matcher(output);
+				if (matcher.find()) {
+					return matcher.group(group);
+				}
+			}
+			return defaultString;
+		}
 	}
 
 	public static class TreeMapHandler<T> {
@@ -838,8 +910,12 @@ public class Utils {
 			return new TreeMapHandler<>(leaves, tree);
 		}
 
-		public TreeMapPath<T> put(String...keys) {
+		public TreeMapPath<T> getNode(String...keys) {
 			return new TreeMapPath<T>(keys);
+		}
+
+		public T put(T value, String...keys) {
+			return new TreeMapPath<T>(keys).value(value);
 		}
 
 		public T get(String...keys) {
@@ -868,11 +944,28 @@ public class Utils {
 			}
 		}
 
-		@SuppressWarnings("rawtypes")
+		/**
+		 * Returns leaf of keys if exists, null if path or leaf do not exist
+		 * @param keys path of tree
+		 * @return leaf of tree (null if not defined in any level of keys
+		 */
+		@SuppressWarnings("unchecked")
 		public boolean hasLeaf(String...keys) {
-			Object leaf = new TreeMapPath<T>(keys).getRoot();
-			return ( leaves.isInstance(leaf) )
-			||	(  java.util.List.class.isInstance(leaf) && !((java.util.List) leaf).isEmpty()	);
+			Objects.requireNonNull(keys, "Keys must be defined!");
+			ObservableMap<String,?> map = tree;
+			for (int i = 0; i < keys.length; i++) {
+				String key = keys[i];
+				if (map.containsKey(key)) {
+					if (i < (keys.length - 1)) {
+						map = (ObservableMap<String, ?>) map.get(key);
+					} else {
+						return true;
+					}
+				} else {
+					return false;
+				}
+			}
+			return false;
 		}
 
 		@SuppressWarnings("unchecked")
@@ -891,6 +984,22 @@ public class Utils {
 			}
 		}
 
+		@SuppressWarnings("unchecked")
+		public <E> ObservableMap<String, E> getTreeNode(String...keys) {
+			TreeMapPath<T> treePath = new TreeMapPath<>(keys);
+			Object root = treePath.getRoot();
+
+			if (root instanceof ObservableMap) {
+				return (ObservableMap<String, E>) root;
+			} else if (root == null) {
+				ObservableMap<String, E> newRoot = FXCollections.observableHashMap();
+				treePath.getParent().put(treePath.lastKey(), newRoot);
+				return newRoot;
+			} else {
+				throw new InconsistentTreeException(ObservableMap.class, root.getClass());
+			}
+		}
+
 	}
 
 	public static <T> T[] subArray(int start, T[] array, IntFunction<T[]> arrayConstructor) {
@@ -901,5 +1010,9 @@ public class Utils {
 		T[] newArray = arrayConstructor.apply(end - start + 1);
 		System.arraycopy(array, start, newArray, 0, end - start + 1);
 		return newArray;
+	}
+
+	public static <K,V> Pair<K, V> pair(K key, V value) {
+		return new Pair<>(key, value);
 	}
 }

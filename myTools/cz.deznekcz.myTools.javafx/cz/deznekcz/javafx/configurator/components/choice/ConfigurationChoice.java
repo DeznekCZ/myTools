@@ -119,7 +119,8 @@ public class ConfigurationChoice extends Choice implements HasDirProperty {
 		return openableProperty().get();
 	}
 
-	public void refresh() {
+	@Override
+	protected void refreshList() {
 		getItems().clear();
 		try {
 			getItems().addAll(

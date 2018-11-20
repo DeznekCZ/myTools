@@ -1,13 +1,18 @@
 package cz.deznekcz.javafx.configurator.components;
 
 import cz.deznekcz.javafx.configurator.components.support.AValue;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.css.PseudoClass;
+import javafx.event.EventTarget;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.Skin;
+import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -20,6 +25,7 @@ public class PasswordEntry extends AValue {
 		private BorderPane box;
 		private Label label;
 		private PasswordField value;
+		private BooleanProperty failed;
 
 		private StringProperty valueString;
 
@@ -66,6 +72,12 @@ public class PasswordEntry extends AValue {
 			valueString.addListener((o,l,n) -> {
 				value.setText(n);
 			});
+
+			failed = new SimpleBooleanProperty(false);
+			failed.addListener((o,l,n) -> {
+				value.pseudoClassStateChanged(PseudoClass.getPseudoClass("mismach"), n != null && n);
+			});
+
 		}
 
 		private void refresh() {
@@ -132,8 +144,25 @@ public class PasswordEntry extends AValue {
 		setSkin(new PasswordEntrySkin(this));
 	}
 
+	public BooleanProperty failedProperty() {
+		return ((PasswordEntrySkin) getSkin()).failed;
+	}
+
+	public boolean isFailed() {
+		return failedProperty().get();
+	}
+
+	public void setFailed(boolean failed) {
+		this.failedProperty().set(failed);
+	}
+
 	@Override
 	public void refresh() {
 
+	}
+
+	@Override
+	public EventTarget getEventTarget() {
+		return ((PasswordEntrySkin) getSkin()).value;
 	}
 }

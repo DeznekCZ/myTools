@@ -11,6 +11,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
+import cz.deznekcz.javafx.configurator.ATemplate;
 import cz.deznekcz.util.Utils;
 
 public class JavaProcess extends Process implements Runnable {
@@ -33,6 +34,7 @@ public class JavaProcess extends Process implements Runnable {
 	private File rootDirectory;
 	private boolean complete;
 	private Map<String, String> enviroment;
+	private ATemplate layout;
 
 
 	public JavaProcess(CommandInstance commandInstance) throws FileNotFoundException {
@@ -48,6 +50,7 @@ public class JavaProcess extends Process implements Runnable {
 		cmd    = commandInstance.getCmd();
 		args   = commandInstance.getArgs();
 		dir    = commandInstance.getDir();
+		layout = commandInstance.getLayout();
 
 		enviroment = new HashMap<>();
 		System.getenv().forEach(enviroment::put);
@@ -119,15 +122,26 @@ public class JavaProcess extends Process implements Runnable {
 	@Override
 	public void run() {
 		try {
-			exitValue = (int) method.invoke(
-					null, // static
-					this, // JavaProcess instance
-					Utils.subArray(
-							1, // removes first element (empty string)
-							CommandInstance.splitArguments("", args), // arguments from combined string
-							String[]::new // array constructor
-					)
-			);
+			if (layout != null) {
+				exitValue = ((CommandLayout) layout).run(
+						this, // JavaProcess instance
+						Utils.subArray(
+								1, // removes first element (empty string)
+								CommandInstance.splitArguments("", args), // arguments from combined string
+								String[]::new // array constructor
+						)
+				);
+			} else {
+				exitValue = (int) method.invoke(
+						null, // static
+						this, // JavaProcess instance
+						Utils.subArray(
+								1, // removes first element (empty string)
+								CommandInstance.splitArguments("", args), // arguments from combined string
+								String[]::new // array constructor
+						)
+				);
+			}
 			synchronized (this) {
 				complete = true;
 			}
@@ -148,6 +162,11 @@ public class JavaProcess extends Process implements Runnable {
 				complete = true;
 			}
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public <L extends ATemplate> L getLayout() {
+		return (L) layout;
 	}
 
 }

@@ -1,6 +1,10 @@
 package cz.deznekcz.javafx.configurator.components;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import cz.deznekcz.javafx.configurator.components.support.AListValue;
+import javafx.application.Platform;
 import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -10,23 +14,26 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.EventTarget;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 import javafx.scene.control.SingleSelectionModel;
 import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 
 @DefaultProperty("items")
 public class Choice extends AListValue {
 
 	private ObjectProperty<ObservableList<String>> items;
+	private ObservableList<String> noFXList;
+	private String lastValue;
 
 	protected static class ChoiceSkin implements Skin<Choice> {
 
@@ -54,8 +61,8 @@ public class Choice extends AListValue {
 			valueDecorator = new BorderPane(value);
 			box.disableProperty().bind(text.disableProperty());
 
-			label.getStyleClass().add("text-value-label");
-			value.getStyleClass().add("text-value-value");
+			label.getStyleClass().add("choice-label");
+			value.getStyleClass().add("choice-value");
 
 			label.idProperty().bind(text.idProperty().concat("_label"));
 			value.idProperty().bind(text.idProperty().concat("_value"));
@@ -204,12 +211,30 @@ public class Choice extends AListValue {
 
 	public Choice() {
 		items = new SimpleObjectProperty<>(FXCollections.observableArrayList());
-		setSkin(new ChoiceSkin(this));
 
+		noFXList = FXCollections.observableArrayList();
+		noFXList.addListener((Observable o) -> {
+			final List<String> interloop = new ArrayList<>(noFXList);
+			Platform.runLater(() -> {
+				items.get().setAll(interloop);
+				if (lastValue.length() > 0)
+					setValueOrFirst(lastValue);
+				else
+					setValueToFirst();
+			});
+		});
+
+		setSkin(new ChoiceSkin(this));
 	}
 
 	@Override
-	public void refresh() {
+	public final void refresh() {
+		lastValue = getValueSafe();
+		getItems().clear();
+		refreshList();
+	}
+
+	protected void refreshList() {
 
 	}
 
@@ -230,5 +255,14 @@ public class Choice extends AListValue {
 		} else {
 			setValueToFirst();
 		}
+	}
+
+	public ObservableList<String> getNonFXItems() {
+		return noFXList;
+	}
+
+	@Override
+	public EventTarget getEventTarget() {
+		return ((ChoiceSkin) getSkin()).value;
 	}
 }

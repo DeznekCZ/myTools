@@ -1,6 +1,8 @@
 package cz.deznekcz.javafx.configurator.components;
+
 import cz.deznekcz.javafx.configurator.components.support.AValue;
 import javafx.beans.property.StringProperty;
+import javafx.event.EventTarget;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
@@ -95,5 +97,10 @@ public class TextValue extends AValue {
 	@Override
 	public void refresh() {
 
+	}
+
+	@Override
+	public EventTarget getEventTarget() {
+		return ((TextValueSkin) getSkin()).value;
 	}
 }

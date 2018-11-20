@@ -25,6 +25,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
+import javafx.event.EventTarget;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -399,6 +400,11 @@ public class ListEntry extends AValue {
 
 	public Predicate<String> getValidator() {
 		return validatorProperty().getValue();
+	}
+
+	@Override
+	public EventTarget getEventTarget() {
+		return ((ListEntrySkin) getSkin()).content;
 	}
 
 }

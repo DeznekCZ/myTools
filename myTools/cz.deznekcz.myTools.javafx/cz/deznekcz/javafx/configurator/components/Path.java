@@ -18,6 +18,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
+import javafx.event.EventTarget;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
@@ -255,5 +256,10 @@ public abstract class Path extends AValue {
 	@Override
 	public void refresh() {
 		((PathSkin) getSkin()).refresh();
+	}
+
+	@Override
+	public EventTarget getEventTarget() {
+		return ((PathSkin) getSkin()).value;
 	}
 }

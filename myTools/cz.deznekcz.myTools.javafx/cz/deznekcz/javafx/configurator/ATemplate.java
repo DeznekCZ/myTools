@@ -1,16 +1,14 @@
 package cz.deznekcz.javafx.configurator;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.Function;
@@ -25,12 +23,9 @@ import cz.deznekcz.javafx.configurator.components.support.AValue;
 import cz.deznekcz.javafx.configurator.components.support.HasArgsProperty;
 import cz.deznekcz.javafx.configurator.components.support.HasCmdProperty;
 import cz.deznekcz.javafx.configurator.components.support.HasDirProperty;
-import cz.deznekcz.javafx.configurator.components.support.ReadOnlyValue;
-import cz.deznekcz.javafx.configurator.components.support.Storeable;
+import cz.deznekcz.javafx.configurator.components.support.ValueLink;
 import cz.deznekcz.reference.Out;
-import cz.deznekcz.util.LiveStorage;
 import cz.deznekcz.util.LiveStorage.EntryValue;
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.StringExpression;
@@ -43,36 +38,54 @@ import javafx.collections.ObservableMap;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
 import javafx.scene.control.Tab;
+import javafx.scene.control.Toggle;
 import javafx.util.Pair;
 
 public abstract class ATemplate implements Initializable  {
 
-    protected <T extends ATemplate> T loadTemplate(ATemplate rootTemplate, String templatePackage) throws IOException {
+	private static final String VALUE_PROPERTY = "value";
+	public static ATemplate IF = new ATemplate() {
+
+		@Override
+		public void initialize(URL location, ResourceBundle resources) {
+
+		}
+
+		@Override
+		protected void lateInitialization() {
+
+		}
+
+		@Override
+		protected void removeBindings() {
+
+		}
+	};
+
+    protected <T extends ATemplate> T loadTemplate(ATemplate rootTemplate, String templatePackage, String name) throws Exception {
     	parent = rootTemplate;
     	setup = rootTemplate.setup;
 
-		URL fxmlFile = new File("config\\" + setup.getStorage().getId() + "\\" + templatePackage + "\\Layout.fxml").toURI().toURL();
-
-		FXMLLoader loader = new FXMLLoader(fxmlFile, setup.getResourceBundle());
+		FXMLLoader loader = new FXMLLoader(
+				ClassLoader.getSystemResource(
+						rootTemplate.getClass().getPackage().getName().replace('.','/')+"/"+templatePackage+"/Layout.fxml"
+				),
+				setup.getResourceBundle()
+		);
 		loader.load();
 
-		T template = loader.<T>getController();
+		final T template = loader.<T>getController();
 		template.setup = setup;
 		template.parent = this;
-		template.id = Bindings.concat(templatePackage + ".", template.root.textProperty(), ".");
+		template.root.setText(name);
+		template.id = Bindings.concat(templatePackage + ".", template.root.textProperty());
 		template.lateInitialization();
-		id.addListener(o -> template.readStored());
+		template.id.addListener(o -> template.readStored());
+		template.readStored();
 		return template;
     }
-
-    public ATemplate() {
-        values = new ArrayList<>();
-		if (this instanceof ASetup)
-			setup = (ASetup) this;
-
-		parent = this;
-	}
 
     @FXML
     protected Tab root;
@@ -80,32 +93,96 @@ public abstract class ATemplate implements Initializable  {
 	protected ASetup setup;
 	protected StringExpression id;
 
-    protected List<Storeable> values;
+    protected Map<String, List<AValue>> values;
 
-    protected abstract void lateInitialization();
+    public ATemplate() {
+        values = new HashMap<>();
+		if (this instanceof ASetup)
+			setup = (ASetup) this;
 
-    protected void readStored() {
-    	for (Storeable value : values) {
-        	if (value != null) {
-	            String newValue =
-	            		this != setup
-	            		? setup.storage.getValue(getId() + value.getId())
-	            		: setup.storage.getValue(value.getId());
-	            if (newValue != null && newValue.length() > 0) value.setValue(newValue);
-	            value.valueProperty().addListener(new EntryValue<String>(setup.storage, value.getId())); // vymazat pùvodní !!!!
-        	}
-        }
+		parent = this;
 	}
 
-    private String getId() {
-    	return this != setup ? (id.get() + ".") : "";
+    protected abstract void lateInitialization() throws Exception;
+
+	protected void readStored() {
+    	for (String property : values.keySet()) {
+    		for (AValue value : values.get(property)) {
+            	if (value != null) {
+            		String idKey = (this != setup                    ? (getId() + "." + value.getId()) : value.getId())
+    	            		     + (!property.equals(VALUE_PROPERTY) ? (":" + property)                : "");
+    	            String newValue = setup.storage.getValue(idKey);
+    	            ObservableValue<?> propertyValue = value.getProperty(property);
+
+    	            if (propertyValue instanceof Property && !((Property<?>) propertyValue).isBound()) {
+						try {
+							Class<?> returnType = propertyValue.getClass().getMethod("getValue").getReturnType();
+							if (returnType == String.class) {
+								if (newValue != null && newValue.length() > 0) {
+									value.setValue(newValue);
+								}
+							} else if (isSubClass(returnType, Number.class)) {
+								Method valueOf = returnType.getMethod("valueOf", String.class);
+			    	            Method setValue = propertyValue.getClass().getMethod("setValue", Number.class);
+
+
+								if (newValue != null && newValue.length() > 0 &&
+										propertyValue instanceof Property && !((Property<?>) propertyValue).isBound()) {
+									try {
+										setValue.invoke(propertyValue, valueOf.invoke(returnType, newValue));
+									} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+										Dialogs.EXCEPTION.show(e);
+									}
+								}
+							} else {
+								Method valueOf = returnType.getMethod("valueOf", String.class);
+			    	            Method setValue = propertyValue.getClass().getMethod("setValue", returnType);
+
+
+								if (newValue != null && newValue.length() > 0) {
+									try {
+										setValue.invoke(propertyValue, valueOf.invoke(returnType, newValue));
+									} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+										Dialogs.EXCEPTION.show(e);
+									}
+								}
+							}
+
+						} catch (NoSuchMethodException | SecurityException e) {
+							Dialogs.EXCEPTION.show(e);
+						}
+    	            }
+
+    	            EntryValue.setup(propertyValue, setup.storage, idKey);
+            	}
+            }
+		}
 	}
 
-	protected final void storedValues(Storeable...values) {
-        this.values.addAll(Arrays.asList(values));
+    private boolean isSubClass(Class<?> tested, Class<?> accepted) {
+		try {
+			tested.asSubclass(accepted);
+			return true;
+		} catch (ClassCastException e) {
+			return false;
+		}
+	}
+
+	protected String getId() {
+    	return this != setup ? id.get() : "";
+	}
+
+	protected final void storedValues(AValue...values) {
+		storedValues(VALUE_PROPERTY, values);
     }
 
-	protected final void format(Property<String> result) {
+	protected final void storedValues(String property, AValue...valueArray) {
+		List<AValue> valueList = this.values.getOrDefault(property, new ArrayList<>());
+		valueList.addAll(Arrays.asList(valueArray));
+		this.values.put(property, valueList);
+    }
+
+	public final void format(Property<String> result) {
         format(result, result.getValue());
     }
 
@@ -116,13 +193,35 @@ public abstract class ATemplate implements Initializable  {
         }
     }
 
-    public final void format(Property<String> result, String format, ReadOnlyValue...values) {
+    /**
+     *
+     * @param result Result property
+     * <br>&nbsp;
+     * @param format format including references:
+     * <br>&nbsp;&nbsp;${variableName[:property][#controllerMethod[@secondArgument[:property]]]}
+     * <br>&nbsp;&nbsp;&nbsp;- variableName, secondArgument = name of variable
+     * <br>&nbsp;&nbsp;&nbsp;- property = value, dir, args, cmd
+     * <br>&nbsp;&nbsp;&nbsp;- controllerMethod = method name declared in final or parent controller or in {@link ATemplate}
+     * <br>&nbsp;
+     * <br>&nbsp;&nbsp;Controller methods:
+     * <br>&nbsp;&nbsp;&nbsp;- {@link #toLowerCase(String)} converts text to upper case
+     * <br>&nbsp;&nbsp;&nbsp;- {@link #toUpperCase(String)} converts text to lower case
+     * <br>&nbsp;&nbsp;&nbsp;- {@link #ifTrue(String, String)} returns second argument while first matches "true" (ignore case)
+     * <br>&nbsp;&nbsp;&nbsp;- {@link #ifFalse(String, String)} returns second argument while first matches "false" (ignore case)
+     * <br>&nbsp;&nbsp;&nbsp;- {@link #notNull(String, String)} returns second argument while first is not null and text length is higher than 0
+     * <br>&nbsp;&nbsp;&nbsp;- {@link #isNull(String, String)} returns second argument while first is null and text length equals to 0
+     * <br>&nbsp;&nbsp;&nbsp;- {@link #getString(String)} returns string from bundle
+     * <br>&nbsp;&nbsp;&nbsp;- {@link #quoted(String)} returns string decorated with ""
+     * <br>&nbsp;
+     * @param values listen-able values referenced by index ${[0-9]+}
+     */
+    public final void format(Property<String> result, String format, AValue...values) {
     	if (format != null) {
 	        List<Object> texts = new ArrayList<>(values != null ? values.length * 2 : 10);
-	        Pattern pattern = Pattern.compile("\\$(\\$|\\{([0-9]+|((_|)[0-9a-zA-Z])[_0-9a-zA-Z]+(:((value)|(dir)|(args)|(cmd)))?(#((_+|)[0-9a-zA-Z])[_0-9a-zA-Z]*(@((_|)[0-9a-zA-Z])[_0-9a-zA-Z]+(:((value)|(dir)|(args)|(cmd)))?)?)?)})");
+	        Pattern pattern = Pattern.compile("\\$(\\$|\\{([0-9]+|[_a-zA-Z][_0-9a-zA-Z]*(:[_a-zA-Z][_0-9a-zA-Z]*)?(#[_a-zA-Z][_0-9a-zA-Z]*(@[_a-zA-Z][_0-9a-zA-Z]*(:[_a-zA-Z][_0-9a-zA-Z]+)?)?)?)})");
 	        Matcher matcher = pattern.matcher(format);
 
-	        Pattern idPattern = Pattern.compile("[_0-9a-zA-Z]+");
+	        Pattern idPattern = Pattern.compile("[_a-zA-Z][_0-9a-zA-Z]*");
 
 	        int lastEnd = 0;
 	        while(matcher.find()) {
@@ -141,7 +240,7 @@ public abstract class ATemplate implements Initializable  {
 	            else {
 	                Matcher idMatcher = idPattern.matcher(match);
 	                String id = idMatcher.find() ? idMatcher.group() : "";
-	                ReadOnlyValue value = getVariable(id);
+	                AValue value = getVariable(id);
 
 	                if (value == null) {
 	                    Dialogs.EXCEPTION.show(new Exception("Value ID: \"" + getClass().getName() + "." + id + "\" not found"));
@@ -162,7 +261,7 @@ public abstract class ATemplate implements Initializable  {
 	                            if ((match.charAt(idMatcher.end()) == '@') && idMatcher.find()) {
 	                                type = "(String,String)";
 	                                String argumentId = idMatcher.group();
-	                                ReadOnlyValue argumentValue = getVariable(argumentId);
+	                                AValue argumentValue = getVariable(argumentId);
 	                                if (argumentValue == null) {
 	                                    Dialogs.EXCEPTION.show(new Exception("Parameter value ID: \"" + getClass().getName() + "." + argumentId + "\" for method: \"String " + methodName + "(String,ReadOnlyValue)\" for format ID: \"" + id + "\" not found"));
 	                                } else {
@@ -235,7 +334,7 @@ public abstract class ATemplate implements Initializable  {
 	                }
 	            }
 	        }
-	        if (lastEnd <= format.length()) texts.add(format.substring(lastEnd));
+	        if (lastEnd < format.length()) texts.add(format.substring(lastEnd));
 
 	        result.bind(Bindings.concat(texts.toArray()));
     	}
@@ -257,11 +356,11 @@ public abstract class ATemplate implements Initializable  {
         }
 	}
 
-	public boolean getIfDefinedProperty(String id, String match, Matcher idMatcher, ReadOnlyValue value, Out<ObservableValue<String>> result) {
+	public boolean getIfDefinedProperty(String id, String match, Matcher idMatcher, AValue value, Out<ObservableValue<String>> result) {
         result.set(value.valueProperty());
         if (match.charAt(idMatcher.end()) == ':') {
             String property = idMatcher.find() ? idMatcher.group() : "";
-            if (property.equals("value")) {
+            if (property.equals(VALUE_PROPERTY)) {
                 result.set( value.valueProperty() );
             } else if (property.equals("dir") && value instanceof HasDirProperty) {
                 result.set( ((HasDirProperty) value).dirProperty() );
@@ -278,14 +377,18 @@ public abstract class ATemplate implements Initializable  {
         return false;
     }
 
-    public final ReadOnlyValue getVariable(String fieldName) {
+    public AValue getVariable(String fieldName) {
         try {
             Field field = getClass().getDeclaredField(fieldName);
             boolean accesible = field.isAccessible();
             field.setAccessible(true);
             Object value = field.get(this);
             field.setAccessible(accesible);
-            return (ReadOnlyValue) value;
+            if (value instanceof Toggle) {
+            	return AValue.toggleReference((Toggle) value);
+            } else {
+            	return (AValue) value;
+            }
         } catch (IllegalArgumentException | IllegalAccessException | SecurityException e) {
             Dialogs.EXCEPTION.show(new Exception("Illegal access: " + getClass().getName() + "." + fieldName, e));
         } catch (NoSuchFieldException e) {
@@ -361,8 +464,19 @@ public abstract class ATemplate implements Initializable  {
             list.getItems().clear();
     }
 
+    public final Tab getRoot() {
+        return root;
+    }
+
+    protected final void links(ValueLink...links) {
+    	for (ValueLink valueLink : links) {
+			valueLink.init(this);
+		}
+    }
+
     //## Converter functions ##
 
+    @Deprecated
     public String boolTo(String bool, String value) {
         return Boolean.parseBoolean(bool) ? value : "" ;
     }
@@ -376,7 +490,11 @@ public abstract class ATemplate implements Initializable  {
     }
 
     public String notNull(String compared, String value) {
-        return compared != null && compared.length() > 0 ? value : "" ;
+        return (compared != null && compared.length() >  0) ? value : "" ;
+    }
+
+    public String isNull(String compared, String value) {
+        return (compared == null || compared.length() == 0) ? value : "" ;
     }
 
     public String toUpperCase(String string) {
@@ -391,11 +509,13 @@ public abstract class ATemplate implements Initializable  {
         return string == null ? "\"\"" : ("\"" + string + "\"");
     }
 
+    public String dequoted(String string) {
+        return string == null ? "" : string.substring(string.charAt(0) == '"' ? 1 : 0, string.length() - (string.charAt(string.length() - 1) == '"' ? 1 : 0));
+    }
+
     public String getString(String string) {
         return setup.getResourceBundle().getString(string);
     }
 
-    public final Tab getRoot() {
-        return root;
-    }
+	protected abstract void removeBindings();
 }

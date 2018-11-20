@@ -38,7 +38,11 @@ public class DirectoryPath extends Path {
 	public void selectPath(ActionEvent event) {
 		DirectoryChooser chooser = new DirectoryChooser();
 		chooser.setTitle(getText());
-		chooser.setInitialDirectory(getLast());
+		if (getValueSafe().length() == 0) {
+			chooser.setInitialDirectory(getLast());
+		} else {
+			chooser.setInitialDirectory(new File(getValue()));
+		}
 		java.io.File result = chooser.showDialog(null);
 		if (result != null) {
 			setValue(result.getPath());

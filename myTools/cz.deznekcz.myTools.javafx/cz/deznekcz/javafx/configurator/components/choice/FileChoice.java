@@ -12,6 +12,7 @@ import cz.deznekcz.javafx.configurator.components.Command;
 import cz.deznekcz.javafx.configurator.components.path.FilePath;
 import cz.deznekcz.javafx.configurator.components.path.WebPath;
 import cz.deznekcz.javafx.configurator.components.support.HasDirProperty;
+import cz.deznekcz.util.ITryDo;
 import cz.deznekcz.util.Utils;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -193,28 +194,31 @@ public class FileChoice extends Choice implements HasDirProperty {
 		return dirProperty().get();
 	}
 
-	public void refresh() {
+	@Override
+	protected void refreshList() {
 		((FileChoiceSkin) getSkin()).extensionString.setValue(Utils.concat(";", ((FileChoiceSkin) getSkin()).extensions));
-		getItems().clear();
-		try {
-			getItems().addAll(
-				Arrays.asList(
-					new File(getDir()).listFiles()
-				)
-				.stream()
-				.filter(File::isFile)
-				.map(File::getName)
-				.filter(fname ->
-					getExtensions().stream()
-							// Convert to regex
-							.map(ext -> ext.replaceAll("[.]", "[.]").replaceAll("[*]", ".*"))
-							// Apply regex
-							.anyMatch(fname::matches)
-				)
-				.collect(Collectors.toList())
-			);
-		} catch (Exception e) {
-		}
+		Configurator.getService().execute(() -> {
+			try {
+				getNonFXItems().setAll(
+					Arrays.asList(
+						new File(getDir()).listFiles()
+					)
+					.stream()
+					.filter(File::isFile)
+					.map(File::getName)
+					.filter(fname ->
+						getExtensions().stream()
+								// Convert to regex
+								.map(ext -> ext.replaceAll("[.]", "[.]").replaceAll("[*]", ".*"))
+								// Apply regex
+								.anyMatch(fname::matches)
+					)
+					.collect(Collectors.toList())
+				);
+			} catch (Exception e) {
+				getNonFXItems().clear();
+			}
+		});
 	}
 
 	public ObservableList<String> getExtensions() {

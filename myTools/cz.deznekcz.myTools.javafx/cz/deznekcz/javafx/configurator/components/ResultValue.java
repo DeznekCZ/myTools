@@ -7,6 +7,7 @@ import cz.deznekcz.javafx.configurator.ASetup;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Configurator.result;
 import cz.deznekcz.javafx.configurator.components.result.ResultValueImage;
+import cz.deznekcz.javafx.configurator.components.support.AValue;
 import cz.deznekcz.javafx.configurator.components.support.Refreshable;
 import cz.deznekcz.util.ForEach;
 import cz.deznekcz.util.Utils;
@@ -20,6 +21,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventTarget;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -30,9 +32,9 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 
-public class ResultValue extends Control implements Refreshable {
+public class ResultValue extends AValue {
 
-	private static class CheckValueSkin implements Skin<ResultValue> {
+	private static class ResultValueSkin implements Skin<ResultValue> {
 
 		private ResultValue text;
 		private BorderPane box;
@@ -44,6 +46,8 @@ public class ResultValue extends Control implements Refreshable {
 		private ResultValueImage noResultValue;
 		private ResultValueImage invalidFunctionValue;
 
+		private StringProperty value;
+
 		private StringProperty tooltipText;
 		private StringProperty fullTooltip;
 
@@ -51,7 +55,7 @@ public class ResultValue extends Control implements Refreshable {
 		private Property<Supplier<Configurator.result>> onValidation;
 		private LongProperty timePropterty;
 
-		public CheckValueSkin(ResultValue text) {
+		public ResultValueSkin(ResultValue text) {
 			this.text = text;
 			text.getStyleClass().add("text-value");
 			text.setTooltip(new Tooltip());
@@ -124,6 +128,24 @@ public class ResultValue extends Control implements Refreshable {
 				) {
 				expr.addListener(this::listener);
 			}
+
+			value = new SimpleStringProperty(resultPropterty.get().name());
+			value.addListener((o,l,n) -> {
+				result r = result.valueOf(n);
+				if (r != null) {
+					if (!r.name().equals(value.getValue())) resultPropterty.set(r);
+				} else {
+					value.set(result.IF.name());
+				}
+			});
+
+			resultPropterty.addListener((o,l,n) -> {
+				if (n != null) {
+					if (!resultPropterty.get().name().equals(value.getValue())) value.set(n.name());
+				} else {
+					resultPropterty.set(result.IF);
+				}
+			});
 		}
 
 		private void listener(ObservableValue<? extends String> o, String l, String n) {
@@ -176,7 +198,7 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public StringProperty textProperty() {
-		return ((CheckValueSkin) getSkin()).label.textProperty();
+		return ((ResultValueSkin) getSkin()).label.textProperty();
 	}
 
 	public String getText() {
@@ -188,7 +210,7 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public StringProperty helpPropterty() {
-		return ((CheckValueSkin) getSkin()).tooltipText;
+		return ((ResultValueSkin) getSkin()).tooltipText;
 	}
 
 	public void setHelp(String prompt) {
@@ -200,7 +222,7 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public StringProperty helpOkPropterty() {
-		return ((CheckValueSkin) getSkin()).okValue.tooltipTextProperty();
+		return ((ResultValueSkin) getSkin()).okValue.tooltipTextProperty();
 	}
 
 	public void setHelpOk(String prompt) {
@@ -212,7 +234,7 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public StringProperty helpFailPropterty() {
-		return ((CheckValueSkin) getSkin()).failValue.tooltipTextProperty();
+		return ((ResultValueSkin) getSkin()).failValue.tooltipTextProperty();
 	}
 
 	public void setHelpFail(String prompt) {
@@ -224,7 +246,7 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public StringProperty helpInvalidFunctionPropterty() {
-		return ((CheckValueSkin) getSkin()).invalidFunctionValue.tooltipTextProperty();
+		return ((ResultValueSkin) getSkin()).invalidFunctionValue.tooltipTextProperty();
 	}
 
 	public void setHelpInvalidFunction(String prompt) {
@@ -236,7 +258,7 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public StringProperty helpNoResultPropterty() {
-		return ((CheckValueSkin) getSkin()).noResultValue.tooltipTextProperty();
+		return ((ResultValueSkin) getSkin()).noResultValue.tooltipTextProperty();
 	}
 
 	public void setHelpNoResult(String prompt) {
@@ -248,11 +270,11 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public String getHelpFull() {
-		return ((CheckValueSkin) getSkin()).fullTooltip.get();
+		return ((ResultValueSkin) getSkin()).fullTooltip.get();
 	}
 
 	public Property<Supplier<Configurator.result>> validatorProperty() {
-		return ((CheckValueSkin) getSkin()).onValidation;
+		return ((ResultValueSkin) getSkin()).onValidation;
 	}
 
 	public void setValidator(Supplier<Configurator.result> validation) {
@@ -264,7 +286,7 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public Property<result> resultProperty() {
-		return ((CheckValueSkin) getSkin()).resultPropterty;
+		return ((ResultValueSkin) getSkin()).resultPropterty;
 	}
 
 	public result getResult() {
@@ -276,7 +298,7 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public LongProperty timeProperty() {
-		return ((CheckValueSkin) getSkin()).timePropterty;
+		return ((ResultValueSkin) getSkin()).timePropterty;
 	}
 
 	public long getTime() {
@@ -300,7 +322,9 @@ public class ResultValue extends Control implements Refreshable {
 	}
 
 	public ResultValue() {
-		setSkin(new CheckValueSkin(this));
+		setSkin(new ResultValueSkin(this));
+		setFocusTraversable(false);
+		register();
 	}
 
 	public BooleanBinding isBinding(result resultValue) {
@@ -334,5 +358,15 @@ public class ResultValue extends Control implements Refreshable {
 		}
 
 		return found;
+	}
+
+	@Override
+	public Property<String> valueProperty() {
+		return ((ResultValueSkin) getSkin()).value;
+	}
+
+	@Override
+	public EventTarget getEventTarget() {
+		return null;
 	}
 }

@@ -12,6 +12,7 @@ import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.Unnecesary;
 import cz.deznekcz.javafx.configurator.components.Choice;
 import cz.deznekcz.javafx.configurator.components.support.HasDirProperty;
+import cz.deznekcz.util.ITryDo;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -27,22 +28,6 @@ import javafx.scene.input.ContextMenuEvent;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class PathChoice extends Choice implements HasDirProperty {
-
-	public static class PathSelectionModel extends SingleSelectionModel<String> {
-
-		private String lastSelected = "";
-
-		@Override
-		protected String getModelItem(int index) {
-			return lastSelected;
-		}
-
-		@Override
-		protected int getItemCount() {
-			return 1;
-		}
-
-	}
 
 	private boolean selectFromRoot;
 
@@ -113,35 +98,32 @@ public class PathChoice extends Choice implements HasDirProperty {
 	}
 
 	@Override
-	public void refresh() {
-		getItems().clear();
-		try {
-			if (selectFromRoot) {
-				getItems().addAll(
-						Arrays.asList(
-							File.listRoots()
-						)
-						.stream()
-						.map(File::getAbsolutePath)
-						.map(string -> string.substring(0, 1))
-						.collect(Collectors.toList())
-					);
-			} else {
-				getItems().addAll(
-						Arrays.asList(
-							new File(getDir()).listFiles()
-						)
-						.stream()
-						.map(File::getName)
-						.collect(Collectors.toList())
-					);
+	protected void refreshList() {
+		Configurator.getService().execute(() -> {
+			try {
+				if (selectFromRoot) {
+					getNonFXItems().setAll(
+							Arrays.asList(
+								File.listRoots()
+							)
+							.stream()
+							.map(File::getAbsolutePath)
+							.map(string -> string.substring(0, 1))
+							.collect(Collectors.toList())
+						);
+				} else {
+					getNonFXItems().setAll(
+							Arrays.asList(
+								new File(getDir()).listFiles()
+							)
+							.stream()
+							.map(File::getName)
+							.collect(Collectors.toList())
+						);
+				}
+			} catch (Exception e) {
+				getNonFXItems().clear();
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void wantSelect(ContextMenuEvent event) {
-		Dialogs.EXCEPTION.show(new NotImplementedException());
+		});
 	}
 }

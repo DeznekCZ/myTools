@@ -15,12 +15,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.deznekcz.javafx.components.Dialogs;
+import cz.deznekcz.javafx.configurator.ATemplate;
 import cz.deznekcz.javafx.configurator.Configurator;
 import cz.deznekcz.javafx.configurator.components.Command;
+import cz.deznekcz.javafx.configurator.components.Command.LayoutGenerator;
+import cz.deznekcz.javafx.configurator.components.support.ValueLink;
 import cz.deznekcz.reference.Out;
 import cz.deznekcz.reference.OutArray;
 import cz.deznekcz.reference.OutBoolean;
@@ -28,6 +33,8 @@ import cz.deznekcz.reference.OutString;
 import cz.deznekcz.util.Builder;
 import cz.deznekcz.util.Utils;
 import javafx.application.Platform;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
@@ -37,6 +44,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ContextMenu;
@@ -118,6 +126,13 @@ public class CommandInstance extends Thread {
 
 	private Map<String,String> enviroment;
 
+	private Consumer<String> outputConsumer;
+	private Consumer<String> errorConsumer;
+	private Supplier<String> inputSupplier;
+	private ATemplate layout;
+	private LayoutGenerator layoutGenerator;
+	private ProcessBuilder processBuilder;
+
 	public Map<String, String> getEnviroment() {
 		return enviroment;
 	}
@@ -130,9 +145,21 @@ public class CommandInstance extends Thread {
 		this.dir = command.getDir();
 		this.state = Out.init(Configurator.command.STATE_RUN);
 		this.fxState = this.state.fxThread();
-		this.method = (command.isJavaFunction() ? ((JavaRunnability) command.getRunnabilty()).getMethod() : null);
+		this.method = (command.isJavaFunction() && !command.isUsingLayout() ? ((JavaRunnability) command.getRunnabilty()).getMethod() : null);
+		this.layoutGenerator = command.getLayoutGenerator();
 		this.enviroment = new HashMap<>();
 		this.command.getExtendedEnvironment().forEach((key,property) -> this.enviroment.put(key,property.getValue()));
+
+		try {
+			this.standartOutputFile = File.createTempFile(command.getId() + ".commandOutput", ".log");
+			this.standartOutputFile.deleteOnExit();
+			this.standartInputFile = File.createTempFile(command.getId() + ".commandInput", ".log");
+			this.standartInputFile.deleteOnExit();
+			this.standartErrorFile = File.createTempFile(command.getId() + ".commandError", ".log");
+			this.standartErrorFile.deleteOnExit();
+		} catch (IOException e1) {
+			Dialogs.EXCEPTION.show(e1, Configurator.command.NO_LOG_FILE.value(node.getText()));
+		}
 
 		node = new RadioButton();
 		node.textProperty().bind(Bindings.concat(
@@ -147,17 +174,6 @@ public class CommandInstance extends Thread {
 		node.setTextAlignment(TextAlignment.LEFT);
 		node.setAlignment(Pos.CENTER_LEFT);
 		node.getStyleClass().add("command-instance-button");
-
-		try {
-			this.standartOutputFile = File.createTempFile("commandOutput", ".log");
-			this.standartOutputFile.deleteOnExit();
-			this.standartInputFile = File.createTempFile("commandInput", ".log");
-			this.standartInputFile.deleteOnExit();
-			this.standartErrorFile = File.createTempFile("commandError", ".log");
-			this.standartErrorFile.deleteOnExit();
-		} catch (IOException e1) {
-			Dialogs.EXCEPTION.show(e1, Configurator.command.NO_LOG_FILE.value(node.getText()));
-		}
 
 		ContextMenu contextMenu = new ContextMenu(OutArray.from(
 				Builder.create(new MenuItem())
@@ -178,14 +194,118 @@ public class CommandInstance extends Thread {
 		node.setContextMenu(contextMenu);
 
 		if (command.isRunnable()) {
-			tab = new Tab();
-			tab.textProperty().bind(Bindings.concat(
-					index + ": ", command.getInstancesStage().titleProperty(),
-					" ", OutString.bindFormat(
-							Configurator.command.STATE,
-							(Out<?>) fxState.bindTransform(OutString::init, (cmd) -> cmd.value())
-						)
-					));
+			if (command.getLayoutGenerator() != null) {
+				try {
+					layout = this.layoutGenerator.generate();
+					CommandLayout controller = (CommandLayout) layout;
+					controller.setCommand(this);
+					outputConsumer = controller.getOutputConsumer();
+					errorConsumer = controller.getErrorConsumer();
+					inputSupplier = controller.getInputSupplier();
+
+					cmdSend = controller.getEnterButton();
+					cmdLine = controller.getCommandLine();
+
+					tab = layout.getRoot();
+				} catch (IOException e) {
+					Dialogs.EXCEPTION.show(e);
+				}
+
+			} else {
+				tab = new Tab();
+				tab.textProperty().bind(Bindings.concat(
+						index + ": ", command.getInstancesStage().titleProperty(),
+						" ", OutString.bindFormat(
+								Configurator.command.STATE,
+								(Out<?>) fxState.bindTransform(OutString::init, (cmd) -> cmd.value())
+							)
+						));
+
+
+				if (command.getCommandsMenu() != null) {
+					menu = command.getCommandsMenu();
+
+					if (menu.getItems().size() == 1) {
+						menu.getItems().add(new SeparatorMenuItem());
+					}
+
+					item = new MenuItem();
+					item.textProperty().bind(
+							Bindings.concat(
+									tab.textProperty(),
+									" ",
+									Configurator.command.ARGS,
+									String.join("\n", splitArguments(args))
+									)
+							);
+					item.setMnemonicParsing(false);
+					menu.getItems().add(item);
+				}
+
+				outputTextArea = new TextArea();
+				outputTextArea.setEditable(false);
+				outputTextArea.setStyle("-fx-font-family: monospace;");
+				outputConsumer = outputTextArea::appendText;
+
+				errorTextArea = new TextArea();
+				errorTextArea.setEditable(false);
+				errorTextArea.setStyle("-fx-font-family: monospace; -fx-text-fill: red; ");
+				errorTextArea.setPrefHeight(200);
+				errorConsumer = errorTextArea::appendText;
+
+				BorderPane logs = new BorderPane();
+				logs.setCenter(outputTextArea);
+				logs.setBottom(errorTextArea);
+
+				cmdExportButton = new Button(Configurator.command.EXPORT_LOG.value());
+				cmdExportButton.setOnAction(this::saveLog);
+//						(event) -> {
+//					if (Dialogs.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
+//							ButtonType.YES, Utils.array(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL)) == ButtonType.YES) {
+//						saveLog(null);
+//					}
+//				});
+				cmdExportButton.disableProperty().bind(new BooleanBinding(){
+					{
+						bind(fxState);
+					}
+					@Override
+					protected boolean computeValue() {
+						return Configurator.command.STATE_RUN == fxState.get();
+					}
+				});
+
+				cmdInterruptButton = new Button(Configurator.command.INTERRUPT.value());
+				cmdInterruptButton.setOnAction((event) -> {
+					if (doInterrupt()) exitInstance(Force.INTERRUPT);
+				});
+				cmdInterruptButton.disableProperty().bind(new BooleanBinding(){
+					{
+						bind(fxState);
+					}
+					@Override
+					protected boolean computeValue() {
+						return Configurator.command.STATE_RUN != fxState.get();
+					}
+				});
+
+				cmdSend = new Button(Configurator.command.SEND.value());
+				cmdLine = new TextField();
+				cmdLine.setOnKeyPressed((event) -> {
+					if (event.getCode() == KeyCode.ENTER) cmdSend.getOnAction().handle(null);
+				});
+
+				HBox cmdBox = new HBox(cmdLine, cmdSend, cmdInterruptButton, cmdExportButton);
+				cmdBox.getStyleClass().add("parameters");
+				HBox.setHgrow(cmdLine, Priority.ALWAYS);
+
+				commandPane = new BorderPane();
+				commandPane.setCenter(logs);
+				commandPane.setBottom(cmdBox);
+
+				tab.setContent(commandPane);
+			}
+
 			tab.setOnCloseRequest((e) -> {
 				if (!exitInstance(Force.USER_INTERRUPT)) e.consume();
 			});
@@ -202,155 +322,174 @@ public class CommandInstance extends Thread {
 				Configurator.getCtrl().selectCommand(tab);
 			});
 
-			if (command.getCommandsMenu() != null) {
-				menu = command.getCommandsMenu();
-
-				if (menu.getItems().size() == 1) {
-					menu.getItems().add(new SeparatorMenuItem());
-				}
-
-				item = new MenuItem();
-				item.textProperty().bind(
-						Bindings.concat(
-								tab.textProperty(),
-								" ",
-								Configurator.command.ARGS,
-								String.join("\n", splitArguments(args))
-								)
-						);
-				item.setMnemonicParsing(false);
-				menu.getItems().add(item);
-			}
-
-			outputTextArea = new TextArea();
-			outputTextArea.setEditable(false);
-			outputTextArea.setStyle("-fx-font-family: monospace;");
-
-			errorTextArea = new TextArea();
-			errorTextArea.setEditable(false);
-			errorTextArea.setStyle("-fx-font-family: monospace; -fx-fill: red; ");
-			errorTextArea.setPrefHeight(200);
-
-			BorderPane logs = new BorderPane();
-			logs.setCenter(outputTextArea);
-			logs.setBottom(errorTextArea);
-
-			cmdExportButton = new Button(Configurator.command.EXPORT_LOG.value());
-			cmdExportButton.setOnAction((event) -> {
-				if (Dialogs.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
-						ButtonType.YES, Utils.array(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL)) == ButtonType.YES) {
-					saveLog(null);
-				}
-			});
-			cmdExportButton.disableProperty().bind(new BooleanBinding(){
-				{
-					bind(fxState);
-				}
-				@Override
-				protected boolean computeValue() {
-					return Configurator.command.STATE_RUN == fxState.get();
-				}
-			});
-
-			cmdInterruptButton = new Button(Configurator.command.INTERRUPT.value());
-			cmdInterruptButton.setOnAction((event) -> {
-				if (doInterrupt()) exitInstance(Force.INTERRUPT);
-			});
-			cmdInterruptButton.disableProperty().bind(new BooleanBinding(){
-				{
-					bind(fxState);
-				}
-				@Override
-				protected boolean computeValue() {
-					return Configurator.command.STATE_RUN != fxState.get();
-				}
-			});
-
-			cmdSend = new Button(Configurator.command.SEND.value());
-			cmdLine = new TextField();
-			cmdLine.setOnKeyPressed((event) -> {
-				if (event.getCode() == KeyCode.ENTER) cmdSend.getOnAction().handle(null);
-			});
-
-			HBox cmdBox = new HBox(cmdLine, cmdSend, cmdInterruptButton, cmdExportButton);
-			cmdBox.getStyleClass().add("parameters");
-			HBox.setHgrow(cmdLine, Priority.ALWAYS);
-
-			commandPane = new BorderPane();
-			commandPane.setCenter(logs);
-			commandPane.setBottom(cmdBox);
-
-			tab.setContent(commandPane);
-
-			index++;
 			start();
+			index++;
 		} else {
 			Dialogs.EXCEPTION.show(new IllegalAccessError(Configurator.command.NOT_RUNABLE.value(command.getText())));
 			invalid = true;
 		}
 	}
 
-	public static class Runnability extends BooleanBinding implements ChangeListener<String> {
-		private ExecutorService service = Configurator.getService();
-		private Future<?> lastCall;
-		private BooleanProperty computed = new SimpleBooleanProperty(false);
-		private BooleanProperty result = new SimpleBooleanProperty(false);
-		private Command command;
+	private CommandInstance(ProcessBuilder processBuilder, Command parentCommand) {
+		this.command = parentCommand;
+		this.processBuilder = processBuilder;
+		this.state = Out.init(Configurator.command.STATE_RUN);
+		this.fxState = this.state.fxThread();
+		this.method = (command.isJavaFunction() ? ((JavaRunnability) command.getRunnabilty()).getMethod() : null);
+		this.layoutGenerator = command.getLayoutGenerator();
+		this.enviroment = new HashMap<>();
+		this.command.getExtendedEnvironment().forEach((key,property) -> this.enviroment.put(key,property.getValue()));
 
-		public Runnability(Command command) {
-			bind(computed);
-			command.cmdProperty().addListener(this);
-			command.dirProperty().addListener(this);
-			this.command = command;
+		this.args = String.join(" ", processBuilder.command());
+		this.dir  = "";
 
-			// RUN FIRST CHECK
-			refresh();
+		try {
+			this.standartOutputFile = File.createTempFile(command.getId() + ".commandOutput", ".log");
+			this.standartOutputFile.deleteOnExit();
+			this.standartInputFile = File.createTempFile(command.getId() + ".commandInput", ".log");
+			this.standartInputFile.deleteOnExit();
+			this.standartErrorFile = File.createTempFile(command.getId() + ".commandError", ".log");
+			this.standartErrorFile.deleteOnExit();
+		} catch (IOException e1) {
+			Dialogs.EXCEPTION.show(e1, Configurator.command.NO_LOG_FILE.value(node.getText()));
 		}
 
-		@Override
-		protected boolean computeValue() {
-			return computed.get() && result.get();
-		}
+		node = new RadioButton();
+		node.textProperty().bind(Bindings.concat(
+				index + ": ", command.textProperty(),
+				" ", OutString.bindFormat(
+						Configurator.command.STATE,
+						(Out<?>) fxState.bindTransform(OutString::init, (cmd) -> cmd.value())
+					),
+				args.length() > 0 ? Bindings.concat("\n", Configurator.command.ARGS, args) : "",
+				dir .length() > 0 ? Bindings.concat("\n", Configurator.command.DIR,  dir ) : ""
+				));
+		node.setTextAlignment(TextAlignment.LEFT);
+		node.setAlignment(Pos.CENTER_LEFT);
+		node.getStyleClass().add("command-instance-button");
 
-		@Override
-		public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-			computed.set(false);
+		tab = new Tab();
+		tab.textProperty().bind(Bindings.concat(
+				index + ": ", command.textProperty(),
+				" ", OutString.bindFormat(
+						Configurator.command.STATE,
+						(Out<?>) fxState.bindTransform(OutString::init, (cmd) -> cmd.value())
+					)
+				));
 
-			if (lastCall != null && !lastCall.isDone()) {
-				lastCall.cancel(true);
-				lastCall = null;
+
+		if (command.getCommandsMenu() != null) {
+			menu = command.getCommandsMenu();
+
+			if (menu.getItems().size() == 1) {
+				menu.getItems().add(new SeparatorMenuItem());
 			}
-			final String cmd = command.getCmd();
-			final String dir = command.getDir();
 
-			if (isLocal(cmd, dir)) {
-				result.set(true);
-				computed.set(true);
-			} else {
-				result.set(false);
-				lastCall = service.submit(() -> {
-					boolean resultV = isInPath(cmd);
-					Platform.runLater(()->{
-						result.set(resultV);
-						computed.set(true);
-					});
-				});
+			item = new MenuItem();
+			item.textProperty().bind(
+					Bindings.concat(
+							tab.textProperty(),
+							" ",
+							Configurator.command.ARGS,
+							String.join("\n", splitArguments(args))
+							)
+					);
+			item.setMnemonicParsing(false);
+			menu.getItems().add(item);
+		}
+
+		outputTextArea = new TextArea();
+		outputTextArea.setEditable(false);
+		outputTextArea.setStyle("-fx-font-family: monospace;");
+		outputConsumer = outputTextArea::appendText;
+
+		errorTextArea = new TextArea();
+		errorTextArea.setEditable(false);
+		errorTextArea.setStyle("-fx-font-family: monospace; -fx-text-fill: red; ");
+		errorTextArea.setPrefHeight(200);
+		errorConsumer = errorTextArea::appendText;
+
+		BorderPane logs = new BorderPane();
+		logs.setCenter(outputTextArea);
+		logs.setBottom(errorTextArea);
+
+		cmdExportButton = new Button(Configurator.command.EXPORT_LOG.value());
+		cmdExportButton.setOnAction((event) -> {
+			if (Dialogs.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
+					ButtonType.YES, Utils.array(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL)) == ButtonType.YES) {
+				saveLog(null);
 			}
-		}
+		});
+		cmdExportButton.disableProperty().bind(new BooleanBinding(){
+			{
+				bind(fxState);
+			}
+			@Override
+			protected boolean computeValue() {
+				return Configurator.command.STATE_RUN == fxState.get();
+			}
+		});
 
-		public void refresh() {
-			changed(null, null, null);
-		}
+		cmdInterruptButton = new Button(Configurator.command.INTERRUPT.value());
+		cmdInterruptButton.setOnAction((event) -> {
+			if (doInterrupt()) exitInstance(Force.INTERRUPT);
+		});
+		cmdInterruptButton.disableProperty().bind(new BooleanBinding(){
+			{
+				bind(fxState);
+			}
+			@Override
+			protected boolean computeValue() {
+				return Configurator.command.STATE_RUN != fxState.get();
+			}
+		});
+
+		cmdSend = new Button(Configurator.command.SEND.value());
+		cmdLine = new TextField();
+		cmdLine.setOnKeyPressed((event) -> {
+			if (event.getCode() == KeyCode.ENTER) cmdSend.getOnAction().handle(null);
+		});
+
+		HBox cmdBox = new HBox(cmdLine, cmdSend, cmdInterruptButton, cmdExportButton);
+		cmdBox.getStyleClass().add("parameters");
+		HBox.setHgrow(cmdLine, Priority.ALWAYS);
+
+		commandPane = new BorderPane();
+		commandPane.setCenter(logs);
+		commandPane.setBottom(cmdBox);
+
+		tab.setContent(commandPane);
+
+		tab.setOnCloseRequest((e) -> {
+			if (!exitInstance(Force.USER_INTERRUPT)) e.consume();
+		});
+		tab.selectedProperty().addListener((o,l,n) -> {
+			node.setSelected(n);
+		});
+		node.selectedProperty().addListener((o,l,n) -> {
+			if (n != tab.isSelected()) node.setSelected(tab.isSelected());
+		});
+
+		Configurator.getCtrl().openCommand(tab);
+
+		node.setOnAction((e) -> {
+			Configurator.getCtrl().selectCommand(tab);
+		});
+
+		this.command.getRunningCommands().add(this);
+
+		start();
+		index++;
 	}
 
-	public static class JavaRunnability extends BooleanBinding implements ChangeListener<String> {
+	public static class JavaRunnability extends BooleanBinding implements InvalidationListener {
 		private Command command;
 		private BooleanProperty computed = new SimpleBooleanProperty();
 		private Method method;
 
 		public JavaRunnability(Command command) {
 			command.cmdProperty().addListener(this);
-			command.dirProperty().addListener(this);
+			command.layoutGeneratorProperty().addListener(this);
 			this.command = command;
 
 			// RUN FIRST CHECK
@@ -363,19 +502,24 @@ public class CommandInstance extends Thread {
 		}
 
 		@Override
-		public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+		public void invalidated(Observable observable) {
 			computed.set(false);
-			String cmd = command.getCmd();
-			String className = cmd.substring(0, cmd.lastIndexOf('.'));
-			String methodName = cmd.substring(cmd.lastIndexOf('.') + 1);
 
-			try {
-				Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass(className);
-				method = clazz.getMethod(methodName, JavaProcess.class, String[].class);
+			if (command.getLayoutGenerator() != null) {
 				computed.set(true);
-			} catch (ClassNotFoundException | NoSuchMethodException | SecurityException e) {
-				Dialogs.EXCEPTION.show(e);
-				computed.set(false);
+			} else {
+				String cmd = command.getCmd();
+				String className = cmd.substring(0, cmd.lastIndexOf('.'));
+				String methodName = cmd.substring(cmd.lastIndexOf('.') + 1);
+
+				try {
+					Class<?> clazz = ClassLoader.getSystemClassLoader().loadClass(className);
+					method = clazz.getMethod(methodName, JavaProcess.class, String[].class);
+					computed.set(true);
+				} catch (ClassNotFoundException | NoSuchMethodException | SecurityException e) {
+					Dialogs.EXCEPTION.show(e);
+					computed.set(false);
+				}
 			}
 		}
 
@@ -384,7 +528,7 @@ public class CommandInstance extends Thread {
 		}
 
 		public void refresh() {
-			changed(null, null, null);
+			invalidated(null);
 		}
 	}
 
@@ -405,8 +549,8 @@ public class CommandInstance extends Thread {
 					if (f.isDirectory()) {
 						for (File subFile : f.listFiles()) {
 							if (subFile.isDirectory()) continue;
-							if (subFile.getName().endsWith(cmd)
-									||  subFile.getName().endsWith(cmd + ".exe"))
+							if (subFile.getName().compareToIgnoreCase(cmd) == 0
+									||  subFile.getName().compareToIgnoreCase(cmd + ".exe") == 0)
 							{
 								return true;
 							}
@@ -441,7 +585,12 @@ public class CommandInstance extends Thread {
 	public void run() {
 		if (invalid) exitInstance(Force.INMEDIATELY);
 		try {
-			if (command.isJavaFunction()) {
+			if (processBuilder != null) {
+				processBuilder.redirectOutput(standartOutputFile);
+				processBuilder.redirectInput(standartInputFile);
+				processBuilder.redirectError(standartErrorFile);
+				process = processBuilder.start();
+			} else if (command.isJavaFunction()) {
 				process = new JavaProcess(this);
 			} else {
 				ProcessBuilder pb = new ProcessBuilder();
@@ -475,16 +624,16 @@ public class CommandInstance extends Thread {
 			});
 
 			while (process.isAlive()) {
-				handle(outputReader, outputTextArea);
-				handle(errorReader, errorTextArea);
+				handle(outputReader, outputConsumer);
+				handle(errorReader, errorConsumer);
 				Thread.sleep(100);
 			}
 
 			cmdLine.setDisable(true);
 			cmdSend.setDisable(true);
 
-			handle(outputReader, outputTextArea);
-			handle(errorReader, errorTextArea);
+			handle(outputReader, outputConsumer);
+			handle(errorReader, errorConsumer);
 
 			outputReader.close();
 			errorReader.close();
@@ -514,21 +663,21 @@ public class CommandInstance extends Thread {
 		} catch(IllegalThreadStateException e) {
 			state.set(Configurator.command.STATE_STOPPED);
 			runOnResult(command.getOnCancel());
-			command.getRefreshables().forEach(r -> r.refresh(command.getConfiguration()));
+			command.getRefreshables().forEach(ValueLink::refresh);
 		} catch (Exception e) {
 			error = e;
 			runOnResult(command.getOnFail());
 			exitInstance(Force.ERROR);
-			command.getRefreshables().forEach(r -> r.refresh(command.getConfiguration()));
+			command.getRefreshables().forEach(ValueLink::refresh);
 		} finally {
-			command.getRefreshables().forEach(r -> r.refresh(command.getConfiguration()));
+			command.getRefreshables().forEach(ValueLink::refresh);
 		}
 
 		// Platform.runLater(RefreshOnChange::doRefresh); // Refresh on finish
 	}
 
 	private void runOnResult(EventHandler<ActionEvent> action) {
-		if (action != null) action.handle(null);
+		if (action != null) Platform.runLater(() -> action.handle(null));
 	}
 
 	public static String[] splitArguments(String arguments) {
@@ -552,17 +701,17 @@ public class CommandInstance extends Thread {
 		}
 	}
 
-	private void handle(BufferedReader reader, TextArea textArea) throws Exception {
+	private void handle(BufferedReader reader, Consumer<String> consumer) throws Exception {
 		while (reader.ready()) {
 			CharBuffer buffer = CharBuffer.allocate(1024);
 			int len = reader.read(buffer);
 			if (len > 0 && len < 1024) {
 				String text = new String(buffer.array()).substring(0, len);
-				Platform.runLater(()->textArea.appendText(text));
+				Platform.runLater(()->consumer.accept(text));
 				break;
 			} else if (len > 0) {
 				String text = new String(buffer.array());
-				Platform.runLater(()->textArea.appendText(text));
+				Platform.runLater(()->consumer.accept(text));
 			}
 		}
 	}
@@ -581,22 +730,24 @@ public class CommandInstance extends Thread {
 			||  state.equalsTo(Configurator.command.STATE_ERROR)
 			||  state.equalsTo(Configurator.command.STATE_STOPPED)
 			||  doInterrupt()) {
-				ButtonType askLogSave = Dialogs.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
-						ButtonType.YES, Utils.array(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL));
-				if (askLogSave == ButtonType.YES) {
-					OutBoolean canceled = OutBoolean.FALSE();
-					ActionEvent event = new ActionEvent(canceled, null);
-					saveLog(event);
-					if (!canceled.get()) {
-						command.removeInstance(this);
-						return true;
-					} else {
-						return false;
-					}
-				} else if (askLogSave == ButtonType.NO) {
-					command.removeInstance(this);
-					return true;
-				}
+				command.removeInstance(this);
+				return true;
+//				ButtonType askLogSave = Dialogs.ASK.show(Configurator.command.ASK_STORE_LOG.value(node.getText()),
+//						ButtonType.YES, Utils.array(ButtonType.YES, ButtonType.NO, ButtonType.CANCEL));
+//				if (askLogSave == ButtonType.YES) {
+//					OutBoolean canceled = OutBoolean.FALSE();
+//					ActionEvent event = new ActionEvent(canceled, null);
+//					saveLog(event);
+//					if (!canceled.get()) {
+//						command.removeInstance(this);
+//						return true;
+//					} else {
+//						return false;
+//					}
+//				} else if (askLogSave == ButtonType.NO) {
+//					command.removeInstance(this);
+//					return true;
+//				}
 			}
 			return false;
 
@@ -693,5 +844,29 @@ public class CommandInstance extends Thread {
 		} catch (Exception e) {
 			Dialogs.EXCEPTION.show(e, Configurator.command.COMMAND_EXECUTION.value());
 		}
+	}
+
+	public boolean hasLayout() {
+		return command.layoutGeneratorProperty().getValue() != null;
+	}
+
+	public ATemplate getLayout() {
+		return layout;
+	}
+
+	public static void create(ProcessBuilder process, Command parentCommand) {
+		new CommandInstance(process, parentCommand);
+	}
+
+	public Command getCommand() {
+		return command;
+	}
+
+	public PrintStream getOutputStream() {
+		return ((JavaProcess) process).out;
+	}
+
+	public PrintStream getErrorStream() {
+		return ((JavaProcess) process).err;
 	}
 }

@@ -28,8 +28,7 @@ public class ConfigurationPath extends Path {
 	@Override
 	public void openPath(ActionEvent event) {
 		try {
-			Configurator.getCtrl().loadConfig(ConfigEntry.loaded(getValue()));
-			Configurator.getCtrl().selectLastConfig();
+			Configurator.getCtrl().loadConfig(ConfigEntry.loaded(getValue()), true);
 		} catch (Exception e) {
 			Dialogs.EXCEPTION.show(e);
 		}
